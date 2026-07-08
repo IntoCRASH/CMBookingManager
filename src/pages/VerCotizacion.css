@@ -1,0 +1,264 @@
+@page {
+  size: letter;
+  margin: 0.35in;
+}
+
+.vc-page {
+  padding: 20px;
+  background: #f2f2f2;
+  min-height: 100vh;
+  color: #111;
+}
+
+.vc-actions {
+  max-width: 816px;
+  margin: 0 auto 14px auto;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.vc-actions button {
+  padding: 8px 12px;
+  border: none;
+  background: #111;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: .2s;
+  font-size: 13px;
+}
+
+.vc-actions button:hover {
+  background: #333;
+}
+
+.vc-document {
+  width: 816px;
+  margin: auto;
+  background: white;
+  padding: 28px 34px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.16);
+  box-sizing: border-box;
+}
+
+.vc-header {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 2px solid #111;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+}
+
+.vc-header h1 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: .8px;
+}
+
+.vc-header p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.vc-box {
+  border: 2px solid #111;
+  padding: 10px 16px;
+  text-align: center;
+  min-width: 130px;
+}
+
+.vc-box strong,
+.vc-box span {
+  display: block;
+}
+
+.vc-box strong {
+  font-size: 12px;
+}
+
+.vc-box span {
+  font-size: 18px;
+  margin-top: 5px;
+}
+
+.vc-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.vc-info-grid h3 {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  letter-spacing: .4px;
+}
+
+.vc-info-grid p {
+  margin: 4px 0;
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+
+.vc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 18px;
+}
+
+.vc-table th {
+  background: #111;
+  color: white;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 12.5px;
+}
+
+.vc-table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.vc-linea-extra {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #333;
+}
+
+.right {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.vc-totales {
+  width: 280px;
+  margin-left: auto;
+  border-top: 2px solid #111;
+  margin-bottom: 18px;
+}
+
+.vc-totales div {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.vc-total-final {
+  font-size: 20px !important;
+  font-weight: bold;
+  border-bottom: 3px solid #111 !important;
+}
+
+.vc-notas {
+  margin-top: 18px;
+  border-top: 1px solid #ddd;
+  padding-top: 12px;
+}
+
+.vc-notas h3 {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  letter-spacing: .5px;
+}
+
+.disclaimer {
+  font-size: 8.7px;
+  line-height: 1.28;
+  color: #444;
+  text-align: justify;
+  margin: 0;
+}
+
+.vc-footer {
+  margin-top: 14px;
+  padding-top: 8px;
+  border-top: 1px solid #ccc;
+  text-align: center;
+  color: #555;
+  font-size: 11px;
+}
+
+.error {
+  color: darkred;
+}
+
+@media print {
+  html,
+  body {
+    width: 8.5in;
+    height: 11in;
+    background: white;
+    margin: 0;
+    padding: 0;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .vc-page {
+    background: white;
+    padding: 0;
+    min-height: auto;
+  }
+
+  .vc-document {
+    width: 100%;
+    min-height: auto;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .vc-header {
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+
+  .vc-header h1 {
+    font-size: 22px;
+  }
+
+  .vc-info-grid {
+    margin-bottom: 12px;
+  }
+
+  .vc-table {
+    margin-bottom: 12px;
+  }
+
+  .vc-table td {
+    padding: 8px 10px;
+  }
+
+  .vc-linea-extra {
+    font-size: 11px;
+    margin-top: 3px;
+  }
+
+  .vc-totales {
+    margin-bottom: 12px;
+  }
+
+  .vc-notas {
+    margin-top: 12px;
+    padding-top: 8px;
+  }
+
+  .disclaimer {
+    font-size: 8.2pt;
+    line-height: 1.18;
+  }
+
+  .vc-footer {
+    margin-top: 10px;
+    padding-top: 6px;
+  }
+}

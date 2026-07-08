@@ -1,0 +1,1103 @@
+/* =========================================================
+   CRUZMONTY BOOKING — DESIGN SYSTEM V2
+   Reemplazo directo para src/styles.css
+   No requiere cambios en JSX.
+========================================================= */
+
+/* =========================
+   VARIABLES
+========================= */
+:root {
+  color-scheme: dark;
+
+  --bg: #060913;
+  --bg-2: #0a1020;
+  --bg-3: #10192e;
+
+  --surface: rgba(15, 23, 42, 0.78);
+  --surface-2: rgba(24, 35, 61, 0.82);
+  --surface-3: rgba(30, 41, 72, 0.88);
+  --surface-hover: rgba(38, 55, 92, 0.92);
+
+  --panel: rgba(255, 255, 255, 0.07);
+  --panel-strong: rgba(255, 255, 255, 0.12);
+
+  --text: #f8fafc;
+  --text-soft: #dbeafe;
+  --muted: #94a3b8;
+  --muted-2: #64748b;
+
+  --line: rgba(148, 163, 184, 0.18);
+  --line-strong: rgba(148, 163, 184, 0.28);
+
+  --accent: #38bdf8;
+  --accent-2: #8b5cf6;
+  --accent-3: #22d3ee;
+  --accent-soft: rgba(56, 189, 248, 0.16);
+
+  --success: #22c55e;
+  --success-soft: rgba(34, 197, 94, 0.16);
+  --danger: #fb7185;
+  --danger-strong: #ef4444;
+  --danger-soft: rgba(251, 113, 133, 0.15);
+  --warning: #f59e0b;
+  --warning-soft: rgba(245, 158, 11, 0.16);
+
+  --radius-xs: 10px;
+  --radius-sm: 14px;
+  --radius-md: 18px;
+  --radius: 22px;
+  --radius-lg: 28px;
+
+  --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.22);
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 32px 100px rgba(0, 0, 0, 0.45);
+
+  --container: 1180px;
+  --control-h: 44px;
+  --transition: 160ms ease;
+}
+
+/* =========================
+   RESET / BASE
+========================= */
+* { box-sizing: border-box; }
+
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(56, 189, 248, 0.24), transparent 30%),
+    radial-gradient(circle at 92% 4%, rgba(139, 92, 246, 0.20), transparent 32%),
+    radial-gradient(circle at 50% 100%, rgba(34, 211, 238, 0.10), transparent 34%),
+    linear-gradient(135deg, var(--bg), var(--bg-2) 48%, #020617);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.75), transparent 75%);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+a { color: inherit; }
+
+::selection {
+  background: rgba(56, 189, 248, 0.28);
+  color: white;
+}
+
+/* =========================
+   TYPOGRAPHY
+========================= */
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  letter-spacing: -0.045em;
+}
+
+h2,
+h3 {
+  letter-spacing: -0.025em;
+}
+
+p {
+  color: var(--muted);
+}
+
+.dashboard h3 {
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+label {
+  display: block;
+  margin: 16px 0 8px;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+button,
+.login-card button,
+header button,
+.menu button,
+.actions-row button,
+.card-footer button,
+.cot-menu button,
+.modal-actions button,
+.calendario-acciones button,
+.edit-btn,
+.danger-btn,
+.close-btn {
+  min-height: var(--control-h);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: white;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  background:
+    linear-gradient(135deg, rgba(56, 189, 248, 0.95), rgba(139, 92, 246, 0.95));
+  box-shadow: 0 12px 34px rgba(56, 189, 248, 0.16);
+  transition:
+    transform var(--transition),
+    border-color var(--transition),
+    background var(--transition),
+    box-shadow var(--transition),
+    opacity var(--transition);
+}
+
+button:hover,
+.login-card button:hover,
+header button:hover,
+.actions-row button:hover,
+.card-footer button:hover,
+.cot-menu button:hover,
+.modal-actions button:hover,
+.edit-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.20);
+  box-shadow: 0 16px 44px rgba(56, 189, 248, 0.22);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+.top-bar button,
+header button,
+.cot-menu button,
+.card-footer button,
+.actions-row button {
+  white-space: nowrap;
+}
+
+.modal-actions button:first-child,
+.close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
+.modal-actions button:first-child:hover,
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.danger-btn,
+button.danger-btn,
+.cot-menu button:last-child:not(:first-child) {
+  background: linear-gradient(135deg, #fb7185, #be123c);
+  box-shadow: 0 12px 34px rgba(251, 113, 133, 0.18);
+}
+
+.danger,
+.error {
+  color: var(--danger);
+}
+
+/* =========================
+   FORM CONTROLS
+========================= */
+input,
+select,
+textarea,
+.login-card input,
+.actions-row input,
+.modal-card input,
+.modal-card select,
+.modal-card textarea,
+.cotizacion-item input,
+.cotizacion-item select {
+  width: 100%;
+  min-height: var(--control-h);
+  padding: 0 14px;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  outline: none;
+  background: rgba(2, 6, 23, 0.44);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    background var(--transition);
+}
+
+textarea {
+  min-height: 110px;
+  padding-top: 12px;
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(148, 163, 184, 0.72);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.login-card input:focus,
+.actions-row input:focus,
+.cotizacion-item input:focus,
+.cotizacion-item select:focus {
+  border-color: rgba(56, 189, 248, 0.76);
+  background: rgba(2, 6, 23, 0.62);
+  box-shadow:
+    0 0 0 4px rgba(56, 189, 248, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 12px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 38px;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--control-h);
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.check-row input,
+input[type="checkbox"] {
+  width: 18px;
+  min-height: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+/* =========================
+   MAIN LAYOUT
+========================= */
+.login-container,
+.dashboard {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.dashboard {
+  width: min(var(--container), 100%);
+  margin: 0 auto;
+}
+
+.top-bar,
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.top-bar h1,
+header h1 {
+  margin: 0;
+  font-size: clamp(34px, 6vw, 58px);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+}
+
+.top-bar p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* =========================
+   LOGIN
+========================= */
+.login-container {
+  display: grid;
+  place-items: center;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 430px;
+  padding: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05)),
+    rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(22px);
+  box-shadow: var(--shadow-lg);
+}
+
+.login-card h1 {
+  margin: 0 0 28px;
+  font-size: clamp(38px, 8vw, 52px);
+  line-height: 0.94;
+}
+
+.login-card input {
+  margin-bottom: 14px;
+}
+
+.login-card button {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.error {
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* =========================
+   DASHBOARD MENU
+========================= */
+.menu {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 25px;
+}
+
+.menu button {
+  min-height: 108px;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 20px;
+  text-align: left;
+  font-size: clamp(17px, 3vw, 21px);
+  font-weight: 900;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.045)),
+    rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.menu button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.26), transparent 40%);
+  transition: opacity var(--transition);
+}
+
+.menu button:hover {
+  transform: translateY(-4px);
+  border-color: rgba(56, 189, 248, 0.42);
+  background: var(--surface-hover);
+}
+
+.menu button:hover::before {
+  opacity: 1;
+}
+
+/* =========================
+   DASHBOARD V2 CARDS
+========================= */
+.dashboard-resumen {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 18px;
+  margin: 30px 0;
+}
+
+.dashboard-card,
+.provincia-card,
+.pagos-resumen div,
+.calendario-dia,
+.cotizacion-item {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035)),
+    var(--surface);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-card {
+  border-radius: var(--radius);
+  padding: 22px;
+}
+
+.dashboard-card h2 {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dashboard-card strong {
+  display: block;
+  margin-top: 14px;
+  font-size: clamp(28px, 5vw, 38px);
+  letter-spacing: -0.04em;
+}
+
+.dashboard-card.grande {
+  grid-row: span 2;
+}
+
+/* =========================
+   GENERIC CARDS / PROVINCIAS
+========================= */
+.cards-grid {
+  display: grid;
+  gap: 18px;
+  margin-top: 30px;
+}
+
+.provincia-card {
+  border-radius: var(--radius);
+  padding: 22px;
+  transition: transform var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.provincia-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+}
+
+.card-header,
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.card-header h2,
+.modal-card h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.035em;
+}
+
+.fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0;
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.fila span {
+  color: var(--muted);
+}
+
+.fila strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.card-footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.edit-btn,
+.danger-btn {
+  width: auto;
+  min-width: 128px;
+}
+
+/* =========================
+   BADGES / STATES
+========================= */
+.estado,
+.activa,
+.inactiva,
+.cot-estado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 30px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.activa,
+.cot-estado {
+  color: #bbf7d0;
+  background: var(--success-soft);
+}
+
+.inactiva {
+  color: #fecdd3;
+  background: var(--danger-soft);
+}
+
+/* =========================
+   ACTION ROWS
+========================= */
+.actions-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+/* =========================
+   MODALS
+========================= */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  z-index: 50;
+  background: rgba(2, 6, 23, 0.76);
+  backdrop-filter: blur(10px);
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 500px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)),
+    #0f172a;
+  box-shadow: var(--shadow-lg);
+}
+
+.close-btn {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 18px;
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+/* =========================
+   COTIZACIONES / LISTS
+========================= */
+.cotizaciones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cotizacion-item {
+  display: grid;
+  grid-template-columns: 170px 2fr 130px 140px 140px 60px;
+  align-items: center;
+  gap: 14px;
+  padding: 17px;
+  border-radius: var(--radius-md);
+  transition: transform var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.cotizacion-item:hover {
+  transform: translateY(-1px);
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+}
+
+.cot-numero {
+  font-weight: 900;
+  color: #bae6fd;
+  letter-spacing: -0.01em;
+}
+
+.cot-cliente strong {
+  display: block;
+  color: var(--text);
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.cot-cliente div,
+.cot-fecha {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.cot-total {
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -0.03em;
+}
+
+.cot-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cot-menu button {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.cotizacion-item {
+  overflow: visible;
+}
+
+.cotizaciones-list {
+  overflow: visible;
+}
+
+.menu-popup{
+    position:absolute;
+    right:0;
+    top:52px;
+    bottom:auto;
+
+    background:white;
+    color:#111827;
+    border-radius:16px;
+    overflow:hidden;
+    min-width:190px;
+
+    box-shadow:0 20px 45px rgba(0,0,0,.35);
+
+    z-index:99999;
+}
+
+.menu-popup button {
+  width: 100%;
+  min-height: 42px;
+  justify-content: flex-start;
+  border: none;
+  border-radius: 0;
+  color: #0f172a;
+  background: #f8fafc;
+  box-shadow: none;
+  text-align: left;
+}
+
+.menu-popup button:hover {
+  transform: none;
+  background: #e2e8f0;
+  box-shadow: none;
+}
+
+.cotizaciones-list{
+    overflow:visible;
+    isolation:isolate;
+}
+/* Nuevo usuario incrustado, sin tocar JSX */
+.cotizacion-item form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.cotizacion-item form h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+  color: var(--text);
+  font-size: 20px;
+}
+
+.cotizacion-item form .check-row,
+.cotizacion-item form .cot-menu {
+  align-self: center;
+}
+
+.cotizacion-item form .cot-menu {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+
+/* =========================
+   CALENDARIO
+========================= */
+.calendario-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.calendario-dia-header {
+  padding: 10px;
+  color: #bae6fd;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.calendario-dia {
+  min-height: 140px;
+  border-radius: var(--radius-md);
+  padding: 10px;
+}
+
+.calendario-numero {
+  margin-bottom: 8px;
+  font-weight: 900;
+  color: var(--text-soft);
+}
+
+.calendario-evento {
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.075);
+  font-size: 12px;
+}
+
+.calendario-evento strong,
+.calendario-evento span,
+.calendario-evento small {
+  display: block;
+}
+
+.calendario-evento small {
+  opacity: 0.75;
+}
+
+.calendario-acciones {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.calendario-acciones button {
+  min-height: 26px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+/* =========================
+   PAGOS
+========================= */
+.pagos-resumen {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.pagos-resumen div {
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+
+.pagos-resumen span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.pagos-resumen strong {
+  font-size: 24px;
+  letter-spacing: -0.04em;
+}
+
+.pagos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.pago-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.pago-item p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (min-width: 760px) {
+  .login-container,
+  .dashboard {
+    padding: 34px;
+  }
+
+  .menu {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .actions-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .dashboard-resumen,
+  .pagos-resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cotizacion-item {
+    grid-template-columns: 1.3fr 2fr 1fr;
+  }
+
+  .cot-menu {
+    justify-content: flex-start;
+  }
+
+  .calendario-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendario-dia-header {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .login-container,
+  .dashboard {
+    padding: 18px;
+  }
+
+  .top-bar,
+  header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .top-bar > div:last-child,
+  header > div:last-child {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .top-bar button,
+  header button {
+    flex: 1;
+  }
+
+  .menu,
+  .dashboard-resumen,
+  .pagos-resumen,
+  .cards-grid,
+  .calendario-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .menu button {
+    min-height: 88px;
+  }
+
+  .cotizacion-item {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .cot-estado {
+    justify-content: flex-start;
+  }
+
+  .cot-menu {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .cotizacion-item form {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .pago-item {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 420px) {
+  .login-card,
+  .modal-card {
+    padding: 24px;
+    border-radius: var(--radius);
+  }
+
+  .top-bar h1,
+  header h1 {
+    font-size: 38px;
+  }
+}
+.cotizaciones-list {
+  position: relative;
+  overflow: visible;
+}
+
+.cotizacion-item {
+  position: relative;
+  overflow: visible;
+  z-index: 1;
+}
+
+.cotizacion-item:has(.menu-popup) {
+  z-index: 9999;
+}
+
+.cot-menu {
+  position: relative;
+  z-index: 10000;
+}
+
+.menu-popup {
+  position: absolute;
+  right: 0;
+  top: 52px;
+  bottom: auto;
+  z-index: 10001;
+}
+.cot-menu {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cot-menu button {
+  width: auto;
+  min-width: 92px;
+  white-space: nowrap;
+}
+
+.cot-menu .danger-btn {
+  width: auto;
+  min-width: 92px;
+}
+.tarifa-item{
+    display:grid;
+
+    grid-template-columns:
+        180px
+        2fr
+        180px
+        150px
+        120px
+        220px;
+
+    align-items:center;
+
+    gap:18px;
+
+    background:#18213b;
+
+    padding:18px;
+
+    border-radius:16px;
+
+    border:1px solid rgba(255,255,255,.08);
+}
