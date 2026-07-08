@@ -13,6 +13,7 @@ export default function Dashboard({
   goCalendario,
   goComisiones,
   goUsuarios,
+  goFormatos,
 }) {
   const [profile, setProfile] = useState(null);
   const [eventosHoy, setEventosHoy] = useState(0);
@@ -167,27 +168,25 @@ async function cargarEventosHoy() {
 
 </div>
       <div className="menu">
-        <button onClick={goNuevaCotizacion}>📝 Nueva Cotización</button>
+  <h3 className="menu-title">Operación</h3>
 
-        <button onClick={goClientes}>👥 Clientes</button>
+  <button onClick={goNuevaCotizacion}>📝 Nueva Cotización</button>
+  <button onClick={goCotizaciones}>📄 Cotizaciones</button>
+  <button onClick={goCalendario}>📅 Calendario</button>
+  <button onClick={goComisiones}>💰 Comisiones</button>
 
-        <button onClick={goCotizaciones}>
-  📄 Cotizaciones
-</button>
-<button onClick={goCalendario}>
-  📅 Calendario
-</button>
+  {profile?.rol === 'admin' && (
+    <>
+      <hr className="menu-divider" />
 
-        <button onClick={goComisiones}>💰 Comisiones</button>
+      <h3 className="menu-title">Configuración</h3>
 
-        {profile?.rol === 'admin' && (
-  <>
-    <button onClick={goTarifas}>⚙️ Tarifas</button>
-
-    <button onClick={goUsuarios}>👤 Usuarios</button>
-  </>
-)}
-      </div>
+      <button onClick={goUsuarios}>👤 Usuarios</button>
+      <button onClick={goFormatos}>🎵 Formatos</button>
+      <button onClick={goTarifas}>⚙️ Tarifas</button>
+    </>
+  )}
+</div>
     </div>
   );
 }

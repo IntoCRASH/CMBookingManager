@@ -11,6 +11,7 @@ import Calendario from './pages/Calendario';
 import PagosCotizacion from './pages/PagosCotizacion';
 import Comisiones from './pages/Comisiones';
 import Usuarios from './pages/Usuarios';
+import Formatos from './pages/Formatos';
 
 
 export default function App() {
@@ -124,6 +125,12 @@ case 'pagos-cotizacion':
       goHome={volverDashboard}
     />
   );
+  case 'formatos':
+  return (
+    <Formatos
+      goHome={volverDashboard}
+    />
+  );
     default:
       return (
         <Dashboard
@@ -135,6 +142,7 @@ case 'pagos-cotizacion':
   goCalendario={() => setPage('calendario')}
   goComisiones={() => setPage('comisiones')}
   goUsuarios={() => setPage('usuarios')}
+  goFormatos={() => setPage('formatos')}
 />
       );
   }
