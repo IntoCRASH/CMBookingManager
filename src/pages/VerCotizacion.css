@@ -262,3 +262,78 @@
     padding-top: 6px;
   }
 }
+/* ===========================================
+   MÓVIL
+=========================================== */
+
+@media (max-width: 768px) {
+
+  .vc-page{
+    padding:12px;
+  }
+
+  .vc-actions{
+    max-width:100%;
+    flex-direction:column;
+  }
+
+  .vc-actions button{
+    width:100%;
+  }
+
+  .vc-document{
+
+    width:100%;
+    max-width:100%;
+
+    padding:18px;
+
+    box-sizing:border-box;
+  }
+
+  .vc-header{
+
+    flex-direction:column;
+    gap:14px;
+
+    align-items:flex-start;
+  }
+
+  .vc-box{
+
+    width:100%;
+    min-width:unset;
+  }
+
+  .vc-info-grid{
+
+    grid-template-columns:1fr;
+
+    gap:12px;
+  }
+
+  .vc-table{
+
+    display:block;
+
+    overflow-x:auto;
+
+    white-space:nowrap;
+  }
+
+  .vc-table td{
+
+    white-space:normal;
+  }
+
+  .vc-totales{
+
+    width:100%;
+  }
+
+  .vc-total-final{
+
+    font-size:18px !important;
+  }
+
+}

@@ -41,6 +41,20 @@ export default function Tarifas({ goHome }) {
     setModalOpen(true);
   }
 
+async function duplicarProvincia(p) {
+  const copia = {
+    ...p,
+    nombre: `${p.nombre || 'Provincia'} copia`,
+  };
+
+  delete copia.id;
+  delete copia.created_at;
+  delete copia.updated_at;
+
+  await saveProvincia(copia);
+  cargar();
+}
+
   async function guardar(e) {
     e.preventDefault();
 
@@ -56,16 +70,20 @@ export default function Tarifas({ goHome }) {
     cargar();
   }
 
-  async function borrar(id, nombre) {
-    const ok = confirm(
-      `¿Deseas borrar definitivamente la provincia "${nombre || 'Sin nombre'}"?`
-    );
+async function borrar(id, nombre) {
+  const ok = confirm(
+    `¿Deseas borrar definitivamente la provincia "${nombre || 'Sin nombre'}"?`
+  );
 
-    if (!ok) return;
+  if (!ok) return;
 
+  try {
     await deleteProvincia(id);
     cargar();
+  } catch (err) {
+    alert(err.message || 'No se pudo borrar la provincia.');
   }
+}
 
   function cambiar(e) {
     const { name, value, type, checked } = e.target;
@@ -131,15 +149,19 @@ export default function Tarifas({ goHome }) {
             </div>
 
             <div className="cot-menu">
-              <button onClick={() => editar(p)}>Editar</button>
+  <button onClick={() => editar(p)}>Editar</button>
 
-              <button
-                className="danger-btn"
-                onClick={() => borrar(p.id, p.nombre)}
-              >
-                Borrar
-              </button>
-            </div>
+  <button onClick={() => duplicarProvincia(p)}>
+    Duplicar
+  </button>
+
+<button
+  className="danger-btn"
+  onClick={() => borrar(p.id, p.nombre)}
+>
+  Borrar
+</button>
+</div>
           </div>
         ))}
       </div>

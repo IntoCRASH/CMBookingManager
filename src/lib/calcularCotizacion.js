@@ -32,6 +32,10 @@ export function calcularCotizacion({
     tipoEventoConfig?.multiplicador_sonido || 1
   );
 
+  const multiplicadorRoadManager = Number(
+    tipoEventoConfig?.multiplicador_road_manager || 1
+  );
+
   const ensayoExtra = Number(tipoEventoConfig?.ensayo_extra || 0);
   const produccionExtra = Number(tipoEventoConfig?.produccion_extra || 0);
 
@@ -58,8 +62,18 @@ export function calcularCotizacion({
     ? sonidoBase * (aplicaMultiplicadorSonido ? multiplicadorSonido : 1)
     : 0;
 
-  const roadManager =
-    musicos < MINIMO_CUARTETO ? ROAD_MANAGER_MENOS_4 : tarifaMusico;
+  const roadManagerBase =
+    musicos < MINIMO_CUARTETO
+      ? ROAD_MANAGER_MENOS_4
+      : tarifaMusico;
+
+  const roadManagerCalculado =
+    roadManagerBase * multiplicadorRoadManager;
+
+  const roadManager = Math.min(
+    roadManagerCalculado,
+    tarifaMusico
+  );
 
   const subtotal =
     honorarios +
@@ -89,6 +103,7 @@ export function calcularCotizacion({
     multiplicador_honorarios: multiplicadorHonorarios,
     multiplicador_musicos: multiplicadorMusicos,
     multiplicador_sonido: multiplicadorSonido,
+    multiplicador_road_manager: multiplicadorRoadManager,
 
     ensayo_extra: ensayoExtra,
     produccion_extra: produccionExtra,

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
 import { getMyProfile } from '../lib/profileService';
 import { APP_CONFIG } from '../lib/config';
 import { getCotizaciones } from '../lib/cotizacionesService';
@@ -7,7 +6,6 @@ import { getCotizaciones } from '../lib/cotizacionesService';
 export default function Dashboard({
   session,
   goTarifas,
-  goClientes,
   goNuevaCotizacion,
   goCotizaciones,
   goCalendario,
@@ -38,12 +36,7 @@ export default function Dashboard({
   }
 
   function obtenerPagado(c) {
-    return Number(
-      c.monto_pagado ||
-      c.total_pagado ||
-      c.pagado ||
-      0
-    );
+    return Number(c.monto_pagado || c.total_pagado || c.pagado || 0);
   }
 
   function obtenerSaldoPendiente(c) {
@@ -57,32 +50,22 @@ export default function Dashboard({
   async function cargarResumen() {
     try {
       const cotizaciones = await getCotizaciones();
-
       const hoy = new Date().toISOString().slice(0, 10);
       const mesActual = hoy.slice(0, 7);
 
       const eventosConfirmados = cotizaciones
-        .filter((c) =>
-          c.fecha_evento &&
-          c.estado === 'Confirmada'
-        )
+        .filter((c) => c.fecha_evento && c.estado === 'Confirmada')
         .sort((a, b) => new Date(a.fecha_evento) - new Date(b.fecha_evento));
 
-      const eventosDeHoy = eventosConfirmados.filter(
-        (c) => c.fecha_evento === hoy
-      );
-
-      const proximo = eventosConfirmados.find(
-        (c) => c.fecha_evento >= hoy
-      );
+      const eventosDeHoy = eventosConfirmados.filter((c) => c.fecha_evento === hoy);
+      const proximo = eventosConfirmados.find((c) => c.fecha_evento >= hoy);
 
       const pendientes = cotizaciones.filter((c) =>
-        c.estado === 'Pendiente'
+        ['Pendiente', 'Pendiente de aprobación', 'Pendiente de cobro'].includes(c.estado)
       );
 
-      const cotizacionesConSaldo = cotizaciones.filter((c) =>
-        ['Confirmada', 'Realizada'].includes(c.estado) &&
-        obtenerSaldoPendiente(c) > 0
+      const cotizacionesConSaldo = cotizaciones.filter(
+        (c) => ['Confirmada', 'Realizada'].includes(c.estado) && obtenerSaldoPendiente(c) > 0
       );
 
       const totalPendiente = cotizacionesConSaldo.reduce(
@@ -91,10 +74,7 @@ export default function Dashboard({
       );
 
       const totalCobradoMes = cotizaciones
-        .filter((c) =>
-          c.fecha_evento &&
-          String(c.fecha_evento).slice(0, 7) === mesActual
-        )
+        .filter((c) => c.fecha_evento && String(c.fecha_evento).slice(0, 7) === mesActual)
         .reduce((sum, c) => sum + obtenerPagado(c), 0);
 
       setEventosHoy(eventosDeHoy.length);
@@ -107,114 +87,127 @@ export default function Dashboard({
     }
   }
 
-  async function logout() {
-    await supabase.auth.signOut();
+  function money(valor) {
+    return `RD$ ${Number(valor || 0).toLocaleString('es-DO')}`;
   }
 
+  function fechaCorta(fecha) {
+    if (!fecha) return { dia: '--', mes: '---' };
+
+    const d = new Date(`${fecha}T00:00:00`);
+
+    return {
+      dia: d.toLocaleDateString('es-DO', { day: '2-digit' }),
+      mes: d.toLocaleDateString('es-DO', { month: 'short' }).replace('.', '').toUpperCase(),
+    };
+  }
+
+  const fechaProximo = fechaCorta(proximoEvento?.fecha_evento);
+  const esAdmin = profile?.rol === 'admin';
+
   return (
-    <div className="dashboard">
-      <header>
+    <div className="dashboard dashboard-mobile-first">
+      <section className="mobile-welcome-card">
         <div>
-          <h1>{APP_CONFIG.empresa}</h1>
-
-          <h2 style={{ marginTop: 20 }}>
-            Hola,
-            {profile ? ` ${profile.nombre}` : ''} 👋
-          </h2>
-
-          <p style={{ fontSize: 18, marginTop: 12 }}>
-            Hoy, <strong>{APP_CONFIG.artista}</strong> tiene{' '}
-            <strong>{eventosHoy}</strong>{' '}
-            evento{eventosHoy !== 1 ? 's' : ''} confirmado
-            {eventosHoy !== 1 ? 's' : ''}.
-          </p>
-
-          <p style={{ opacity: .65, marginTop: 10 }}>
-            {session.user.email}
-          </p>
-
+          <span className="eyebrow">Cruzmonty Booking Suite</span>
+          <h1>Hola{profile?.nombre ? `, ${profile.nombre}` : ''}</h1>
           <p>
-            {profile ? `${profile.rol.toUpperCase()}` : 'Cargando...'}
+            Hoy, <strong>{APP_CONFIG.artista}</strong> tiene <strong>{eventosHoy}</strong>{' '}
+            evento{eventosHoy !== 1 ? 's' : ''} confirmado{eventosHoy !== 1 ? 's' : ''}.
           </p>
         </div>
 
-        <button onClick={logout}>Salir</button>
-      </header>
-
-      <div className="dashboard-resumen">
-        <div className="dashboard-card grande">
-          <h2>🎵 Próximo Evento Confirmado</h2>
-
-          {proximoEvento ? (
-            <>
-              <h3>{proximoEvento.tipo_evento || 'Evento'}</h3>
-
-              <p>
-                <strong>{proximoEvento.clientes?.nombre || 'Cliente sin nombre'}</strong>
-              </p>
-
-              <p>
-                📍 {proximoEvento.venue || proximoEvento.provincias?.nombre || 'Lugar pendiente'}
-              </p>
-
-              <p>
-                📅 {proximoEvento.fecha_evento}
-                {proximoEvento.hora_inicio ? ` · ${proximoEvento.hora_inicio}` : ''}
-              </p>
-
-              <button onClick={() => goCotizaciones()}>
-                Ver cotizaciones
-              </button>
-            </>
-          ) : (
-            <p style={{ opacity: .6 }}>
-              No hay próximos eventos confirmados.
-            </p>
-          )}
+        <div className="profile-pill">
+          <span>{(profile?.nombre || session?.user?.email || 'C').slice(0, 1).toUpperCase()}</span>
+          <div>
+            <strong>{profile?.nombre || 'Usuario'}</strong>
+            <small>{profile?.rol || 'usuario'}</small>
+          </div>
         </div>
+      </section>
 
-        <div className="dashboard-card">
-          <h2>📅 Eventos Hoy</h2>
+      <section className="dashboard-primary-actions">
+        <button type="button" className="primary-action" onClick={goNuevaCotizacion}>
+          <span>+</span>
+          Nueva cotización
+        </button>
+        <button type="button" className="secondary-action" onClick={goCotizaciones}>
+          Ver cotizaciones
+        </button>
+      </section>
+
+      <section className="mobile-kpi-grid">
+        <button type="button" className="kpi-tile blue" onClick={goCalendario}>
+          <span>📅</span>
+          <small>Eventos hoy</small>
           <strong>{eventosHoy}</strong>
-        </div>
+        </button>
 
-        <div className="dashboard-card">
-          <h2>💰 Balance Pendiente</h2>
-          <strong>RD$ {balancePendiente.toLocaleString()}</strong>
-        </div>
+        <button type="button" className="kpi-tile purple" onClick={goCotizaciones}>
+          <span>💰</span>
+          <small>Balance pendiente</small>
+          <strong>{money(balancePendiente)}</strong>
+        </button>
 
-        <div className="dashboard-card">
-          <h2>📄 Cotizaciones Pendientes</h2>
+        <button type="button" className="kpi-tile rose" onClick={goCotizaciones}>
+          <span>📄</span>
+          <small>Cotizaciones pendientes</small>
           <strong>{cotizacionesPendientes}</strong>
+        </button>
+
+        <button type="button" className="kpi-tile orange" onClick={goComisiones}>
+          <span>💵</span>
+          <small>Cobrado este mes</small>
+          <strong>{money(cobradoMes)}</strong>
+        </button>
+      </section>
+
+      <section className="next-event-card">
+        <div className="section-heading">
+          <span>Próximo evento confirmado</span>
+          <button type="button" onClick={goCalendario}>Agenda</button>
         </div>
 
-        <div className="dashboard-card">
-          <h2>💵 Cobrado este mes</h2>
-          <strong>RD$ {cobradoMes.toLocaleString()}</strong>
-        </div>
-      </div>
+        {proximoEvento ? (
+          <div className="next-event-content">
+            <div className="date-badge">
+              <strong>{fechaProximo.dia}</strong>
+              <span>{fechaProximo.mes}</span>
+            </div>
 
-      <div className="menu">
-        <h3 className="menu-title">Operación</h3>
-
-        <button onClick={goNuevaCotizacion}>📝 Nueva Cotización</button>
-        <button onClick={goCotizaciones}>📄 Cotizaciones</button>
-        <button onClick={goCalendario}>📅 Calendario</button>
-        <button onClick={goComisiones}>💰 Comisiones</button>
-
-        {profile?.rol === 'admin' && (
-          <>
-            <hr className="menu-divider" />
-
-            <h3 className="menu-title">Configuración</h3>
-
-            <button onClick={goUsuarios}>👤 Usuarios</button>
-            <button onClick={goFormatos}>🎵 Formatos</button>
-            <button onClick={goTiposEvento}>🎤 Tipos de Evento</button>
-            <button onClick={goTarifas}>⚙️ Tarifas</button>
-          </>
+            <div>
+              <h2>{proximoEvento.nombre_evento || proximoEvento.tipo_evento || 'Evento'}</h2>
+              <p>{proximoEvento.clientes?.nombre || 'Cliente sin nombre'}</p>
+              <small>
+                {proximoEvento.venue || proximoEvento.provincias?.nombre || 'Lugar pendiente'}
+                {proximoEvento.hora_inicio ? ` · ${proximoEvento.hora_inicio}` : ''}
+              </small>
+            </div>
+          </div>
+        ) : (
+          <div className="empty-event-state">
+            <strong>No hay próximos eventos confirmados.</strong>
+            <span>Cuando confirmes una cotización con fecha, aparecerá aquí.</span>
+          </div>
         )}
-      </div>
+      </section>
+
+      <section className="quick-actions-card">
+        <div className="section-heading">
+          <span>Operación rápida</span>
+        </div>
+
+        <div className="quick-actions-grid">
+          <button type="button" onClick={goNuevaCotizacion}>➕<span>Nueva cotización</span></button>
+          <button type="button" onClick={goCotizaciones}>📄<span>Cotizaciones</span></button>
+          <button type="button" onClick={goCalendario}>📅<span>Calendario</span></button>
+          <button type="button" onClick={goComisiones}>💰<span>Comisiones</span></button>
+          {esAdmin && <button type="button" onClick={goUsuarios}>👤<span>Usuarios</span></button>}
+          {esAdmin && <button type="button" onClick={goFormatos}>🎵<span>Formatos</span></button>}
+          {esAdmin && <button type="button" onClick={goTiposEvento}>🎤<span>Tipos de evento</span></button>}
+          {esAdmin && <button type="button" onClick={goTarifas}>⚙️<span>Tarifas</span></button>}
+        </div>
+      </section>
     </div>
   );
 }

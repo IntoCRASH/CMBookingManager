@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
 import { getClientes, crearCliente } from '../lib/clientesService';
 import { getProvincias } from '../lib/provinciasService';
@@ -37,7 +38,7 @@ const formInicial = {
   cantidad_musicos: 1,
   incluye_sonido: false,
   descuento: 0,
-  estado: 'Pendiente',
+  estado: 'Pendiente de aprobación',
 };
 
 export default function NuevaCotizacion({
@@ -56,6 +57,7 @@ export default function NuevaCotizacion({
   const [error, setError] = useState('');
   const [modoEdicion, setModoEdicion] = useState(false);
   const [mostrarDetallesEvento, setMostrarDetallesEvento] = useState(false);
+  const resultadoRef = useRef(null);
 
   useEffect(() => {
     cargarDatos();
@@ -181,32 +183,32 @@ export default function NuevaCotizacion({
 
   function validar() {
     if (!form.cliente_id && !form.cliente_nombre.trim()) {
-      setError('Selecciona un cliente o escribe el nombre del cliente.');
+      toast.error('Selecciona un cliente o escribe el nombre del cliente.');
       return false;
     }
 
     if (!form.cliente_telefono.trim()) {
-      setError('El teléfono del cliente es obligatorio.');
+      toast.error('El teléfono del cliente es obligatorio.');
       return false;
     }
 
     if (!form.provincia_id) {
-      setError('Selecciona una provincia.');
+      toast.error('Selecciona una provincia.');
       return false;
     }
 
     if (!form.tipo_evento_config_id) {
-      setError('Selecciona un tipo de evento.');
+      toast.error('Selecciona un tipo de evento.');
       return false;
     }
 
     if (!form.formato_id && !modoEdicion) {
-      setError('Selecciona un formato.');
+      toast.error('Selecciona un formato.');
       return false;
     }
 
     if (Number(form.cantidad_musicos || 0) <= 0) {
-      setError('El formato debe tener una cantidad válida de músicos.');
+      toast.error('El formato debe tener una cantidad válida de músicos.');
       return false;
     }
 
@@ -224,7 +226,7 @@ export default function NuevaCotizacion({
     );
 
     if (!provincia) {
-      setError('Provincia inválida.');
+      toast.error('Provincia inválida.');
       return;
     }
 
@@ -233,7 +235,7 @@ export default function NuevaCotizacion({
     );
 
     if (!tipoEventoSeleccionado) {
-      setError('Tipo de evento inválido.');
+      toast.error('Tipo de evento inválido.');
       return;
     }
 
@@ -261,6 +263,12 @@ export default function NuevaCotizacion({
     });
 
     setResultado(calculo);
+    setTimeout(() => {
+  resultadoRef.current?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  });
+}, 100);
   }
 
   async function obtenerClienteId() {
@@ -280,7 +288,7 @@ export default function NuevaCotizacion({
     setError('');
 
     if (!resultado) {
-      setError('Primero debes calcular la cotización.');
+      toast.error('Primero debes calcular la cotización.');
       return;
     }
 
@@ -324,18 +332,23 @@ export default function NuevaCotizacion({
         ...resultado,
       });
 
-      alert(
-        modoEdicion
-          ? 'Cotización actualizada.'
-          : 'Cotización guardada.'
-      );
+      toast.success(
+  modoEdicion
+    ? 'Cotización actualizada correctamente.'
+    : 'Cotización guardada correctamente.'
+);
 
       if (onCotizacionGuardada) {
         onCotizacionGuardada(guardada.id);
       }
     } catch (err) {
-      console.error(err);
-      setError(err.message || 'No se pudo guardar la cotización.');
+  console.error(err);
+
+  const mensaje =
+    err.message || 'No se pudo guardar la cotización.';
+
+  setError(mensaje);
+  toast.error(mensaje);
     }
   }
 
@@ -552,13 +565,13 @@ export default function NuevaCotizacion({
                 >
                   <option value="">
                     {modoEdicion && !form.formato_id
-                      ? `Formato anterior (${form.cantidad_musicos} músico(s))`
+                      ? `Formato anterior`
                       : 'Seleccionar formato'}
                   </option>
 
                   {formatos.map((f) => (
                     <option key={f.id} value={f.id}>
-                      {f.nombre} ({Number(f.cantidad_musicos || 0)} músico(s))
+                      {f.nombre} 
                     </option>
                   ))}
                 </select>
@@ -598,10 +611,11 @@ export default function NuevaCotizacion({
                   value={form.estado}
                   onChange={cambiar}
                 >
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="Confirmada">Confirmada</option>
-                  <option value="Cancelada">Cancelada</option>
-                  <option value="Realizada">Realizada</option>
+                  <option value="Pendiente de aprobación">Pendiente de aprobación</option>
+<option value="Pendiente de cobro">Pendiente de cobro</option>
+<option value="Confirmada">Confirmada</option>
+<option value="Cancelada">Cancelada</option>
+<option value="Realizada">Realizada</option>
                 </select>
               </div>
 
@@ -637,7 +651,11 @@ export default function NuevaCotizacion({
       </form>
 
       {resultado && (
-        <div className="provincia-card" style={{ marginTop: 24 }}>
+        <div
+  ref={resultadoRef}
+  className="provincia-card"
+  style={{ marginTop: 24 }}
+>
           <h2>Resultado interno</h2>
 
           <div className="resultado-grid">

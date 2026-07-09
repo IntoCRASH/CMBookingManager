@@ -39,7 +39,19 @@ export default function Formatos({ goHome }) {
     setError('');
     setModalOpen(true);
   }
+async function duplicar(formato) {
+  const copia = {
+    ...formato,
+    nombre: `${formato.nombre || 'Formato'} copia`,
+  };
 
+  delete copia.id;
+  delete copia.created_at;
+  delete copia.updated_at;
+
+  await saveFormato(copia);
+  cargar();
+}
   function cambiar(e) {
     const { name, value, type, checked } = e.target;
 
@@ -138,15 +150,19 @@ export default function Formatos({ goHome }) {
             </div>
 
             <div className="cot-menu">
-              <button onClick={() => editar(f)}>Editar</button>
+  <button onClick={() => editar(f)}>Editar</button>
 
-              <button
-                className="danger-btn"
-                onClick={() => borrar(f.id, f.nombre)}
-              >
-                Borrar
-              </button>
-            </div>
+  <button onClick={() => duplicar(f)}>
+    Duplicar
+  </button>
+
+  <button
+    className="danger-btn"
+    onClick={() => borrar(f.id, f.nombre)}
+  >
+    Borrar
+  </button>
+</div>
           </div>
         ))}
       </div>

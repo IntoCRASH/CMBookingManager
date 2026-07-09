@@ -183,6 +183,10 @@ Fecha: <strong>{fechaLarga(cotizacion.fecha_evento)}</strong>
             Debe especificar su preferencia.
             <br /><br />
 
+            Se debe proveer <strong>amenidades y refrigerio</strong>,
+            mesa y sillas con snack o almuerzo, según lo acordado con el cliente.
+            <br /><br />
+
             Para separar la fecha es imprescindible realizar un adelanto del
             <strong> 50% del monto acordado</strong> a la cuenta
             <strong> 829457379</strong> del Banco Popular, a nombre de

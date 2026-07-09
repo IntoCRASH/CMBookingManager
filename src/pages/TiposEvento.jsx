@@ -11,6 +11,7 @@ const nuevoRegistro = {
   multiplicador_honorarios: 1,
   multiplicador_musicos: 1,
   multiplicador_sonido: 1,
+  multiplicador_road_manager: 1,
   ensayo_extra: 0,
   produccion_extra: 0,
   activo: true,
@@ -44,6 +45,7 @@ export default function TiposEvento({ goHome }) {
       multiplicador_honorarios: Number(tipo.multiplicador_honorarios || 1),
       multiplicador_musicos: Number(tipo.multiplicador_musicos || 1),
       multiplicador_sonido: Number(tipo.multiplicador_sonido || 1),
+      multiplicador_road_manager: Number(tipo.multiplicador_road_manager || 1),
       ensayo_extra: Number(tipo.ensayo_extra || 0),
       produccion_extra: Number(tipo.produccion_extra || 0),
       activo: Boolean(tipo.activo),
@@ -51,6 +53,31 @@ export default function TiposEvento({ goHome }) {
 
     setError('');
     setModalOpen(true);
+  }
+
+  async function duplicar(tipo) {
+    const copia = {
+      ...tipo,
+      nombre: `${tipo.nombre || 'Tipo de evento'} copia`,
+      multiplicador_honorarios: Number(tipo.multiplicador_honorarios || 1),
+      multiplicador_musicos: Number(tipo.multiplicador_musicos || 1),
+      multiplicador_sonido: Number(tipo.multiplicador_sonido || 1),
+      multiplicador_road_manager: Number(tipo.multiplicador_road_manager || 1),
+      ensayo_extra: Number(tipo.ensayo_extra || 0),
+      produccion_extra: Number(tipo.produccion_extra || 0),
+      activo: Boolean(tipo.activo),
+    };
+
+    delete copia.id;
+    delete copia.created_at;
+    delete copia.updated_at;
+
+    try {
+      await saveTipoEventoConfig(copia);
+      cargar();
+    } catch (err) {
+      alert(err.message || 'No se pudo duplicar el tipo de evento.');
+    }
   }
 
   function cambiar(e) {
@@ -86,6 +113,11 @@ export default function TiposEvento({ goHome }) {
       return;
     }
 
+    if (Number(form.multiplicador_road_manager || 0) <= 0) {
+      setError('El multiplicador de road manager debe ser mayor que cero.');
+      return;
+    }
+
     if (Number(form.ensayo_extra || 0) < 0) {
       setError('El ensayo extra no puede ser negativo.');
       return;
@@ -97,7 +129,17 @@ export default function TiposEvento({ goHome }) {
     }
 
     try {
-      await saveTipoEventoConfig(form);
+      await saveTipoEventoConfig({
+        ...form,
+        multiplicador_honorarios: Number(form.multiplicador_honorarios || 1),
+        multiplicador_musicos: Number(form.multiplicador_musicos || 1),
+        multiplicador_sonido: Number(form.multiplicador_sonido || 1),
+        multiplicador_road_manager: Number(form.multiplicador_road_manager || 1),
+        ensayo_extra: Number(form.ensayo_extra || 0),
+        produccion_extra: Number(form.produccion_extra || 0),
+        activo: Boolean(form.activo),
+      });
+
       setModalOpen(false);
       setForm(nuevoRegistro);
       cargar();
@@ -122,7 +164,7 @@ export default function TiposEvento({ goHome }) {
   }
 
   const tiposFiltrados = tiposEvento.filter((tipo) =>
-    `${tipo.nombre} ${tipo.multiplicador_honorarios} ${tipo.multiplicador_musicos} ${tipo.multiplicador_sonido} ${tipo.ensayo_extra} ${tipo.produccion_extra}`
+    `${tipo.nombre} ${tipo.multiplicador_honorarios} ${tipo.multiplicador_musicos} ${tipo.multiplicador_sonido} ${tipo.multiplicador_road_manager} ${tipo.ensayo_extra} ${tipo.produccion_extra}`
       .toLowerCase()
       .includes(busqueda.toLowerCase())
   );
@@ -158,7 +200,7 @@ export default function TiposEvento({ goHome }) {
                 Honorarios: x{Number(tipo.multiplicador_honorarios || 1)} · Músicos: x{Number(tipo.multiplicador_musicos || 1)}
               </strong>
               <div>
-                Sonido: x{Number(tipo.multiplicador_sonido || 1)} · Ensayo: RD${' '}
+                Sonido: x{Number(tipo.multiplicador_sonido || 1)} · Road Manager: x{Number(tipo.multiplicador_road_manager || 1)} · Ensayo: RD${' '}
                 {Number(tipo.ensayo_extra || 0).toLocaleString()} · Producción: RD${' '}
                 {Number(tipo.produccion_extra || 0).toLocaleString()}
               </div>
@@ -178,6 +220,10 @@ export default function TiposEvento({ goHome }) {
 
             <div className="cot-menu">
               <button onClick={() => editar(tipo)}>Editar</button>
+
+              <button onClick={() => duplicar(tipo)}>
+                Duplicar
+              </button>
 
               <button
                 className="danger-btn"
@@ -231,6 +277,16 @@ export default function TiposEvento({ goHome }) {
             min="0.1"
             step="0.05"
             value={form.multiplicador_sonido}
+            onChange={cambiar}
+          />
+
+          <label>Multiplicador Road Manager *</label>
+          <input
+            name="multiplicador_road_manager"
+            type="number"
+            min="0.1"
+            step="0.05"
+            value={form.multiplicador_road_manager}
             onChange={cambiar}
           />
 

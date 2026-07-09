@@ -52,10 +52,7 @@ export async function saveProvincia(provincia) {
 export async function deleteProvincia(id) {
   const { error } = await supabase
     .from('provincias')
-    .update({
-      activa: false,
-      updated_at: new Date().toISOString(),
-    })
+    .delete()
     .eq('id', id);
 
   if (error) throw error;
