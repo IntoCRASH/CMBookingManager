@@ -1,26 +1,17 @@
 /* =========================================================
-   CRUZMONTY BOOKING — DESIGN SYSTEM V2
-   Reemplazo directo para src/styles.css
-   No requiere cambios en JSX.
+   CRUZMONTY BOOKING — CLEAN DESIGN SYSTEM
+   Reemplazo directo para: src/styles.css
 ========================================================= */
 
-/* =========================
-   VARIABLES
-========================= */
 :root {
   color-scheme: dark;
 
   --bg: #060913;
   --bg-2: #0a1020;
-  --bg-3: #10192e;
-
   --surface: rgba(15, 23, 42, 0.78);
-  --surface-2: rgba(24, 35, 61, 0.82);
-  --surface-3: rgba(30, 41, 72, 0.88);
-  --surface-hover: rgba(38, 55, 92, 0.92);
-
-  --panel: rgba(255, 255, 255, 0.07);
-  --panel-strong: rgba(255, 255, 255, 0.12);
+  --surface-2: rgba(24, 35, 61, 0.86);
+  --surface-3: rgba(30, 41, 72, 0.92);
+  --surface-hover: rgba(38, 55, 92, 0.95);
 
   --text: #f8fafc;
   --text-soft: #dbeafe;
@@ -28,45 +19,36 @@
   --muted-2: #64748b;
 
   --line: rgba(148, 163, 184, 0.18);
-  --line-strong: rgba(148, 163, 184, 0.28);
+  --line-strong: rgba(148, 163, 184, 0.32);
 
   --accent: #38bdf8;
   --accent-2: #8b5cf6;
-  --accent-3: #22d3ee;
-  --accent-soft: rgba(56, 189, 248, 0.16);
-
   --success: #22c55e;
-  --success-soft: rgba(34, 197, 94, 0.16);
   --danger: #fb7185;
-  --danger-strong: #ef4444;
-  --danger-soft: rgba(251, 113, 133, 0.15);
+  --danger-strong: #be123c;
   --warning: #f59e0b;
+
+  --success-soft: rgba(34, 197, 94, 0.16);
+  --danger-soft: rgba(251, 113, 133, 0.16);
   --warning-soft: rgba(245, 158, 11, 0.16);
 
   --radius-xs: 10px;
   --radius-sm: 14px;
   --radius-md: 18px;
-  --radius: 22px;
   --radius-lg: 28px;
 
-  --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.22);
-  --shadow: 0 20px 60px rgba(0, 0, 0, 0.32);
-  --shadow-lg: 0 32px 100px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.24);
+  --shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+  --shadow-lg: 0 34px 100px rgba(0, 0, 0, 0.48);
 
   --container: 1180px;
   --control-h: 44px;
   --transition: 160ms ease;
 }
 
-/* =========================
-   RESET / BASE
-========================= */
 * { box-sizing: border-box; }
 
-html {
-  min-height: 100%;
-  scroll-behavior: smooth;
-}
+html { min-height: 100%; }
 
 body {
   margin: 0;
@@ -75,9 +57,8 @@ body {
   color: var(--text);
   background:
     radial-gradient(circle at 8% 0%, rgba(56, 189, 248, 0.24), transparent 30%),
-    radial-gradient(circle at 92% 4%, rgba(139, 92, 246, 0.20), transparent 32%),
-    radial-gradient(circle at 50% 100%, rgba(34, 211, 238, 0.10), transparent 34%),
-    linear-gradient(135deg, var(--bg), var(--bg-2) 48%, #020617);
+    radial-gradient(circle at 92% 4%, rgba(139, 92, 246, 0.22), transparent 32%),
+    linear-gradient(135deg, var(--bg), var(--bg-2) 54%, #020617);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -93,15 +74,13 @@ body::before {
     linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
   background-size: 42px 42px;
-  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.75), transparent 75%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.8), transparent 78%);
 }
 
 button,
 input,
 select,
-textarea {
-  font: inherit;
-}
+textarea { font: inherit; }
 
 button {
   border: 0;
@@ -112,46 +91,20 @@ button:disabled,
 input:disabled,
 select:disabled,
 textarea:disabled {
-  opacity: 0.55;
+  opacity: .55;
   cursor: not-allowed;
 }
 
-a { color: inherit; }
-
 ::selection {
-  background: rgba(56, 189, 248, 0.28);
+  background: rgba(56, 189, 248, .30);
   color: white;
 }
 
-/* =========================
-   TYPOGRAPHY
-========================= */
-h1,
-h2,
-h3,
-p {
-  margin-top: 0;
-}
+h1, h2, h3, p { margin-top: 0; }
 
-h1 {
-  letter-spacing: -0.045em;
-}
-
-h2,
-h3 {
-  letter-spacing: -0.025em;
-}
-
-p {
-  color: var(--muted);
-}
-
-.dashboard h3 {
-  margin: 0 0 22px;
-  color: var(--muted);
-  font-size: 15px;
-  font-weight: 650;
-}
+h1 { letter-spacing: -0.055em; }
+h2, h3 { letter-spacing: -0.025em; }
+p { color: var(--muted); }
 
 label {
   display: block;
@@ -159,15 +112,15 @@ label {
   color: var(--text-soft);
   font-size: 13px;
   font-weight: 750;
-  letter-spacing: 0.01em;
 }
 
 /* =========================
-   BUTTONS
+   CONTROLS
 ========================= */
 button,
 .login-card button,
 header button,
+.top-bar button,
 .menu button,
 .actions-row button,
 .card-footer button,
@@ -184,72 +137,46 @@ header button,
   gap: 8px;
   padding: 0 16px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255,255,255,.10);
   color: white;
-  font-weight: 800;
+  font-weight: 850;
   letter-spacing: -0.01em;
-  background:
-    linear-gradient(135deg, rgba(56, 189, 248, 0.95), rgba(139, 92, 246, 0.95));
-  box-shadow: 0 12px 34px rgba(56, 189, 248, 0.16);
-  transition:
-    transform var(--transition),
-    border-color var(--transition),
-    background var(--transition),
-    box-shadow var(--transition),
-    opacity var(--transition);
+  white-space: nowrap;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 12px 34px rgba(56, 189, 248, .16);
+  transition: transform var(--transition), border-color var(--transition), background var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 
 button:hover,
 .login-card button:hover,
 header button:hover,
+.top-bar button:hover,
 .actions-row button:hover,
 .card-footer button:hover,
 .cot-menu button:hover,
 .modal-actions button:hover,
 .edit-btn:hover {
   transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.20);
-  box-shadow: 0 16px 44px rgba(56, 189, 248, 0.22);
+  border-color: rgba(255,255,255,.22);
+  box-shadow: 0 16px 44px rgba(56, 189, 248, .22);
 }
 
-button:active {
-  transform: translateY(0);
-}
-
-.top-bar button,
-header button,
-.cot-menu button,
-.card-footer button,
-.actions-row button {
-  white-space: nowrap;
-}
-
-.modal-actions button:first-child,
-.close-btn {
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: none;
-}
-
-.modal-actions button:first-child:hover,
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.13);
-}
+button:active { transform: translateY(0); }
 
 .danger-btn,
-button.danger-btn,
-.cot-menu button:last-child:not(:first-child) {
-  background: linear-gradient(135deg, #fb7185, #be123c);
-  box-shadow: 0 12px 34px rgba(251, 113, 133, 0.18);
+button.danger-btn {
+  background: linear-gradient(135deg, #fb7185, var(--danger-strong));
+  box-shadow: 0 12px 34px rgba(251, 113, 133, .18);
 }
 
-.danger,
+.danger { color: var(--danger); }
 .error {
+  margin-top: 14px;
   color: var(--danger);
+  font-size: 14px;
+  font-weight: 800;
 }
 
-/* =========================
-   FORM CONTROLS
-========================= */
 input,
 select,
 textarea,
@@ -259,7 +186,9 @@ textarea,
 .modal-card select,
 .modal-card textarea,
 .cotizacion-item input,
-.cotizacion-item select {
+.cotizacion-item select,
+.tarifa-item input,
+.tarifa-item select {
   width: 100%;
   min-height: var(--control-h);
   padding: 0 14px;
@@ -267,12 +196,9 @@ textarea,
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   outline: none;
-  background: rgba(2, 6, 23, 0.44);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  transition:
-    border-color var(--transition),
-    box-shadow var(--transition),
-    background var(--transition);
+  background: rgba(2, 6, 23, .46);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
 }
 
 textarea {
@@ -282,22 +208,14 @@ textarea {
 }
 
 input::placeholder,
-textarea::placeholder {
-  color: rgba(148, 163, 184, 0.72);
-}
+textarea::placeholder { color: rgba(148, 163, 184, .72); }
 
 input:focus,
 select:focus,
-textarea:focus,
-.login-card input:focus,
-.actions-row input:focus,
-.cotizacion-item input:focus,
-.cotizacion-item select:focus {
-  border-color: rgba(56, 189, 248, 0.76);
-  background: rgba(2, 6, 23, 0.62);
-  box-shadow:
-    0 0 0 4px rgba(56, 189, 248, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+textarea:focus {
+  border-color: rgba(56, 189, 248, .76);
+  background: rgba(2, 6, 23, .64);
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, .14), inset 0 1px 0 rgba(255,255,255,.04);
 }
 
 select {
@@ -305,9 +223,7 @@ select {
   background-image:
     linear-gradient(45deg, transparent 50%, var(--muted) 50%),
     linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-  background-position:
-    calc(100% - 18px) 50%,
-    calc(100% - 12px) 50%;
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
   padding-right: 38px;
@@ -332,7 +248,7 @@ input[type="checkbox"] {
 }
 
 /* =========================
-   MAIN LAYOUT
+   LAYOUT
 ========================= */
 .login-container,
 .dashboard {
@@ -343,6 +259,12 @@ input[type="checkbox"] {
 .dashboard {
   width: min(var(--container), 100%);
   margin: 0 auto;
+  overflow: visible;
+}
+
+.login-container {
+  display: grid;
+  place-items: center;
 }
 
 .top-bar,
@@ -358,8 +280,7 @@ header {
 header h1 {
   margin: 0;
   font-size: clamp(34px, 6vw, 58px);
-  line-height: 0.92;
-  letter-spacing: -0.06em;
+  line-height: .92;
 }
 
 .top-bar p {
@@ -371,20 +292,13 @@ header h1 {
 /* =========================
    LOGIN
 ========================= */
-.login-container {
-  display: grid;
-  place-items: center;
-}
-
 .login-card {
   width: 100%;
   max-width: 430px;
   padding: 34px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05)),
-    rgba(15, 23, 42, 0.72);
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05)), rgba(15,23,42,.72);
   backdrop-filter: blur(22px);
   box-shadow: var(--shadow-lg);
 }
@@ -392,73 +306,14 @@ header h1 {
 .login-card h1 {
   margin: 0 0 28px;
   font-size: clamp(38px, 8vw, 52px);
-  line-height: 0.94;
+  line-height: .94;
 }
 
-.login-card input {
-  margin-bottom: 14px;
-}
-
-.login-card button {
-  width: 100%;
-  margin-top: 4px;
-}
-
-.error {
-  margin-top: 14px;
-  font-size: 14px;
-  font-weight: 700;
-}
+.login-card input { margin-bottom: 14px; }
+.login-card button { width: 100%; margin-top: 4px; }
 
 /* =========================
-   DASHBOARD MENU
-========================= */
-.menu {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 25px;
-}
-
-.menu button {
-  min-height: 108px;
-  align-items: flex-end;
-  justify-content: flex-start;
-  padding: 20px;
-  text-align: left;
-  font-size: clamp(17px, 3vw, 21px);
-  font-weight: 900;
-  border-radius: var(--radius);
-  background:
-    linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.045)),
-    rgba(15, 23, 42, 0.72);
-  backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-sm);
-  position: relative;
-  overflow: hidden;
-}
-
-.menu button::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.26), transparent 40%);
-  transition: opacity var(--transition);
-}
-
-.menu button:hover {
-  transform: translateY(-4px);
-  border-color: rgba(56, 189, 248, 0.42);
-  background: var(--surface-hover);
-}
-
-.menu button:hover::before {
-  opacity: 1;
-}
-
-/* =========================
-   DASHBOARD V2 CARDS
+   DASHBOARD
 ========================= */
 .dashboard-resumen {
   display: grid;
@@ -471,17 +326,16 @@ header h1 {
 .provincia-card,
 .pagos-resumen div,
 .calendario-dia,
-.cotizacion-item {
+.cotizacion-item,
+.tarifa-item {
   border: 1px solid var(--line);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035)),
-    var(--surface);
+  background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035)), var(--surface);
   backdrop-filter: blur(18px);
   box-shadow: var(--shadow-sm);
 }
 
 .dashboard-card {
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   padding: 22px;
 }
 
@@ -489,9 +343,9 @@ header h1 {
   margin: 0;
   color: var(--muted);
   font-size: 14px;
-  font-weight: 750;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: .08em;
 }
 
 .dashboard-card strong {
@@ -501,12 +355,68 @@ header h1 {
   letter-spacing: -0.04em;
 }
 
-.dashboard-card.grande {
-  grid-row: span 2;
+.dashboard-card.grande { grid-row: span 2; }
+
+.menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 25px;
+}
+
+.menu button {
+  min-height: 76px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 18px 22px;
+  text-align: left;
+  font-size: 18px;
+  font-weight: 950;
+  border-radius: var(--radius-md);
+  background: linear-gradient(145deg, rgba(255,255,255,.13), rgba(255,255,255,.045)), rgba(15,23,42,.72);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.menu button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(circle at top right, rgba(56,189,248,.26), transparent 40%);
+  transition: opacity var(--transition);
+}
+
+.menu button:hover {
+  transform: translateY(-3px);
+  border-color: rgba(56,189,248,.42);
+  background: var(--surface-hover);
+}
+
+.menu button:hover::before { opacity: 1; }
+
+.menu-title {
+  grid-column: 1 / -1;
+  margin: 18px 0 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.menu-divider {
+  grid-column: 1 / -1;
+  border: none;
+  height: 1px;
+  background: rgba(255,255,255,.08);
+  margin: 12px 0 2px;
 }
 
 /* =========================
-   GENERIC CARDS / PROVINCIAS
+   CARDS / MODALS
 ========================= */
 .cards-grid {
   display: grid;
@@ -515,15 +425,8 @@ header h1 {
 }
 
 .provincia-card {
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   padding: 22px;
-  transition: transform var(--transition), border-color var(--transition), background var(--transition);
-}
-
-.provincia-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--line-strong);
-  background: var(--surface-2);
 }
 
 .card-header,
@@ -539,26 +442,18 @@ header h1 {
 .modal-card h2 {
   margin: 0;
   font-size: 24px;
-  letter-spacing: -0.035em;
 }
 
 .fila {
   display: flex;
   justify-content: space-between;
   gap: 18px;
-  margin: 0;
   padding: 13px 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid rgba(148,163,184,.12);
 }
 
-.fila span {
-  color: var(--muted);
-}
-
-.fila strong {
-  color: var(--text);
-  font-size: 16px;
-}
+.fila span { color: var(--muted); }
+.fila strong { color: var(--text); font-size: 16px; }
 
 .card-footer {
   margin-top: 20px;
@@ -568,13 +463,57 @@ header h1 {
 }
 
 .edit-btn,
-.danger-btn {
-  width: auto;
-  min-width: 128px;
+.danger-btn { width: auto; min-width: 128px; }
+
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  z-index: 50;
+  background: rgba(2,6,23,.76);
+  backdrop-filter: blur(10px);
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 500px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.035)), #0f172a;
+  box-shadow: var(--shadow-lg);
+}
+
+.close-btn {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 18px;
+  background: rgba(255,255,255,.08);
+  box-shadow: none;
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.modal-actions button:first-child {
+  background: rgba(255,255,255,.08);
+  box-shadow: none;
 }
 
 /* =========================
-   BADGES / STATES
+   BADGES
 ========================= */
 .estado,
 .activa,
@@ -589,8 +528,8 @@ header h1 {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.02em;
-  border: 1px solid rgba(255,255,255,0.08);
+  letter-spacing: .02em;
+  border: 1px solid rgba(255,255,255,.08);
 }
 
 .activa,
@@ -605,7 +544,7 @@ header h1 {
 }
 
 /* =========================
-   ACTION ROWS
+   LISTS / COTIZACIONES
 ========================= */
 .actions-row {
   display: grid;
@@ -614,67 +553,24 @@ header h1 {
   margin-bottom: 24px;
 }
 
-/* =========================
-   MODALS
-========================= */
-.modal-bg {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  z-index: 50;
-  background: rgba(2, 6, 23, 0.76);
-  backdrop-filter: blur(10px);
-}
-
-.modal-card {
-  width: 100%;
-  max-width: 500px;
-  max-height: 92vh;
-  overflow-y: auto;
-  padding: 28px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--line);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)),
-    #0f172a;
-  box-shadow: var(--shadow-lg);
-}
-
-.close-btn {
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
-  min-height: 40px;
-  padding: 0;
-  border-radius: 999px;
-  font-size: 18px;
-}
-
-.modal-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 22px;
-}
-
-/* =========================
-   COTIZACIONES / LISTS
-========================= */
 .cotizaciones-list {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow: visible;
 }
 
 .cotizacion-item {
+  position: relative;
   display: grid;
-  grid-template-columns: 170px 2fr 130px 140px 140px 60px;
+  grid-template-columns: 170px 2fr 130px 140px 140px 72px;
   align-items: center;
   gap: 14px;
   padding: 17px;
   border-radius: var(--radius-md);
+  overflow: visible;
+  z-index: 1;
   transition: transform var(--transition), border-color var(--transition), background var(--transition);
 }
 
@@ -684,8 +580,13 @@ header h1 {
   background: var(--surface-2);
 }
 
+.cotizacion-item:has(.menu-popup),
+.cotizacion-item.menu-activo {
+  z-index: 9999;
+}
+
 .cot-numero {
-  font-weight: 900;
+  font-weight: 950;
   color: #bae6fd;
   letter-spacing: -0.01em;
 }
@@ -701,7 +602,7 @@ header h1 {
 .cot-fecha {
   color: var(--muted);
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 700;
 }
 
 .cot-total {
@@ -715,49 +616,50 @@ header h1 {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
+  overflow: visible;
+  z-index: 20;
 }
 
 .cot-menu button {
   min-height: 38px;
+  min-width: 92px;
+  width: auto;
   padding: 0 12px;
   border-radius: 12px;
   font-size: 13px;
 }
 
-.cotizacion-item {
-  overflow: visible;
+.cot-menu > button:only-child,
+.cot-menu > button:first-child:nth-last-child(2) {
+  min-width: 48px;
 }
 
-.cotizaciones-list {
-  overflow: visible;
-}
-
-.menu-popup{
-    position:absolute;
-    right:0;
-    top:52px;
-    bottom:auto;
-
-    background:white;
-    color:#111827;
-    border-radius:16px;
-    overflow:hidden;
-    min-width:190px;
-
-    box-shadow:0 20px 45px rgba(0,0,0,.35);
-
-    z-index:99999;
+.menu-popup {
+  position: absolute;
+  right: 0;
+  top: 48px;
+  bottom: auto;
+  width: 190px;
+  min-width: 190px;
+  background: #f8fafc;
+  color: #0f172a;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 22px 50px rgba(0,0,0,.45);
+  z-index: 10000;
 }
 
 .menu-popup button {
   width: 100%;
+  min-width: 100%;
   min-height: 42px;
   justify-content: flex-start;
-  border: none;
-  border-radius: 0;
+  padding: 0 16px;
   color: #0f172a;
   background: #f8fafc;
+  border: 0;
+  border-radius: 0;
   box-shadow: none;
   text-align: left;
 }
@@ -768,11 +670,13 @@ header h1 {
   box-shadow: none;
 }
 
-.cotizaciones-list{
-    overflow:visible;
-    isolation:isolate;
+.menu-popup button.danger,
+.menu-popup button:last-child {
+  background: linear-gradient(135deg, #fb7185, var(--danger-strong));
+  color: white;
 }
-/* Nuevo usuario incrustado, sin tocar JSX */
+
+/* Nuevo usuario incrustado */
 .cotizacion-item form {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -787,15 +691,21 @@ header h1 {
   font-size: 20px;
 }
 
-.cotizacion-item form .check-row,
-.cotizacion-item form .cot-menu {
-  align-self: center;
-}
-
 .cotizacion-item form .cot-menu {
   grid-column: 1 / -1;
   justify-content: flex-start;
   margin-top: 4px;
+}
+
+.tarifa-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 180px 2fr 180px 150px 120px 220px;
+  align-items: center;
+  gap: 18px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  overflow: visible;
 }
 
 /* =========================
@@ -814,7 +724,7 @@ header h1 {
   font-weight: 900;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: .08em;
 }
 
 .calendario-dia {
@@ -833,20 +743,15 @@ header h1 {
   margin-bottom: 8px;
   padding: 8px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.07);
-  background: rgba(255,255,255,0.075);
+  border: 1px solid rgba(255,255,255,.07);
+  background: rgba(255,255,255,.075);
   font-size: 12px;
 }
 
 .calendario-evento strong,
 .calendario-evento span,
-.calendario-evento small {
-  display: block;
-}
-
-.calendario-evento small {
-  opacity: 0.75;
-}
+.calendario-evento small { display: block; }
+.calendario-evento small { opacity: .75; }
 
 .calendario-acciones {
   display: flex;
@@ -918,52 +823,28 @@ header h1 {
 ========================= */
 @media (min-width: 760px) {
   .login-container,
-  .dashboard {
-    padding: 34px;
-  }
+  .dashboard { padding: 34px; }
 
-  .menu {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
-  }
-
-  .actions-row {
-    grid-template-columns: 1fr auto;
-  }
-
-  .cards-grid {
-    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
-  }
+  .actions-row { grid-template-columns: 1fr auto; }
+  .cards-grid { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
 }
 
 @media (max-width: 980px) {
   .dashboard-resumen,
-  .pagos-resumen {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .pagos-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-  .cotizacion-item {
-    grid-template-columns: 1.3fr 2fr 1fr;
-  }
+  .cotizacion-item,
+  .tarifa-item { grid-template-columns: 1fr 1fr; }
 
-  .cot-menu {
-    justify-content: flex-start;
-  }
+  .cot-menu { justify-content: flex-start; }
 
-  .calendario-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .calendario-dia-header {
-    display: none;
-  }
+  .calendario-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .calendario-dia-header { display: none; }
 }
 
 @media (max-width: 680px) {
   .login-container,
-  .dashboard {
-    padding: 18px;
-  }
+  .dashboard { padding: 18px; }
 
   .top-bar,
   header {
@@ -979,156 +860,35 @@ header h1 {
   }
 
   .top-bar button,
-  header button {
-    flex: 1;
-  }
+  header button { flex: 1; }
 
   .menu,
   .dashboard-resumen,
   .pagos-resumen,
   .cards-grid,
-  .calendario-grid {
-    grid-template-columns: 1fr;
-  }
+  .calendario-grid,
+  .cotizacion-item,
+  .tarifa-item { grid-template-columns: 1fr; }
 
-  .menu button {
-    min-height: 88px;
-  }
-
-  .cotizacion-item {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  .cot-estado {
-    justify-content: flex-start;
-  }
+  .cot-estado { justify-content: flex-start; }
 
   .cot-menu {
     justify-content: flex-start;
     flex-wrap: wrap;
   }
 
-  .cotizacion-item form {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .pago-item {
-    flex-direction: column;
-  }
+  .cotizacion-item form { grid-template-columns: 1fr; }
+  .modal-actions { grid-template-columns: 1fr; }
+  .pago-item { flex-direction: column; }
 }
 
 @media (max-width: 420px) {
   .login-card,
   .modal-card {
     padding: 24px;
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
   }
 
   .top-bar h1,
-  header h1 {
-    font-size: 38px;
-  }
-}
-.cotizaciones-list {
-  position: relative;
-  overflow: visible;
-}
-
-.cotizacion-item {
-  position: relative;
-  overflow: visible;
-  z-index: 1;
-}
-
-.cotizacion-item:has(.menu-popup) {
-  z-index: 9999;
-}
-
-.cot-menu {
-  position: relative;
-  z-index: 10000;
-}
-
-.menu-popup {
-  position: absolute;
-  right: 0;
-  top: 52px;
-  bottom: auto;
-  z-index: 10001;
-}
-.cot-menu {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.cot-menu button {
-  width: auto;
-  min-width: 92px;
-  white-space: nowrap;
-}
-
-.cot-menu .danger-btn {
-  width: auto;
-  min-width: 92px;
-}
-.tarifa-item{
-    display:grid;
-
-    grid-template-columns:
-        180px
-        2fr
-        180px
-        150px
-        120px
-        220px;
-
-    align-items:center;
-
-    gap:18px;
-
-    background:#18213b;
-
-    padding:18px;
-
-    border-radius:16px;
-
-    border:1px solid rgba(255,255,255,.08);
-}
-.menu-title{
-  margin:18px 0 10px;
-  font-size:14px;
-  font-weight:700;
-  color:#94a3b8;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-}
-
-.menu-divider{
-  border:none;
-  height:1px;
-  background:rgba(255,255,255,.08);
-  margin:22px 0;
-}
-
-.menu {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-}
-
-.menu button {
-  min-height: 76px;
-  padding: 18px 22px;
-  font-size: 18px;
-}
-
-.menu-title,
-.menu-divider {
-  grid-column: 1 / -1;
+  header h1 { font-size: 38px; }
 }

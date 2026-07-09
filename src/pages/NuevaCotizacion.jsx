@@ -5,6 +5,7 @@ import { getProvincias } from '../lib/provinciasService';
 import { getFormatosActivos } from '../lib/formatosService';
 import { calcularCotizacion } from '../lib/calcularCotizacion';
 import { getMyProfile } from '../lib/profileService';
+import { getTiposEventoConfig } from '../lib/tiposEventoConfigService';
 import {
   saveCotizacion,
   getCotizacionById,
@@ -21,7 +22,7 @@ const formInicial = {
   formato_id: '',
 
   fecha_evento: '',
-  tipo_evento: 'Privado',
+  tipo_evento_config_id: '',
   nombre_evento: '',
   venue: '',
   direccion_evento: '',
@@ -39,20 +40,6 @@ const formInicial = {
   estado: 'Pendiente',
 };
 
-const tiposEvento = [
-  'Boda',
-  'Cumpleaños',
-  'Concierto',
-  'Privado',
-  'Público',
-  'Small Venue',
-  'Político',
-  'Corporativo',
-  'Festival',
-  'Religioso',
-  'Otro',
-];
-
 export default function NuevaCotizacion({
   cotizacionId,
   goHome,
@@ -61,6 +48,7 @@ export default function NuevaCotizacion({
   const [clientes, setClientes] = useState([]);
   const [provincias, setProvincias] = useState([]);
   const [formatos, setFormatos] = useState([]);
+  const [tiposEvento, setTiposEvento] = useState([]);
   const [usuarioEmail, setUsuarioEmail] = useState('');
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState(formInicial);
@@ -97,7 +85,7 @@ export default function NuevaCotizacion({
       formato_id: c.formato_id || '',
 
       fecha_evento: c.fecha_evento || '',
-      tipo_evento: c.tipo_evento,
+      tipo_evento_config_id: c.tipo_evento_config_id || '',
       nombre_evento: c.nombre_evento || '',
       venue: c.venue || '',
       direccion_evento: c.direccion_evento || '',
@@ -140,10 +128,12 @@ export default function NuevaCotizacion({
     const clientesData = await getClientes();
     const provinciasData = await getProvincias();
     const formatosData = await getFormatosActivos();
+    const tiposEventoData = await getTiposEventoConfig();
 
     setClientes(clientesData);
     setProvincias(provinciasData.filter((p) => p.activa));
     setFormatos(formatosData);
+    setTiposEvento(tiposEventoData);
   }
 
   function cambiar(e) {
@@ -205,6 +195,11 @@ export default function NuevaCotizacion({
       return false;
     }
 
+    if (!form.tipo_evento_config_id) {
+      setError('Selecciona un tipo de evento.');
+      return false;
+    }
+
     if (!form.formato_id && !modoEdicion) {
       setError('Selecciona un formato.');
       return false;
@@ -233,6 +228,15 @@ export default function NuevaCotizacion({
       return;
     }
 
+    const tipoEventoSeleccionado = tiposEvento.find(
+      (tipo) => String(tipo.id) === String(form.tipo_evento_config_id)
+    );
+
+    if (!tipoEventoSeleccionado) {
+      setError('Tipo de evento inválido.');
+      return;
+    }
+
     let perfilActual = profile;
 
     if (!perfilActual) {
@@ -253,6 +257,7 @@ export default function NuevaCotizacion({
       descuento: Number(form.descuento),
       aplicarComision: !esAdmin,
       comisionPorcentaje: Number(perfilActual?.comision_porcentaje || 0) / 100,
+      tipoEventoConfig: tipoEventoSeleccionado,
     });
 
     setResultado(calculo);
@@ -286,6 +291,10 @@ export default function NuevaCotizacion({
         data: { user },
       } = await supabase.auth.getUser();
 
+      const tipoEventoSeleccionado = tiposEvento.find(
+        (tipo) => String(tipo.id) === String(form.tipo_evento_config_id)
+      );
+
       const guardada = await saveCotizacion({
         id: form.id,
         cliente_id: clienteIdFinal,
@@ -294,7 +303,8 @@ export default function NuevaCotizacion({
         formato_id: form.formato_id || null,
 
         fecha_evento: form.fecha_evento || null,
-        tipo_evento: form.tipo_evento,
+        tipo_evento_config_id: form.tipo_evento_config_id || null,
+        tipo_evento: tipoEventoSeleccionado?.nombre || null,
         nombre_evento: form.nombre_evento || null,
         venue: form.venue || null,
         direccion_evento: form.direccion_evento || null,
@@ -395,15 +405,18 @@ export default function NuevaCotizacion({
           <section className="form-section">
             <h2>Evento</h2>
 
-            <label>Tipo de evento</label>
+            <label>Tipo de evento *</label>
             <select
-              name="tipo_evento"
-              value={form.tipo_evento}
+              name="tipo_evento_config_id"
+              value={form.tipo_evento_config_id}
               onChange={cambiar}
+              required
             >
+              <option value="">Seleccionar tipo de evento</option>
+
               {tiposEvento.map((tipo) => (
-                <option key={tipo} value={tipo}>
-                  {tipo}
+                <option key={tipo.id} value={tipo.id}>
+                  {tipo.nombre}
                 </option>
               ))}
             </select>
@@ -637,9 +650,42 @@ export default function NuevaCotizacion({
             </div>
 
             <div className="fila">
-              <span>Honorarios</span>
-              <strong>RD$ {resultado.honorarios.toLocaleString()}</strong>
+              <span>Tipo de evento</span>
+              <strong>
+                {tiposEvento.find((tipo) => String(tipo.id) === String(form.tipo_evento_config_id))?.nombre ||
+                  'No seleccionado'}
+              </strong>
             </div>
+
+            <div className="fila">
+  <span>Honorarios</span>
+  <strong>RD$ {resultado.honorarios.toLocaleString()}</strong>
+</div>
+
+{resultado.multiplicador_honorarios > 1 && (
+  <div className="fila">
+    <span>Multiplicador aplicado</span>
+    <strong>x{resultado.multiplicador_honorarios}</strong>
+  </div>
+)}
+
+{resultado.ensayo_extra > 0 && (
+  <div className="fila">
+    <span>Ensayo extra</span>
+    <strong>
+      RD$ {resultado.ensayo_extra.toLocaleString()}
+    </strong>
+  </div>
+)}
+
+{resultado.produccion_extra > 0 && (
+  <div className="fila">
+    <span>Producción extra</span>
+    <strong>
+      RD$ {resultado.produccion_extra.toLocaleString()}
+    </strong>
+  </div>
+)}
 
             <div className="fila">
               <span>Nómina</span>

@@ -12,6 +12,7 @@ import PagosCotizacion from './pages/PagosCotizacion';
 import Comisiones from './pages/Comisiones';
 import Usuarios from './pages/Usuarios';
 import Formatos from './pages/Formatos';
+import TiposEvento from './pages/TiposEvento';
 
 
 export default function App() {
@@ -131,6 +132,12 @@ case 'pagos-cotizacion':
       goHome={volverDashboard}
     />
   );
+  case 'tipos-evento':
+  return (
+    <TiposEvento
+      goHome={volverDashboard}
+    />
+  );
     default:
       return (
         <Dashboard
@@ -143,6 +150,7 @@ case 'pagos-cotizacion':
   goComisiones={() => setPage('comisiones')}
   goUsuarios={() => setPage('usuarios')}
   goFormatos={() => setPage('formatos')}
+  goTiposEvento={() => setPage('tipos-evento')}
 />
       );
   }

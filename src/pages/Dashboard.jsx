@@ -4,6 +4,7 @@ import { getMyProfile } from '../lib/profileService';
 import { APP_CONFIG } from '../lib/config';
 import { getCotizaciones } from '../lib/cotizacionesService';
 
+
 export default function Dashboard({
   session,
   goTarifas,
@@ -14,6 +15,7 @@ export default function Dashboard({
   goComisiones,
   goUsuarios,
   goFormatos,
+  goTiposEvento,
 }) {
   const [profile, setProfile] = useState(null);
   const [eventosHoy, setEventosHoy] = useState(0);
@@ -182,8 +184,18 @@ async function cargarEventosHoy() {
       <h3 className="menu-title">Configuración</h3>
 
       <button onClick={goUsuarios}>👤 Usuarios</button>
-      <button onClick={goFormatos}>🎵 Formatos</button>
-      <button onClick={goTarifas}>⚙️ Tarifas</button>
+
+<button onClick={goFormatos}>
+  🎵 Formatos
+</button>
+
+<button onClick={goTiposEvento}>
+  🎤 Tipos de Evento
+</button>
+
+<button onClick={goTarifas}>
+  ⚙️ Tarifas
+</button>
     </>
   )}
 </div>
