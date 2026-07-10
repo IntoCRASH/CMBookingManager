@@ -13,7 +13,7 @@ const nuevoRegistro = {
   activo: true,
 };
 
-export default function Formatos({ goHome }) {
+export default function Formatos({ goBack }) {
   const [formatos, setFormatos] = useState([]);
   const [form, setForm] = useState(nuevoRegistro);
   const [modalOpen, setModalOpen] = useState(false);
@@ -156,8 +156,8 @@ export default function Formatos({ goHome }) {
           <p>Formatos musicales disponibles</p>
         </div>
 
-        <button type="button" onClick={goHome}>
-          ← Dashboard
+        <button type="button" onClick={goBack}>
+          ← Atrás
         </button>
       </div>
 

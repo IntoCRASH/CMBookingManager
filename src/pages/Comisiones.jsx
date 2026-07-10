@@ -4,7 +4,7 @@ import { getCotizaciones } from '../lib/cotizacionesService';
 import { supabase } from '../lib/supabaseClient';
 import { getMyProfile } from '../lib/profileService';
 
-export default function Comisiones({ goHome }) {
+export default function Comisiones({ goBack }) {
   const [cotizaciones, setCotizaciones] = useState([]);
   const [profile, setProfile] = useState(null);
   const [estadoFiltro, setEstadoFiltro] = useState('');
@@ -128,8 +128,8 @@ export default function Comisiones({ goHome }) {
           </p>
         </div>
 
-        <button type="button" onClick={goHome}>
-          ← Dashboard
+        <button type="button" onClick={goBack}>
+          ← Atrás
         </button>
       </div>
 

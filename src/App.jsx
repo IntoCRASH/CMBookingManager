@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { supabase } from './lib/supabaseClient';
 import { getMyProfile } from './lib/profileService';
@@ -15,6 +15,7 @@ import Comisiones from './pages/Comisiones';
 import Usuarios from './pages/Usuarios';
 import Formatos from './pages/Formatos';
 import TiposEvento from './pages/TiposEvento';
+import Perfil from './pages/Perfil';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -23,6 +24,7 @@ export default function App() {
   const [page, setPage] = useState('dashboard');
   const [cotizacionId, setCotizacionId] = useState(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  const navigationHistory = useRef([]);
 
   useEffect(() => {
     async function loadSession() {
@@ -35,16 +37,19 @@ export default function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, sessionActual) => {
-      setSession(sessionActual);
+    } = supabase.auth.onAuthStateChange(
+      (_event, sessionActual) => {
+        setSession(sessionActual);
 
-      if (!sessionActual) {
-        setProfile(null);
-        setPage('dashboard');
-        setCotizacionId(null);
-        setMoreOpen(false);
+        if (!sessionActual) {
+          setProfile(null);
+          setPage('dashboard');
+          setCotizacionId(null);
+          setMoreOpen(false);
+          navigationHistory.current = [];
+        }
       }
-    });
+    );
 
     return () => subscription.unsubscribe();
   }, []);
@@ -64,49 +69,94 @@ export default function App() {
     cargarPerfil();
   }, [session]);
 
-  function abrirCotizacion(id) {
-    setCotizacionId(id);
-    setPage('ver-cotizacion');
+  function normalizarCotizacionId(nombrePagina, id) {
+    const paginasConCotizacion = [
+      'nueva-cotizacion',
+      'ver-cotizacion',
+      'pagos-cotizacion',
+    ];
+
+    return paginasConCotizacion.includes(nombrePagina)
+      ? id ?? null
+      : null;
+  }
+
+  function navegarA(nombrePagina, id = null) {
+    const destinoCotizacionId = normalizarCotizacionId(
+      nombrePagina,
+      id
+    );
+
+    const mismaPagina = page === nombrePagina;
+    const mismaCotizacion =
+      String(cotizacionId ?? '') ===
+      String(destinoCotizacionId ?? '');
+
+    if (mismaPagina && mismaCotizacion) {
+      setMoreOpen(false);
+      return;
+    }
+
+    navigationHistory.current.push({
+      page,
+      cotizacionId,
+    });
+
+    setPage(nombrePagina);
+    setCotizacionId(destinoCotizacionId);
     setMoreOpen(false);
+  }
+
+  function abrirCotizacion(id) {
+    navegarA('ver-cotizacion', id);
   }
 
   function editarCotizacion(id) {
-    setCotizacionId(id);
-    setPage('nueva-cotizacion');
-    setMoreOpen(false);
+    navegarA('nueva-cotizacion', id);
   }
 
   function abrirPagos(id) {
-    setCotizacionId(id);
-    setPage('pagos-cotizacion');
-    setMoreOpen(false);
+    navegarA('pagos-cotizacion', id);
   }
 
   function volverDashboard() {
-    setCotizacionId(null);
-    setPage('dashboard');
-    setMoreOpen(false);
+    navegarA('dashboard');
   }
 
   function nuevaCotizacion() {
-    setCotizacionId(null);
-    setPage('nueva-cotizacion');
+    navegarA('nueva-cotizacion');
+  }
+
+  function volverAtras() {
+    const paginaAnterior = navigationHistory.current.pop();
+
+    if (paginaAnterior) {
+      setPage(paginaAnterior.page || 'dashboard');
+      setCotizacionId(paginaAnterior.cotizacionId ?? null);
+    } else {
+      setPage('dashboard');
+      setCotizacionId(null);
+    }
+
     setMoreOpen(false);
   }
 
   function irA(nombrePagina) {
-    if (
-      nombrePagina !== 'ver-cotizacion' &&
-      nombrePagina !== 'pagos-cotizacion'
-    ) {
-      setCotizacionId(null);
-    }
+    navegarA(nombrePagina);
+  }
 
-    setPage(nombrePagina);
-    setMoreOpen(false);
+  function actualizarPerfilLocal(perfilNegocio) {
+    setProfile((actual) => ({
+      ...actual,
+      nombre:
+        perfilNegocio?.nombre_completo ||
+        actual?.nombre ||
+        '',
+    }));
   }
 
   async function logout() {
+    navigationHistory.current = [];
     await supabase.auth.signOut();
   }
 
@@ -118,11 +168,6 @@ export default function App() {
         id: 'dashboard',
         label: 'Inicio',
         action: volverDashboard,
-      },
-      {
-        id: 'nueva-cotizacion',
-        label: 'Nueva cotización',
-        action: nuevaCotizacion,
       },
       {
         id: 'cotizaciones',
@@ -151,6 +196,11 @@ export default function App() {
     return [
       ...base,
       {
+        id: 'perfil',
+        label: 'Perfil',
+        action: () => irA('perfil'),
+      },
+      {
         id: 'usuarios',
         label: 'Usuarios',
         action: () => irA('usuarios'),
@@ -171,7 +221,7 @@ export default function App() {
         action: () => irA('tarifas'),
       },
     ];
-  }, [esAdmin, page]);
+  }, [esAdmin, page, cotizacionId]);
 
   const mobileNav = [
     {
@@ -179,12 +229,6 @@ export default function App() {
       label: 'Inicio',
       icon: '⌂',
       action: volverDashboard,
-    },
-    {
-      id: 'nueva-cotizacion',
-      label: 'Cotizar',
-      icon: '+',
-      action: nuevaCotizacion,
     },
     {
       id: 'cotizaciones',
@@ -215,11 +259,11 @@ export default function App() {
   } else {
     switch (page) {
       case 'tarifas':
-        contenido = <Tarifas goHome={volverDashboard} />;
+        contenido = <Tarifas goBack={volverAtras} />;
         break;
 
       case 'clientes':
-        contenido = <Clientes goHome={volverDashboard} />;
+        contenido = <Clientes goBack={volverAtras} />;
         break;
 
       case 'nueva-cotizacion':
@@ -227,7 +271,7 @@ export default function App() {
           <NuevaCotizacion
             session={session}
             cotizacionId={cotizacionId}
-            goHome={volverDashboard}
+            goBack={volverAtras}
             onCotizacionGuardada={abrirCotizacion}
           />
         );
@@ -236,7 +280,8 @@ export default function App() {
       case 'cotizaciones':
         contenido = (
           <Cotizaciones
-            goHome={volverDashboard}
+            goBack={volverAtras}
+            nuevaCotizacion={nuevaCotizacion}
             abrirCotizacion={abrirCotizacion}
             editarCotizacion={editarCotizacion}
             abrirPagos={abrirPagos}
@@ -247,7 +292,7 @@ export default function App() {
       case 'calendario':
         contenido = (
           <Calendario
-            goHome={volverDashboard}
+            goBack={volverAtras}
             abrirCotizacion={abrirCotizacion}
             editarCotizacion={editarCotizacion}
           />
@@ -258,8 +303,7 @@ export default function App() {
         contenido = (
           <VerCotizacion
             cotizacionId={cotizacionId}
-            goHome={volverDashboard}
-            nuevaCotizacion={nuevaCotizacion}
+            goBack={volverAtras}
           />
         );
         break;
@@ -268,34 +312,42 @@ export default function App() {
         contenido = (
           <PagosCotizacion
             cotizacionId={cotizacionId}
-            goBack={() => irA('cotizaciones')}
+            goBack={volverAtras}
           />
         );
         break;
 
       case 'comisiones':
-        contenido = <Comisiones goHome={volverDashboard} />;
+        contenido = <Comisiones goBack={volverAtras} />;
+        break;
+
+      case 'perfil':
+        contenido = (
+          <Perfil
+            goBack={volverAtras}
+            onProfileUpdated={actualizarPerfilLocal}
+          />
+        );
         break;
 
       case 'usuarios':
-        contenido = <Usuarios goHome={volverDashboard} />;
+        contenido = <Usuarios goBack={volverAtras} />;
         break;
 
       case 'formatos':
-        contenido = <Formatos goHome={volverDashboard} />;
+        contenido = <Formatos goBack={volverAtras} />;
         break;
 
       case 'tipos-evento':
-        contenido = <TiposEvento goHome={volverDashboard} />;
+        contenido = <TiposEvento goBack={volverAtras} />;
         break;
 
       default:
         contenido = (
           <Dashboard
             session={session}
+            goPerfil={() => irA('perfil')}
             goTarifas={() => irA('tarifas')}
-            goClientes={() => irA('clientes')}
-            goNuevaCotizacion={nuevaCotizacion}
             goCotizaciones={() => irA('cotizaciones')}
             goCalendario={() => irA('calendario')}
             goComisiones={() => irA('comisiones')}
@@ -419,6 +471,15 @@ export default function App() {
               >
                 ◇ Comisiones
               </button>
+
+              {esAdmin && (
+                <button
+                  type="button"
+                  onClick={() => irA('perfil')}
+                >
+                  ◉ Perfil
+                </button>
+              )}
 
               {esAdmin && (
                 <button

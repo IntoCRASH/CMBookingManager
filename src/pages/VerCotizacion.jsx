@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getCotizacionById } from '../lib/cotizacionesService';
 import './VerCotizacion.css';
 
-export default function VerCotizacion({ cotizacionId, goHome, nuevaCotizacion }) {
+export default function VerCotizacion({ cotizacionId, goBack }) {
   const [cotizacion, setCotizacion] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -61,9 +61,8 @@ function fechaLarga(fecha) {
   return (
     <div className="vc-page">
       <div className="vc-actions no-print">
-        <button onClick={goHome}>← Dashboard</button>
-        <button onClick={nuevaCotizacion}>Nueva cotización</button>
-        <button onClick={imprimir}>Imprimir / Guardar PDF</button>
+        <button type="button" onClick={goBack}>← Atrás</button>
+        <button type="button" onClick={imprimir}>Imprimir / Guardar PDF</button>
       </div>
 
       <div className="vc-document">
@@ -97,7 +96,7 @@ function fechaLarga(fecha) {
   </p>
 )}
             <p><strong>Venue:</strong> {venue}</p>
-            <p><strong>Provincia:</strong> {provincia.nombre || 'N/A'}</p>
+            <p><strong>Zona:</strong> {provincia.nombre || 'N/A'}</p>
             <p><strong>Sonido:</strong> {cotizacion.incluye_sonido ? 'Incluido' : 'No incluido'}</p>
           </div>
         </section>
@@ -128,7 +127,7 @@ Lugar: <strong>{venue}</strong>
 
 <br />
 
-Provincia: <strong>{provincia.nombre || 'N/A'}</strong>
+Zona: <strong>{provincia.nombre || 'N/A'}</strong>
 
 <br />
 

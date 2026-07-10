@@ -43,7 +43,7 @@ const formInicial = {
 
 export default function NuevaCotizacion({
   cotizacionId,
-  goHome,
+  goBack,
   onCotizacionGuardada,
 }) {
   const [clientes, setClientes] = useState([]);
@@ -193,7 +193,7 @@ export default function NuevaCotizacion({
     }
 
     if (!form.provincia_id) {
-      toast.error('Selecciona una provincia.');
+      toast.error('Selecciona una zona.');
       return false;
     }
 
@@ -226,7 +226,7 @@ export default function NuevaCotizacion({
     );
 
     if (!provincia) {
-      toast.error('Provincia inválida.');
+      toast.error('Zona inválida.');
       return;
     }
 
@@ -360,7 +360,7 @@ export default function NuevaCotizacion({
           <p>Calcular y guardar una cotización</p>
         </div>
 
-        <button onClick={goHome}>← Dashboard</button>
+        <button type="button" onClick={goBack}>← Atrás</button>
       </div>
 
       <form className="form-cotizacion" onSubmit={calcular}>
@@ -450,13 +450,13 @@ export default function NuevaCotizacion({
               onChange={cambiar}
             />
 
-            <label>Provincia *</label>
+            <label>Zona *</label>
             <select
               name="provincia_id"
               value={form.provincia_id}
               onChange={cambiar}
             >
-              <option value="">Seleccionar provincia</option>
+              <option value="">Seleccionar zona</option>
               {provincias.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.nombre}

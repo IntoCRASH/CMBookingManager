@@ -17,7 +17,7 @@ const nuevoRegistro = {
   activa: true,
 };
 
-export default function Tarifas({ goHome }) {
+export default function Tarifas({ goBack }) {
   const [provincias, setProvincias] = useState([]);
   const [form, setForm] = useState(nuevoRegistro);
   const [modalOpen, setModalOpen] = useState(false);
@@ -67,7 +67,7 @@ export default function Tarifas({ goHome }) {
   async function duplicarProvincia(provincia) {
     try {
       const copia = {
-        nombre: `${provincia.nombre || 'Provincia'} copia`,
+        nombre: `${provincia.nombre || 'Zona'} copia`,
         honorarios: Number(provincia.honorarios || 0),
         tarifa_musico: Number(provincia.tarifa_musico || 0),
         dieta_musico: Number(provincia.dieta_musico || 0),
@@ -77,11 +77,11 @@ export default function Tarifas({ goHome }) {
       };
 
       await saveProvincia(copia);
-      toast.success('Provincia duplicada correctamente.');
+      toast.success('Zona duplicada correctamente.');
       await cargar();
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'No se pudo duplicar la provincia.');
+      toast.error(err.message || 'No se pudo duplicar la zona.');
     }
   }
 
@@ -99,7 +99,7 @@ export default function Tarifas({ goHome }) {
     setError('');
 
     if (!form.nombre.trim()) {
-      setError('Debes escribir el nombre de la provincia.');
+      setError('Debes escribir el nombre de la zona.');
       return;
     }
 
@@ -117,8 +117,8 @@ export default function Tarifas({ goHome }) {
 
       toast.success(
         form.id
-          ? 'Provincia actualizada correctamente.'
-          : 'Provincia creada correctamente.'
+          ? 'Zona actualizada correctamente.'
+          : 'Zona creada correctamente.'
       );
 
       setModalOpen(false);
@@ -126,7 +126,7 @@ export default function Tarifas({ goHome }) {
       await cargar();
     } catch (err) {
       console.error(err);
-      const mensaje = err.message || 'No se pudo guardar la provincia.';
+      const mensaje = err.message || 'No se pudo guardar la zona.';
       setError(mensaje);
       toast.error(mensaje);
     }
@@ -134,18 +134,18 @@ export default function Tarifas({ goHome }) {
 
   async function borrar(id, nombre) {
     const ok = confirm(
-      `¿Deseas borrar definitivamente la provincia "${nombre || 'Sin nombre'}"?`
+      `¿Deseas borrar definitivamente la zona "${nombre || 'Sin nombre'}"?`
     );
 
     if (!ok) return;
 
     try {
       await deleteProvincia(id);
-      toast.success('Provincia eliminada correctamente.');
+      toast.success('Zona eliminada correctamente.');
       await cargar();
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'No se pudo borrar la provincia.');
+      toast.error(err.message || 'No se pudo borrar la zona.');
     }
   }
 
@@ -166,40 +166,40 @@ export default function Tarifas({ goHome }) {
       <div className="top-bar">
         <div>
           <h1>Tarifas</h1>
-          <p>Provincias y costos base</p>
+          <p>Zonas y costos base</p>
         </div>
 
-        <button type="button" onClick={goHome}>
-          ← Dashboard
+        <button type="button" onClick={goBack}>
+          ← Atrás
         </button>
       </div>
 
       <div className="actions-row tarifas-actions">
         <input
           type="search"
-          placeholder="Buscar provincia..."
+          placeholder="Buscar zona..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
 
         <button type="button" onClick={nuevaProvincia}>
-          + Nueva Provincia
+          + Nueva Zona
         </button>
       </div>
 
       <div className="tarifas-lista">
         <div className="tarifas-header" aria-hidden="true">
-          <span>Provincia</span>
+          <span>Zona</span>
           <span>Acciones</span>
         </div>
 
         {cargando ? (
           <div className="tarifas-empty">
-            Cargando provincias...
+            Cargando zonas...
           </div>
         ) : provinciasFiltradas.length === 0 ? (
           <div className="tarifas-empty">
-            No se encontraron provincias.
+            No se encontraron zonas.
           </div>
         ) : (
           provinciasFiltradas.map((provincia) => (
@@ -244,11 +244,11 @@ export default function Tarifas({ goHome }) {
 
       <Modal
         open={modalOpen}
-        title={form.id ? 'Editar Provincia' : 'Nueva Provincia'}
+        title={form.id ? 'Editar Zona' : 'Nueva Zona'}
         onClose={() => setModalOpen(false)}
       >
         <form onSubmit={guardar}>
-          <label>Provincia *</label>
+          <label>Zona *</label>
           <input
             name="nombre"
             value={form.nombre}

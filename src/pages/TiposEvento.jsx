@@ -18,7 +18,7 @@ const nuevoRegistro = {
   activo: true,
 };
 
-export default function TiposEvento({ goHome }) {
+export default function TiposEvento({ goBack }) {
   const [tiposEvento, setTiposEvento] = useState([]);
   const [form, setForm] = useState(nuevoRegistro);
   const [modalOpen, setModalOpen] = useState(false);
@@ -235,8 +235,8 @@ export default function TiposEvento({ goHome }) {
           <p>Configura multiplicadores, ensayos y producción</p>
         </div>
 
-        <button type="button" onClick={goHome}>
-          ← Dashboard
+        <button type="button" onClick={goBack}>
+          ← Atrás
         </button>
       </div>
 

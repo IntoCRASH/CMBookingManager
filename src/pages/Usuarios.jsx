@@ -18,7 +18,7 @@ const usuarioInicial = {
   activo: true,
 };
 
-export default function Usuarios({ goHome }) {
+export default function Usuarios({ goBack }) {
   const [usuarios, setUsuarios] = useState([]);
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState(usuarioInicial);
@@ -225,8 +225,8 @@ export default function Usuarios({ goHome }) {
           <p>Administración del equipo</p>
         </div>
 
-        <button type="button" onClick={goHome}>
-          ← Dashboard
+        <button type="button" onClick={goBack}>
+          ← Atrás
         </button>
       </div>
 

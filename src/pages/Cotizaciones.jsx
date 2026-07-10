@@ -8,7 +8,8 @@ import {
 } from '../lib/cotizacionesService';
 
 export default function Cotizaciones({
-  goHome,
+  goBack,
+  nuevaCotizacion,
   abrirCotizacion,
   editarCotizacion,
   abrirPagos,
@@ -151,16 +152,26 @@ export default function Cotizaciones({
 
   return (
     <div className="dashboard cotizaciones-page">
-      <div className="top-bar">
+       <div className="top-bar">
         <div>
           <h1>Cotizaciones</h1>
-          <p>{filtradas.length} registro{filtradas.length !== 1 ? 's' : ''}</p>
+           <p>{filtradas.length} registro{filtradas.length !== 1 ? 's' : ''}</p>
         </div>
 
-        <button type="button" onClick={goHome}>
-          ← Dashboard
-        </button>
-      </div>
+        <div className="top-bar-actions">
+        <button
+           type="button"
+           className="primary-button"
+           onClick={nuevaCotizacion}
+            >
+            + Nueva cotización
+          </button>
+
+        <button type="button" onClick={goBack}>
+      ← Atrás
+    </button>
+  </div>
+</div>
 
       <div className="cotizaciones-filtros">
         <input

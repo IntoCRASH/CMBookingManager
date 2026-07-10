@@ -93,7 +93,7 @@ export default function PagosCotizacion({ cotizacionId, goBack }) {
           <p>{cotizacion.numero} · {cotizacion.clientes?.nombre}</p>
         </div>
 
-        <button onClick={goBack}>← Volver</button>
+        <button type="button" onClick={goBack}>← Atrás</button>
       </div>
 
       <div className="pagos-resumen">

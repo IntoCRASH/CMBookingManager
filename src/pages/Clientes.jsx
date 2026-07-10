@@ -15,7 +15,7 @@ const clienteInicial = {
   email: '',
 };
 
-export default function Clientes({ goHome }) {
+export default function Clientes({ goBack }) {
   const [clientes, setClientes] = useState([]);
   const [form, setForm] = useState(clienteInicial);
   const [modalOpen, setModalOpen] = useState(false);
@@ -157,8 +157,8 @@ export default function Clientes({ goHome }) {
           <p>Nombre y teléfono son obligatorios</p>
         </div>
 
-        <button type="button" onClick={goHome}>
-          ← Dashboard
+        <button type="button" onClick={goBack}>
+          ← Atrás
         </button>
       </div>
 

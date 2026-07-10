@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getCotizaciones } from '../lib/cotizacionesService';
 
-export default function Calendario({ goHome, abrirCotizacion, editarCotizacion }) {
+export default function Calendario({ goBack, abrirCotizacion, editarCotizacion }) {
   const [cotizaciones, setCotizaciones] = useState([]);
   const [fechaBase, setFechaBase] = useState(new Date());
 
@@ -64,7 +64,7 @@ export default function Calendario({ goHome, abrirCotizacion, editarCotizacion }
           <p>{nombreMes}</p>
         </div>
 
-        <button onClick={goHome}>← Dashboard</button>
+        <button type="button" onClick={goBack}>← Atrás</button>
       </div>
 
       <div className="modal-card" style={{ marginBottom: 20 }}>
