@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
 import {
   getCotizaciones,
@@ -16,6 +17,7 @@ export default function Cotizaciones({
   const [estado, setEstado] = useState('');
   const [buscar, setBuscar] = useState('');
   const [menuAbierto, setMenuAbierto] = useState(null);
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     cargar();
@@ -42,26 +44,39 @@ export default function Cotizaciones({
   }, []);
 
   async function cargar() {
-    const data = await getCotizaciones();
-    setCotizaciones(data);
+    try {
+      setCargando(true);
+      const data = await getCotizaciones();
+      setCotizaciones(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudieron cargar las cotizaciones.');
+    } finally {
+      setCargando(false);
+    }
   }
 
-  const filtradas = cotizaciones.filter((c) => {
-    const texto = (
-      (c.numero || '') +
-      ' ' +
-      (c.clientes?.nombre || '') +
-      ' ' +
-      (c.nombre_evento || '') +
-      ' ' +
-      (c.venue || '')
-    ).toLowerCase();
+  const filtradas = useMemo(() => {
+    const textoBusqueda = buscar.trim().toLowerCase();
 
-    const cumpleTexto = texto.includes(buscar.toLowerCase());
-    const cumpleEstado = !estado || c.estado === estado;
+    return cotizaciones.filter((c) => {
+      const texto = [
+        c.numero,
+        c.clientes?.nombre,
+        c.nombre_evento,
+        c.tipo_evento,
+        c.venue,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
 
-    return cumpleTexto && cumpleEstado;
-  });
+      const cumpleTexto = !textoBusqueda || texto.includes(textoBusqueda);
+      const cumpleEstado = !estado || c.estado === estado;
+
+      return cumpleTexto && cumpleEstado;
+    });
+  }, [cotizaciones, buscar, estado]);
 
   function money(valor) {
     return `RD$ ${Number(valor || 0).toLocaleString('es-DO')}`;
@@ -77,162 +92,220 @@ export default function Cotizaciones({
     });
   }
 
+  function claseEstado(valor) {
+    return String(valor || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-');
+  }
+
   async function duplicar(id) {
     if (!window.confirm('¿Duplicar esta cotización?')) return;
 
-    setMenuAbierto(null);
-    await duplicarCotizacion(id);
-    await cargar();
+    try {
+      setMenuAbierto(null);
+      await duplicarCotizacion(id);
+      toast.success('Cotización duplicada correctamente.');
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudo duplicar la cotización.');
+    }
   }
 
   async function eliminar(id) {
     if (!window.confirm('¿Eliminar definitivamente esta cotización?')) return;
 
-    const { error } = await supabase
-      .from('cotizaciones')
-      .delete()
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .from('cotizaciones')
+        .delete()
+        .eq('id', id);
 
-    if (error) {
-      alert(`No se pudo eliminar: ${error.message}`);
-      return;
+      if (error) throw error;
+
+      setMenuAbierto(null);
+      toast.success('Cotización eliminada correctamente.');
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudo eliminar la cotización.');
     }
-
-    setMenuAbierto(null);
-    await cargar();
   }
 
   async function cancelar(id) {
     if (!window.confirm('¿Cancelar esta cotización?')) return;
 
-    setMenuAbierto(null);
-    await cancelarCotizacion(id);
-    await cargar();
+    try {
+      setMenuAbierto(null);
+      await cancelarCotizacion(id);
+      toast.success('Cotización cancelada correctamente.');
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudo cancelar la cotización.');
+    }
   }
 
   return (
-    <div className="dashboard">
+    <div className="dashboard cotizaciones-page">
       <div className="top-bar">
         <div>
           <h1>Cotizaciones</h1>
-          <p>{filtradas.length} registros</p>
+          <p>{filtradas.length} registro{filtradas.length !== 1 ? 's' : ''}</p>
         </div>
 
-        <button onClick={goHome}>← Dashboard</button>
+        <button type="button" onClick={goHome}>
+          ← Dashboard
+        </button>
       </div>
 
-      <div className="cotizaciones-list">
-        {filtradas.map((c) => (
-          <div
-            className={`cotizacion-item ${menuAbierto === c.id ? 'menu-activo' : ''}`}
-            key={c.id}
-          >
-            <div className="cot-numero">
-              {c.numero}
-            </div>
+      <div className="cotizaciones-filtros">
+        <input
+          type="search"
+          placeholder="Buscar por número, cliente, evento o venue..."
+          value={buscar}
+          onChange={(e) => setBuscar(e.target.value)}
+        />
 
-            <div className="cot-cliente">
-              <strong>{c.clientes?.nombre}</strong>
+        <select
+          value={estado}
+          onChange={(e) => setEstado(e.target.value)}
+        >
+          <option value="">Todos los estados</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Pendiente de aprobación">Pendiente de aprobación</option>
+          <option value="Pendiente de cobro">Pendiente de cobro</option>
+          <option value="Confirmada">Confirmada</option>
+          <option value="Realizada">Realizada</option>
+          <option value="Cancelada">Cancelada</option>
+        </select>
+      </div>
 
-              <div>
-                {c.nombre_evento || c.tipo_evento}
+      <div className="cotizaciones-table">
+        <div className="cotizaciones-table-header" aria-hidden="true">
+          <span>Número</span>
+          <span>Cliente / Evento</span>
+          <span>Fecha</span>
+          <span>Total</span>
+          <span>Estado</span>
+          <span>Acciones</span>
+        </div>
+
+        {cargando ? (
+          <div className="cotizaciones-empty">Cargando cotizaciones...</div>
+        ) : filtradas.length === 0 ? (
+          <div className="cotizaciones-empty">
+            No se encontraron cotizaciones.
+          </div>
+        ) : (
+          filtradas.map((c) => (
+            <article
+              className={`cotizacion-row ${
+                menuAbierto === c.id ? 'menu-activo' : ''
+              }`}
+              key={c.id}
+            >
+              <div className="cotizacion-numero" data-label="Número">
+                {c.numero || `#${c.id}`}
               </div>
 
-              {c.venue && (
-                <div
-                  style={{
-                    opacity: 0.75,
-                    fontSize: 13,
-                  }}
-                >
-                  {c.venue}
-                </div>
-              )}
-            </div>
+              <div className="cotizacion-cliente" data-label="Cliente / Evento">
+                <strong>{c.clientes?.nombre || 'Cliente sin nombre'}</strong>
+                <span>{c.nombre_evento || c.tipo_evento || 'Evento sin nombre'}</span>
+                {c.venue && <small>{c.venue}</small>}
+              </div>
 
-            <div className="cot-fecha">
-              {fechaCorta(c.fecha_evento)}
-            </div>
+              <div className="cotizacion-fecha" data-label="Fecha">
+                {fechaCorta(c.fecha_evento)}
+              </div>
 
-            <div className="cot-total">
-              {money(c.total)}
-            </div>
+              <div className="cotizacion-total" data-label="Total">
+                {money(c.total)}
+              </div>
 
-            <div className="cot-estado">
-              {c.estado}
-            </div>
+              <div data-label="Estado">
+                <span className={`cotizacion-estado estado-${claseEstado(c.estado)}`}>
+                  {c.estado || 'Sin estado'}
+                </span>
+              </div>
 
-            <div
-              className="cot-menu"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={() =>
-                  setMenuAbierto(menuAbierto === c.id ? null : c.id)
-                }
+              <div
+                className="cotizacion-acciones"
+                onClick={(event) => event.stopPropagation()}
               >
-                ⋮
-              </button>
+                <button
+                  type="button"
+                  className="cotizacion-menu-button"
+                  aria-label="Abrir acciones"
+                  onClick={() =>
+                    setMenuAbierto(menuAbierto === c.id ? null : c.id)
+                  }
+                >
+                  ⋮
+                </button>
 
-              {menuAbierto === c.id && (
-                <div className="menu-popup">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuAbierto(null);
-                      abrirCotizacion(c.id);
-                    }}
-                  >
-                    👁 Ver
-                  </button>
+                {menuAbierto === c.id && (
+                  <div className="menu-popup cotizaciones-menu-popup">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuAbierto(null);
+                        abrirCotizacion(c.id);
+                      }}
+                    >
+                      👁 Ver
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuAbierto(null);
-                      editarCotizacion(c.id);
-                    }}
-                  >
-                    ✏ Editar
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuAbierto(null);
+                        editarCotizacion(c.id);
+                      }}
+                    >
+                      ✏ Editar
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuAbierto(null);
-                      abrirPagos(c.id);
-                    }}
-                  >
-                    💰 Pagos
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuAbierto(null);
+                        abrirPagos(c.id);
+                      }}
+                    >
+                      💰 Pagos
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => duplicar(c.id)}
-                  >
-                    📋 Duplicar
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => duplicar(c.id)}
+                    >
+                      📋 Duplicar
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => cancelar(c.id)}
-                  >
-                    ❌ Cancelar
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => cancelar(c.id)}
+                    >
+                      ❌ Cancelar
+                    </button>
 
-                  <button
-                    type="button"
-                    className="danger"
-                    onClick={() => eliminar(c.id)}
-                  >
-                    🗑 Eliminar
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
+                    <button
+                      type="button"
+                      className="danger"
+                      onClick={() => eliminar(c.id)}
+                    >
+                      🗑 Eliminar
+                    </button>
+                  </div>
+                )}
+              </div>
+            </article>
+          ))
+        )}
       </div>
     </div>
   );

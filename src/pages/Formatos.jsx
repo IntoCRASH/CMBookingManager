@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import {
   getFormatos,
@@ -18,14 +19,23 @@ export default function Formatos({ goHome }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     cargar();
   }, []);
 
   async function cargar() {
-    const data = await getFormatos();
-    setFormatos(data);
+    try {
+      setCargando(true);
+      const data = await getFormatos();
+      setFormatos(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudieron cargar los formatos.');
+    } finally {
+      setCargando(false);
+    }
   }
 
   function nuevo() {
@@ -35,30 +45,40 @@ export default function Formatos({ goHome }) {
   }
 
   function editar(formato) {
-    setForm(formato);
+    setForm({
+      id: formato.id,
+      nombre: formato.nombre || '',
+      cantidad_musicos: Number(formato.cantidad_musicos || 1),
+      activo: Boolean(formato.activo),
+    });
     setError('');
     setModalOpen(true);
   }
-async function duplicar(formato) {
-  const copia = {
-    ...formato,
-    nombre: `${formato.nombre || 'Formato'} copia`,
-  };
 
-  delete copia.id;
-  delete copia.created_at;
-  delete copia.updated_at;
+  async function duplicar(formato) {
+    try {
+      const copia = {
+        nombre: `${formato.nombre || 'Formato'} copia`,
+        cantidad_musicos: Number(formato.cantidad_musicos || 1),
+        activo: Boolean(formato.activo),
+      };
 
-  await saveFormato(copia);
-  cargar();
-}
+      await saveFormato(copia);
+      toast.success('Formato duplicado correctamente.');
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudo duplicar el formato.');
+    }
+  }
+
   function cambiar(e) {
     const { name, value, type, checked } = e.target;
 
-    setForm({
-      ...form,
+    setForm((actual) => ({
+      ...actual,
       [name]: type === 'checkbox' ? checked : value,
-    });
+    }));
   }
 
   async function guardar(e) {
@@ -76,12 +96,26 @@ async function duplicar(formato) {
     }
 
     try {
-      await saveFormato(form);
+      await saveFormato({
+        ...form,
+        nombre: form.nombre.trim(),
+        cantidad_musicos: Number(form.cantidad_musicos),
+      });
+
+      toast.success(
+        form.id
+          ? 'Formato actualizado correctamente.'
+          : 'Formato creado correctamente.'
+      );
+
       setModalOpen(false);
       setForm(nuevoRegistro);
-      cargar();
+      await cargar();
     } catch (err) {
-      setError(err.message || 'No se pudo guardar el formato.');
+      console.error(err);
+      const mensaje = err.message || 'No se pudo guardar el formato.';
+      setError(mensaje);
+      toast.error(mensaje);
     }
   }
 
@@ -92,79 +126,100 @@ async function duplicar(formato) {
 
     if (!ok) return;
 
-    await deleteFormato(id);
-    cargar();
+    try {
+      await deleteFormato(id);
+      toast.success('Formato eliminado correctamente.');
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudo borrar el formato.');
+    }
   }
 
-  const formatosFiltrados = formatos.filter((f) =>
-    `${f.nombre} ${f.cantidad_musicos}`
-      .toLowerCase()
-      .includes(busqueda.toLowerCase())
-  );
+  const formatosFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+
+    if (!texto) return formatos;
+
+    return formatos.filter((f) =>
+      String(f.nombre || '')
+        .toLowerCase()
+        .includes(texto)
+    );
+  }, [formatos, busqueda]);
 
   return (
-    <div className="dashboard">
+    <div className="dashboard formatos-page">
       <div className="top-bar">
         <div>
           <h1>Formatos</h1>
-          <p>Formatos musicales y cantidad de músicos</p>
+          <p>Formatos musicales disponibles</p>
         </div>
 
-        <button onClick={goHome}>← Dashboard</button>
+        <button type="button" onClick={goHome}>
+          ← Dashboard
+        </button>
       </div>
 
-      <div className="actions-row">
+      <div className="actions-row formatos-actions">
         <input
+          type="search"
           placeholder="Buscar formato..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
 
-        <button onClick={nuevo}>➕ Nuevo Formato</button>
+        <button type="button" onClick={nuevo}>
+          + Nuevo Formato
+        </button>
       </div>
 
-      <div className="cotizaciones-list">
-        {formatosFiltrados.map((f) => (
-          <div className="tarifa-item" key={f.id}>
-            <div className="cot-numero">🎵 {f.nombre}</div>
+      <div className="formatos-lista">
+        <div className="formatos-header" aria-hidden="true">
+          <span>Formato</span>
+          <span>Acciones</span>
+        </div>
 
-            <div className="cot-cliente">
-              <strong>{Number(f.cantidad_musicos || 0)} músico(s)</strong>
-              <div>
-                Este valor se usará para calcular tarifas, dietas y comisiones.
-              </div>
-            </div>
-
-            <div className="cot-fecha">
-              Formato
-            </div>
-
-            <div className="cot-total">
-              {Number(f.cantidad_musicos || 0)}
-            </div>
-
-            <div className="cot-estado">
-              <span className={f.activo ? 'estado activa' : 'estado inactiva'}>
-                {f.activo ? 'Activo' : 'Inactivo'}
-              </span>
-            </div>
-
-            <div className="cot-menu">
-  <button onClick={() => editar(f)}>Editar</button>
-
-  <button onClick={() => duplicar(f)}>
-    Duplicar
-  </button>
-
-  <button
-    className="danger-btn"
-    onClick={() => borrar(f.id, f.nombre)}
-  >
-    Borrar
-  </button>
-</div>
+        {cargando ? (
+          <div className="formatos-empty">Cargando formatos...</div>
+        ) : formatosFiltrados.length === 0 ? (
+          <div className="formatos-empty">
+            No se encontraron formatos.
           </div>
-        ))}
+        ) : (
+          formatosFiltrados.map((f) => (
+            <article className="formato-row" key={f.id}>
+              <div className="formato-nombre">
+                <span className="formato-icono">♪</span>
+                <strong>{f.nombre || 'Sin nombre'}</strong>
+              </div>
+
+              <div className="formato-acciones">
+                <button
+                  type="button"
+                  onClick={() => editar(f)}
+                >
+                  Editar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => duplicar(f)}
+                >
+                  Duplicar
+                </button>
+
+                <button
+                  type="button"
+                  className="danger-btn"
+                  onClick={() => borrar(f.id, f.nombre)}
+                >
+                  Borrar
+                </button>
+              </div>
+            </article>
+          ))
+        )}
       </div>
 
       <Modal
@@ -203,7 +258,10 @@ async function duplicar(formato) {
           {error && <p className="error">{error}</p>}
 
           <div className="modal-actions">
-            <button type="button" onClick={() => setModalOpen(false)}>
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+            >
               Cancelar
             </button>
 

@@ -596,3 +596,1716 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
     padding: 22px;
   }
 }
+.usuario-item {
+  grid-template-columns: 1fr auto auto;
+}
+
+@media (max-width: 680px) {
+  .usuario-item {
+    grid-template-columns: 1fr;
+  }
+}
+/* =========================
+   USUARIOS — TABLA LIMPIA
+========================= */
+
+.usuarios-page {
+  max-width: 1240px;
+}
+
+.usuarios-topbar {
+  margin-bottom: 22px;
+}
+
+.usuarios-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.usuarios-table-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(18px);
+}
+
+.usuarios-table-head,
+.usuario-row {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.4fr) 180px minmax(320px, auto);
+  align-items: center;
+  gap: 24px;
+}
+
+.usuarios-table-head {
+  padding: 22px 32px;
+  border-bottom: 1px solid var(--line);
+  color: #667085;
+  font-size: 12px;
+  font-weight: 1000;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.usuario-row {
+  min-height: 106px;
+  padding: 22px 32px;
+  border-bottom: 1px solid var(--line);
+}
+
+.usuario-row:last-child {
+  border-bottom: 0;
+}
+
+.usuario-main {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.usuario-avatar {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 1000;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 14px 30px rgba(118, 87, 255, .20);
+}
+
+.usuario-main strong {
+  display: block;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 950;
+  letter-spacing: -0.03em;
+}
+
+.usuario-main span {
+  display: inline-flex;
+  margin-top: 7px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: #4f35ff;
+  background: rgba(118, 87, 255, .11);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.usuario-estado .estado {
+  gap: 6px;
+  min-height: 34px;
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+.usuario-estado .estado::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.usuario-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.usuario-actions button {
+  min-width: 112px;
+  min-height: 48px;
+  border-radius: 14px;
+}
+
+.usuario-actions .secondary-btn {
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, .14);
+  background: rgba(37, 99, 235, .06);
+  box-shadow: none;
+}
+
+.usuario-actions .secondary-btn:hover {
+  background: rgba(37, 99, 235, .10);
+}
+
+.usuario-edit-main,
+.usuario-edit-fields {
+  min-width: 0;
+}
+
+.usuario-edit-fields {
+  display: grid;
+  grid-template-columns: 1fr 110px 120px;
+  gap: 10px;
+  align-items: center;
+}
+
+.usuario-check {
+  margin: 0;
+}
+
+.usuarios-table-footer {
+  padding: 18px 32px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .usuarios-table-head {
+    display: none;
+  }
+
+  .usuario-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 22px;
+  }
+
+  .usuario-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .usuario-actions button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .usuario-edit-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .usuarios-page {
+    padding-bottom: 90px;
+  }
+
+  .usuarios-top-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .usuarios-table-card {
+    border-radius: 20px;
+  }
+
+  .usuario-main strong {
+    font-size: 16px;
+  }
+
+  .usuario-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   CLIENTES — TABLA RESPONSIVE
+   Pegar al final de src/styles.css
+========================================================= */
+
+.clientes-page {
+  max-width: 1420px;
+}
+
+.clientes-actions {
+  align-items: stretch;
+}
+
+.clientes-table {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: var(--shadow-xs);
+}
+
+.clientes-table-header,
+.cliente-row {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1.35fr)
+    minmax(190px, 1.35fr)
+    minmax(130px, 0.85fr)
+    minmax(190px, 1.25fr)
+    minmax(190px, auto);
+  align-items: center;
+  gap: 22px;
+}
+
+.clientes-table-header {
+  min-height: 58px;
+  padding: 0 22px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.cliente-row {
+  min-height: 88px;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.cliente-row:last-child {
+  border-bottom: 0;
+}
+
+.cliente-identidad {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.cliente-avatar {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: #fff;
+  font-weight: 950;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 10px 22px rgba(46, 167, 255, .18);
+}
+
+.cliente-identidad strong,
+.cliente-empresa strong {
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cliente-identidad small,
+.cliente-empresa small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cliente-contacto,
+.cliente-email {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.cliente-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cliente-acciones button {
+  min-width: 82px;
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.clientes-empty {
+  padding: 42px 22px;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 750;
+}
+
+@media (max-width: 980px) {
+  .clientes-table-header {
+    display: none;
+  }
+
+  .clientes-table {
+    border: 0;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .cliente-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 20px;
+    margin-bottom: 12px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255,255,255,.84);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .cliente-identidad,
+  .cliente-acciones {
+    grid-column: 1 / -1;
+  }
+
+  .cliente-acciones {
+    justify-content: flex-start;
+  }
+
+  .cliente-empresa::before,
+  .cliente-contacto::before,
+  .cliente-email::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+}
+
+@media (max-width: 680px) {
+  .clientes-page {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .clientes-topbar {
+    gap: 14px;
+  }
+
+  .clientes-topbar > div:last-child {
+    width: auto;
+  }
+
+  .cliente-row {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .cliente-identidad,
+  .cliente-acciones {
+    grid-column: auto;
+  }
+
+  .cliente-acciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cliente-acciones button {
+    width: 100%;
+  }
+}
+/* =========================================================
+   COTIZACIONES — DISTRIBUCIÓN RESPONSIVE
+   Pegar al final de src/styles.css
+========================================================= */
+
+.cotizaciones-page {
+  max-width: 1420px;
+}
+
+.cotizaciones-filtros {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.cotizaciones-table {
+  overflow: visible;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: var(--shadow-xs);
+}
+
+.cotizaciones-table-header,
+.cotizacion-row {
+  display: grid;
+  grid-template-columns:
+    minmax(110px, .75fr)
+    minmax(260px, 2.1fr)
+    minmax(125px, .9fr)
+    minmax(140px, .95fr)
+    minmax(180px, 1.2fr)
+    74px;
+  align-items: center;
+  gap: 20px;
+}
+
+.cotizaciones-table-header {
+  min-height: 58px;
+  padding: 0 22px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.cotizacion-row {
+  position: relative;
+  min-height: 92px;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line);
+  z-index: 1;
+}
+
+.cotizacion-row:last-child {
+  border-bottom: 0;
+}
+
+.cotizacion-row.menu-activo {
+  z-index: 100;
+}
+
+.cotizacion-numero {
+  color: #1675d1;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.cotizacion-cliente {
+  min-width: 0;
+}
+
+.cotizacion-cliente strong,
+.cotizacion-cliente span,
+.cotizacion-cliente small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cotizacion-cliente strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.cotizacion-cliente span {
+  margin-top: 4px;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cotizacion-cliente small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cotizacion-fecha {
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.cotizacion-total {
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 950;
+  letter-spacing: -.03em;
+  white-space: nowrap;
+}
+
+.cotizacion-estado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  max-width: 100%;
+  padding: 6px 11px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.estado-pendiente,
+.estado-pendiente-de-aprobacion {
+  color: #985d00;
+  border-color: rgba(245, 158, 11, .18);
+  background: rgba(245, 158, 11, .12);
+}
+
+.estado-pendiente-de-cobro {
+  color: #6941c6;
+  border-color: rgba(118, 87, 255, .18);
+  background: rgba(118, 87, 255, .12);
+}
+
+.estado-confirmada {
+  color: #087443;
+  border-color: rgba(32, 177, 90, .18);
+  background: rgba(32, 177, 90, .12);
+}
+
+.estado-realizada {
+  color: #075985;
+  border-color: rgba(46, 167, 255, .18);
+  background: rgba(46, 167, 255, .12);
+}
+
+.estado-cancelada {
+  color: #b42318;
+  border-color: rgba(239, 63, 107, .18);
+  background: rgba(239, 63, 107, .12);
+}
+
+.cotizacion-acciones {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cotizacion-menu-button {
+  width: 42px;
+  min-width: 42px;
+  min-height: 38px;
+  padding: 0;
+  border-radius: 12px;
+  font-size: 22px;
+}
+
+.cotizaciones-menu-popup {
+  top: 46px;
+  right: 0;
+}
+
+.cotizaciones-empty {
+  padding: 44px 22px;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 750;
+}
+
+@media (max-width: 1100px) {
+  .cotizaciones-table-header,
+  .cotizacion-row {
+    grid-template-columns:
+      minmax(100px, .75fr)
+      minmax(220px, 1.8fr)
+      minmax(120px, .9fr)
+      minmax(130px, .9fr)
+      minmax(150px, 1.05fr)
+      64px;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 860px) {
+  .cotizaciones-table-header {
+    display: none;
+  }
+
+  .cotizaciones-table {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .cotizacion-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 20px;
+    margin-bottom: 12px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .86);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .cotizacion-cliente {
+    grid-column: 1 / -1;
+  }
+
+  .cotizacion-row > div::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .cotizacion-cliente::before,
+  .cotizacion-acciones::before {
+    display: none !important;
+  }
+
+  .cotizacion-acciones {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .cotizaciones-menu-popup {
+    left: 0;
+    right: auto;
+  }
+}
+
+@media (max-width: 680px) {
+  .cotizaciones-page {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .cotizaciones-filtros {
+    grid-template-columns: 1fr;
+  }
+
+  .cotizacion-row {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .cotizacion-cliente,
+  .cotizacion-acciones {
+    grid-column: auto;
+  }
+
+  .cotizacion-cliente strong,
+  .cotizacion-cliente span,
+  .cotizacion-cliente small {
+    white-space: normal;
+  }
+
+  .cotizacion-estado {
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
+/* =========================================================
+   COMISIONES — DISTRIBUCIÓN RESPONSIVE
+   Pegar al final de src/styles.css
+========================================================= */
+
+.comisiones-page {
+  max-width: 1420px;
+}
+
+.comisiones-resumen {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.comision-resumen-card {
+  min-height: 118px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .86);
+  box-shadow: var(--shadow-xs);
+}
+
+.comision-resumen-card span {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.comision-resumen-card strong {
+  display: block;
+  color: var(--text);
+  font-size: clamp(24px, 3vw, 32px);
+  letter-spacing: -.04em;
+}
+
+.comision-resumen-card.total {
+  background: linear-gradient(135deg, rgba(46,167,255,.12), rgba(255,255,255,.92));
+}
+
+.comision-resumen-card.cantidad {
+  background: linear-gradient(135deg, rgba(118,87,255,.12), rgba(255,255,255,.92));
+}
+
+.comision-resumen-card.pendiente {
+  background: linear-gradient(135deg, rgba(245,158,11,.14), rgba(255,255,255,.92));
+}
+
+.comision-resumen-card.cobrada {
+  background: linear-gradient(135deg, rgba(32,177,90,.12), rgba(255,255,255,.92));
+}
+
+.comisiones-filtros {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.comisiones-table {
+  overflow: visible;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255,255,255,.86);
+  box-shadow: var(--shadow-xs);
+}
+
+.comisiones-table-header,
+.comision-row {
+  display: grid;
+  grid-template-columns:
+    minmax(115px, .8fr)
+    minmax(240px, 1.9fr)
+    minmax(120px, .85fr)
+    minmax(135px, .9fr)
+    minmax(135px, .9fr)
+    minmax(110px, .75fr)
+    minmax(150px, auto);
+  align-items: center;
+  gap: 18px;
+}
+
+.comisiones-table-header {
+  min-height: 58px;
+  padding: 0 22px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.comision-row {
+  min-height: 94px;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.comision-row:last-child {
+  border-bottom: 0;
+}
+
+.comision-numero {
+  color: #1675d1;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.comision-cliente {
+  min-width: 0;
+}
+
+.comision-cliente strong,
+.comision-cliente span,
+.comision-cliente small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comision-cliente strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.comision-cliente span {
+  margin-top: 4px;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.comision-cliente small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.comision-fecha {
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.comision-total,
+.comision-monto {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: -.03em;
+  white-space: nowrap;
+}
+
+.comision-monto {
+  color: #087443;
+}
+
+.comision-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.comision-badge.pendiente {
+  color: #985d00;
+  border: 1px solid rgba(245,158,11,.18);
+  background: rgba(245,158,11,.12);
+}
+
+.comision-badge.cobrada {
+  color: #087443;
+  border: 1px solid rgba(32,177,90,.18);
+  background: rgba(32,177,90,.12);
+}
+
+.comision-accion {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.comision-accion button {
+  min-width: 138px;
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.secondary-state-btn {
+  color: #4f35ff !important;
+  border-color: rgba(118,87,255,.18) !important;
+  background: rgba(118,87,255,.08) !important;
+  box-shadow: none !important;
+}
+
+.comisiones-empty {
+  padding: 44px 22px;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 750;
+}
+
+@media (max-width: 1120px) {
+  .comisiones-resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .comisiones-table-header,
+  .comision-row {
+    grid-template-columns:
+      minmax(105px, .8fr)
+      minmax(210px, 1.7fr)
+      minmax(110px, .8fr)
+      minmax(125px, .85fr)
+      minmax(125px, .85fr)
+      minmax(100px, .7fr)
+      minmax(135px, auto);
+    gap: 13px;
+  }
+}
+
+@media (max-width: 900px) {
+  .comisiones-table-header {
+    display: none;
+  }
+
+  .comisiones-table {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .comision-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 20px;
+    margin-bottom: 12px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255,255,255,.86);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .comision-cliente {
+    grid-column: 1 / -1;
+  }
+
+  .comision-row > div::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .comision-cliente::before,
+  .comision-accion::before {
+    display: none !important;
+  }
+
+  .comision-accion {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 680px) {
+  .comisiones-page {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .comisiones-resumen,
+  .comisiones-filtros {
+    grid-template-columns: 1fr;
+  }
+
+  .comision-row {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .comision-cliente,
+  .comision-accion {
+    grid-column: auto;
+  }
+
+  .comision-cliente strong,
+  .comision-cliente span,
+  .comision-cliente small {
+    white-space: normal;
+  }
+
+  .comision-accion button {
+    width: 100%;
+  }
+}
+/* =========================================================
+   FORMATOS — LISTA SIMPLE Y RESPONSIVE
+   Pegar al final de src/styles.css
+========================================================= */
+
+.formatos-page {
+  max-width: 1420px;
+}
+
+.formatos-actions {
+  align-items: stretch;
+}
+
+.formatos-lista {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .86);
+  box-shadow: var(--shadow-xs);
+}
+
+.formatos-header,
+.formato-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+}
+
+.formatos-header {
+  min-height: 58px;
+  padding: 0 22px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.formato-row {
+  min-height: 82px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.formato-row:last-child {
+  border-bottom: 0;
+}
+
+.formato-nombre {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.formato-icono {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  color: #4f35ff;
+  font-size: 20px;
+  font-weight: 950;
+  background: rgba(118, 87, 255, .10);
+}
+
+.formato-nombre strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.formato-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.formato-acciones button {
+  min-width: 88px;
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.formatos-empty {
+  padding: 42px 22px;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 750;
+}
+
+@media (max-width: 680px) {
+  .formatos-page {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .formatos-header {
+    display: none;
+  }
+
+  .formatos-lista {
+    border: 0;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .formato-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 12px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255,255,255,.86);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .formato-nombre strong {
+    white-space: normal;
+  }
+
+  .formato-acciones {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .formato-acciones button {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .formato-acciones {
+    grid-template-columns: 1fr;
+  }
+}
+/* =========================================================
+   TIPOS DE EVENTO — LISTA SIMPLE Y RESPONSIVE
+   Pegar al final de src/styles.css
+========================================================= */
+
+.tipos-evento-page {
+  max-width: 1420px;
+}
+
+.tipos-evento-actions {
+  align-items: stretch;
+}
+
+.tipos-evento-lista {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .86);
+  box-shadow: var(--shadow-xs);
+}
+
+.tipos-evento-header,
+.tipo-evento-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+}
+
+.tipos-evento-header {
+  min-height: 58px;
+  padding: 0 22px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.tipo-evento-row {
+  min-height: 82px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tipo-evento-row:last-child {
+  border-bottom: 0;
+}
+
+.tipo-evento-nombre {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.tipo-evento-icono {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  color: #4f35ff;
+  font-size: 20px;
+  font-weight: 950;
+  background: rgba(118, 87, 255, .10);
+}
+
+.tipo-evento-nombre strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tipo-evento-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.tipo-evento-acciones button {
+  min-width: 88px;
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.tipos-evento-empty {
+  padding: 42px 22px;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 750;
+}
+
+@media (max-width: 680px) {
+  .tipos-evento-page {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .tipos-evento-header {
+    display: none;
+  }
+
+  .tipos-evento-lista {
+    border: 0;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .tipo-evento-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 12px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255,255,255,.86);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .tipo-evento-nombre strong {
+    white-space: normal;
+  }
+
+  .tipo-evento-acciones {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .tipo-evento-acciones button {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .tipo-evento-acciones {
+    grid-template-columns: 1fr;
+  }
+}
+/* =========================================================
+   TARIFAS — LISTA SIMPLE Y RESPONSIVE
+   Pegar al final de src/styles.css
+========================================================= */
+
+.tarifas-page {
+  max-width: 1420px;
+}
+
+.tarifas-actions {
+  align-items: stretch;
+}
+
+.tarifas-lista {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .86);
+  box-shadow: var(--shadow-xs);
+}
+
+.tarifas-header,
+.tarifa-row-simple {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+}
+
+.tarifas-header {
+  min-height: 58px;
+  padding: 0 22px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.tarifa-row-simple {
+  min-height: 82px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tarifa-row-simple:last-child {
+  border-bottom: 0;
+}
+
+.tarifa-nombre {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.tarifa-icono {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  color: #4f35ff;
+  font-size: 20px;
+  font-weight: 950;
+  background: rgba(118, 87, 255, .10);
+}
+
+.tarifa-nombre strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tarifa-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.tarifa-acciones button {
+  min-width: 88px;
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.tarifas-empty {
+  padding: 42px 22px;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 750;
+}
+
+@media (max-width: 680px) {
+  .tarifas-page {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .tarifas-header {
+    display: none;
+  }
+
+  .tarifas-lista {
+    border: 0;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .tarifa-row-simple {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 12px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255,255,255,.86);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .tarifa-nombre strong {
+    white-space: normal;
+  }
+
+  .tarifa-acciones {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .tarifa-acciones button {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .tarifa-acciones {
+    grid-template-columns: 1fr;
+  }
+}
+/* =========================================================
+   USUARIOS — LISTA SIMPLE Y RESPONSIVE
+   Pegar al final de src/styles.css
+========================================================= */
+
+.usuarios-simple-page {
+  max-width: 1420px;
+}
+
+.usuarios-simple-actions {
+  align-items: stretch;
+}
+
+.usuarios-simple-lista {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .86);
+  box-shadow: var(--shadow-xs);
+}
+
+.usuarios-simple-header,
+.usuario-simple-row {
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 1fr)
+    minmax(120px, 180px)
+    auto;
+  align-items: center;
+  gap: 24px;
+}
+
+.usuarios-simple-header {
+  min-height: 58px;
+  padding: 0 22px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.usuario-simple-row {
+  min-height: 86px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.usuario-simple-row:last-child {
+  border-bottom: 0;
+}
+
+.usuario-simple-nombre {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.usuario-simple-avatar {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: white;
+  font-weight: 950;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 10px 22px rgba(46, 167, 255, .18);
+}
+
+.usuario-simple-nombre strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.usuario-simple-estado {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.usuario-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.usuario-badge.activo {
+  color: #087443;
+  border: 1px solid rgba(32, 177, 90, .18);
+  background: rgba(32, 177, 90, .12);
+}
+
+.usuario-badge.inactivo {
+  color: #b42318;
+  border: 1px solid rgba(239, 63, 107, .18);
+  background: rgba(239, 63, 107, .12);
+}
+
+.usuario-simple-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.usuario-simple-acciones button {
+  min-width: 88px;
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.usuario-simple-acciones .secondary-btn {
+  color: #315eea;
+  border: 1px solid rgba(49, 94, 234, .16);
+  background: rgba(49, 94, 234, .06);
+  box-shadow: none;
+}
+
+.usuarios-simple-empty {
+  padding: 42px 22px;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 750;
+}
+
+@media (max-width: 760px) {
+  .usuarios-simple-header {
+    display: none;
+  }
+
+  .usuarios-simple-lista {
+    border: 0;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .usuario-simple-row {
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    margin-bottom: 12px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255,255,255,.86);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .usuario-simple-acciones {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .usuario-simple-acciones button {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .usuarios-simple-page {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .usuario-simple-row {
+    grid-template-columns: 1fr;
+  }
+
+  .usuario-simple-estado {
+    justify-content: flex-start;
+  }
+
+  .usuario-simple-acciones {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .usuario-simple-acciones {
+    grid-template-columns: 1fr;
+  }
+}
+/* =========================================================
+   TOPBAR DESKTOP — BOTONES COMPACTOS SIN ICONOS
+   Pegar al final de src/styles.css
+========================================================= */
+
+.desktop-topbar {
+  gap: 10px;
+  padding: 8px 12px;
+}
+
+.desktop-nav-links {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.desktop-nav-links button {
+  min-height: 34px;
+  padding: 0 9px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.desktop-nav-links button > span {
+  display: none !important;
+}
+
+@media (max-width: 1320px) {
+  .desktop-nav-links {
+    gap: 1px;
+  }
+
+  .desktop-nav-links button {
+    min-height: 32px;
+    padding: 0 7px;
+    font-size: 10px;
+  }
+
+  .topbar-user {
+    gap: 7px;
+  }
+
+  .logout-button {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import {
   getProvincias,
@@ -21,149 +22,224 @@ export default function Tarifas({ goHome }) {
   const [form, setForm] = useState(nuevoRegistro);
   const [modalOpen, setModalOpen] = useState(false);
   const [busqueda, setBusqueda] = useState('');
+  const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     cargar();
   }, []);
 
   async function cargar() {
-    const data = await getProvincias();
-    setProvincias(data);
+    try {
+      setCargando(true);
+      const data = await getProvincias();
+      setProvincias(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudieron cargar las tarifas.');
+    } finally {
+      setCargando(false);
+    }
   }
 
   function nuevaProvincia() {
     setForm(nuevoRegistro);
+    setError('');
     setModalOpen(true);
   }
 
-  function editar(p) {
-    setForm(p);
+  function editar(provincia) {
+    setForm({
+      id: provincia.id,
+      nombre: provincia.nombre || '',
+      honorarios: Number(provincia.honorarios || 0),
+      tarifa_musico: Number(provincia.tarifa_musico || 0),
+      dieta_musico: Number(provincia.dieta_musico || 0),
+      transporte: Number(provincia.transporte || 0),
+      sonido: Number(provincia.sonido || 0),
+      activa: Boolean(provincia.activa),
+    });
+
+    setError('');
     setModalOpen(true);
   }
 
-async function duplicarProvincia(p) {
-  const copia = {
-    ...p,
-    nombre: `${p.nombre || 'Provincia'} copia`,
-  };
+  async function duplicarProvincia(provincia) {
+    try {
+      const copia = {
+        nombre: `${provincia.nombre || 'Provincia'} copia`,
+        honorarios: Number(provincia.honorarios || 0),
+        tarifa_musico: Number(provincia.tarifa_musico || 0),
+        dieta_musico: Number(provincia.dieta_musico || 0),
+        transporte: Number(provincia.transporte || 0),
+        sonido: Number(provincia.sonido || 0),
+        activa: Boolean(provincia.activa),
+      };
 
-  delete copia.id;
-  delete copia.created_at;
-  delete copia.updated_at;
-
-  await saveProvincia(copia);
-  cargar();
-}
-
-  async function guardar(e) {
-    e.preventDefault();
-
-    if (!form.nombre.trim()) {
-      alert('Debes escribir el nombre de la provincia.');
-      return;
+      await saveProvincia(copia);
+      toast.success('Provincia duplicada correctamente.');
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudo duplicar la provincia.');
     }
-
-    await saveProvincia(form);
-
-    setModalOpen(false);
-    setForm(nuevoRegistro);
-    cargar();
   }
-
-async function borrar(id, nombre) {
-  const ok = confirm(
-    `¿Deseas borrar definitivamente la provincia "${nombre || 'Sin nombre'}"?`
-  );
-
-  if (!ok) return;
-
-  try {
-    await deleteProvincia(id);
-    cargar();
-  } catch (err) {
-    alert(err.message || 'No se pudo borrar la provincia.');
-  }
-}
 
   function cambiar(e) {
     const { name, value, type, checked } = e.target;
 
-    setForm({
-      ...form,
+    setForm((actual) => ({
+      ...actual,
       [name]: type === 'checkbox' ? checked : value,
-    });
+    }));
   }
 
-  const provinciasFiltradas = provincias.filter((p) =>
-    p.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  async function guardar(e) {
+    e.preventDefault();
+    setError('');
+
+    if (!form.nombre.trim()) {
+      setError('Debes escribir el nombre de la provincia.');
+      return;
+    }
+
+    try {
+      await saveProvincia({
+        ...form,
+        nombre: form.nombre.trim(),
+        honorarios: Number(form.honorarios || 0),
+        tarifa_musico: Number(form.tarifa_musico || 0),
+        dieta_musico: Number(form.dieta_musico || 0),
+        transporte: Number(form.transporte || 0),
+        sonido: Number(form.sonido || 0),
+        activa: Boolean(form.activa),
+      });
+
+      toast.success(
+        form.id
+          ? 'Provincia actualizada correctamente.'
+          : 'Provincia creada correctamente.'
+      );
+
+      setModalOpen(false);
+      setForm(nuevoRegistro);
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      const mensaje = err.message || 'No se pudo guardar la provincia.';
+      setError(mensaje);
+      toast.error(mensaje);
+    }
+  }
+
+  async function borrar(id, nombre) {
+    const ok = confirm(
+      `¿Deseas borrar definitivamente la provincia "${nombre || 'Sin nombre'}"?`
+    );
+
+    if (!ok) return;
+
+    try {
+      await deleteProvincia(id);
+      toast.success('Provincia eliminada correctamente.');
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudo borrar la provincia.');
+    }
+  }
+
+  const provinciasFiltradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+
+    if (!texto) return provincias;
+
+    return provincias.filter((provincia) =>
+      String(provincia.nombre || '')
+        .toLowerCase()
+        .includes(texto)
+    );
+  }, [provincias, busqueda]);
 
   return (
-    <div className="dashboard">
+    <div className="dashboard tarifas-page">
       <div className="top-bar">
         <div>
           <h1>Tarifas</h1>
           <p>Provincias y costos base</p>
         </div>
 
-        <button onClick={goHome}>← Dashboard</button>
+        <button type="button" onClick={goHome}>
+          ← Dashboard
+        </button>
       </div>
 
-      <div className="actions-row">
+      <div className="actions-row tarifas-actions">
         <input
+          type="search"
           placeholder="Buscar provincia..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
 
-        <button onClick={nuevaProvincia}>➕ Nueva Provincia</button>
+        <button type="button" onClick={nuevaProvincia}>
+          + Nueva Provincia
+        </button>
       </div>
 
-      <div className="cotizaciones-list">
-        {provinciasFiltradas.map((p) => (
-          <div className="tarifa-item" key={p.id}>
-            <div className="cot-numero">📍 {p.nombre}</div>
+      <div className="tarifas-lista">
+        <div className="tarifas-header" aria-hidden="true">
+          <span>Provincia</span>
+          <span>Acciones</span>
+        </div>
 
-            <div className="cot-cliente">
-              <strong>
-                Honorarios: RD$ {Number(p.honorarios || 0).toLocaleString()}
-              </strong>
-              <div>
-                Músico: RD$ {Number(p.tarifa_musico || 0).toLocaleString()} ·
-                Dieta: RD$ {Number(p.dieta_musico || 0).toLocaleString()}
-              </div>
-            </div>
-
-            <div className="cot-fecha">
-              Transporte: RD$ {Number(p.transporte || 0).toLocaleString()}
-            </div>
-
-            <div className="cot-total">
-              RD$ {Number(p.sonido || 0).toLocaleString()}
-            </div>
-
-            <div className="cot-estado">
-              <span className={p.activa ? 'estado activa' : 'estado inactiva'}>
-                {p.activa ? 'Activa' : 'Inactiva'}
-              </span>
-            </div>
-
-            <div className="cot-menu">
-  <button onClick={() => editar(p)}>Editar</button>
-
-  <button onClick={() => duplicarProvincia(p)}>
-    Duplicar
-  </button>
-
-<button
-  className="danger-btn"
-  onClick={() => borrar(p.id, p.nombre)}
->
-  Borrar
-</button>
-</div>
+        {cargando ? (
+          <div className="tarifas-empty">
+            Cargando provincias...
           </div>
-        ))}
+        ) : provinciasFiltradas.length === 0 ? (
+          <div className="tarifas-empty">
+            No se encontraron provincias.
+          </div>
+        ) : (
+          provinciasFiltradas.map((provincia) => (
+            <article
+              className="tarifa-row-simple"
+              key={provincia.id}
+            >
+              <div className="tarifa-nombre">
+                <span className="tarifa-icono">📍</span>
+                <strong>{provincia.nombre || 'Sin nombre'}</strong>
+              </div>
+
+              <div className="tarifa-acciones">
+                <button
+                  type="button"
+                  onClick={() => editar(provincia)}
+                >
+                  Editar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => duplicarProvincia(provincia)}
+                >
+                  Duplicar
+                </button>
+
+                <button
+                  type="button"
+                  className="danger-btn"
+                  onClick={() =>
+                    borrar(provincia.id, provincia.nombre)
+                  }
+                >
+                  Borrar
+                </button>
+              </div>
+            </article>
+          ))
+        )}
       </div>
 
       <Modal
@@ -172,13 +248,18 @@ async function borrar(id, nombre) {
         onClose={() => setModalOpen(false)}
       >
         <form onSubmit={guardar}>
-          <label>Provincia</label>
-          <input name="nombre" value={form.nombre} onChange={cambiar} />
+          <label>Provincia *</label>
+          <input
+            name="nombre"
+            value={form.nombre}
+            onChange={cambiar}
+          />
 
           <label>Honorarios Cruzmonty</label>
           <input
             name="honorarios"
             type="number"
+            min="0"
             value={form.honorarios}
             onChange={cambiar}
           />
@@ -187,6 +268,7 @@ async function borrar(id, nombre) {
           <input
             name="tarifa_musico"
             type="number"
+            min="0"
             value={form.tarifa_musico}
             onChange={cambiar}
           />
@@ -195,6 +277,7 @@ async function borrar(id, nombre) {
           <input
             name="dieta_musico"
             type="number"
+            min="0"
             value={form.dieta_musico}
             onChange={cambiar}
           />
@@ -203,6 +286,7 @@ async function borrar(id, nombre) {
           <input
             name="transporte"
             type="number"
+            min="0"
             value={form.transporte}
             onChange={cambiar}
           />
@@ -211,6 +295,7 @@ async function borrar(id, nombre) {
           <input
             name="sonido"
             type="number"
+            min="0"
             value={form.sonido}
             onChange={cambiar}
           />
@@ -225,12 +310,19 @@ async function borrar(id, nombre) {
             Activa
           </label>
 
+          {error && <p className="error">{error}</p>}
+
           <div className="modal-actions">
-            <button type="button" onClick={() => setModalOpen(false)}>
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+            >
               Cancelar
             </button>
 
-            <button type="submit">Guardar</button>
+            <button type="submit">
+              Guardar
+            </button>
           </div>
         </form>
       </Modal>

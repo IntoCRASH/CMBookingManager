@@ -95,7 +95,10 @@ export default function App() {
   }
 
   function irA(nombrePagina) {
-    if (nombrePagina !== 'ver-cotizacion' && nombrePagina !== 'pagos-cotizacion') {
+    if (
+      nombrePagina !== 'ver-cotizacion' &&
+      nombrePagina !== 'pagos-cotizacion'
+    ) {
       setCotizacionId(null);
     }
 
@@ -111,30 +114,96 @@ export default function App() {
 
   const navDesktop = useMemo(() => {
     const base = [
-      { id: 'dashboard', label: 'Inicio', icon: '⌘', action: volverDashboard },
-      { id: 'nueva-cotizacion', label: 'Nueva cotización', icon: '+', action: nuevaCotizacion },
-      { id: 'cotizaciones', label: 'Cotizaciones', icon: '▦', action: () => irA('cotizaciones') },
-      { id: 'calendario', label: 'Calendario', icon: '◷', action: () => irA('calendario') },
-      { id: 'comisiones', label: 'Comisiones', icon: '◇', action: () => irA('comisiones') },
+      {
+        id: 'dashboard',
+        label: 'Inicio',
+        action: volverDashboard,
+      },
+      {
+        id: 'nueva-cotizacion',
+        label: 'Nueva cotización',
+        action: nuevaCotizacion,
+      },
+      {
+        id: 'cotizaciones',
+        label: 'Cotizaciones',
+        action: () => irA('cotizaciones'),
+      },
+      {
+        id: 'clientes',
+        label: 'Clientes',
+        action: () => irA('clientes'),
+      },
+      {
+        id: 'calendario',
+        label: 'Calendario',
+        action: () => irA('calendario'),
+      },
+      {
+        id: 'comisiones',
+        label: 'Comisiones',
+        action: () => irA('comisiones'),
+      },
     ];
 
     if (!esAdmin) return base;
 
     return [
       ...base,
-      { id: 'usuarios', label: 'Usuarios', icon: '◌', action: () => irA('usuarios') },
-      { id: 'formatos', label: 'Formatos', icon: '♪', action: () => irA('formatos') },
-      { id: 'tipos-evento', label: 'Tipos', icon: '◆', action: () => irA('tipos-evento') },
-      { id: 'tarifas', label: 'Tarifas', icon: '◎', action: () => irA('tarifas') },
+      {
+        id: 'usuarios',
+        label: 'Usuarios',
+        action: () => irA('usuarios'),
+      },
+      {
+        id: 'formatos',
+        label: 'Formatos',
+        action: () => irA('formatos'),
+      },
+      {
+        id: 'tipos-evento',
+        label: 'Tipos',
+        action: () => irA('tipos-evento'),
+      },
+      {
+        id: 'tarifas',
+        label: 'Tarifas',
+        action: () => irA('tarifas'),
+      },
     ];
   }, [esAdmin, page]);
 
   const mobileNav = [
-    { id: 'dashboard', label: 'Inicio', icon: '⌂', action: volverDashboard },
-    { id: 'nueva-cotizacion', label: 'Cotizar', icon: '+', action: nuevaCotizacion },
-    { id: 'cotizaciones', label: 'Cotiz.', icon: '▦', action: () => irA('cotizaciones') },
-    { id: 'calendario', label: 'Agenda', icon: '◷', action: () => irA('calendario') },
-    { id: 'more', label: 'Más', icon: '☰', action: () => setMoreOpen(true) },
+    {
+      id: 'dashboard',
+      label: 'Inicio',
+      icon: '⌂',
+      action: volverDashboard,
+    },
+    {
+      id: 'nueva-cotizacion',
+      label: 'Cotizar',
+      icon: '+',
+      action: nuevaCotizacion,
+    },
+    {
+      id: 'cotizaciones',
+      label: 'Cotiz.',
+      icon: '▦',
+      action: () => irA('cotizaciones'),
+    },
+    {
+      id: 'calendario',
+      label: 'Agenda',
+      icon: '◷',
+      action: () => irA('calendario'),
+    },
+    {
+      id: 'more',
+      label: 'Más',
+      icon: '☰',
+      action: () => setMoreOpen(true),
+    },
   ];
 
   let contenido;
@@ -252,8 +321,13 @@ export default function App() {
     <div className={`app-shell page-${page}`}>
       {page !== 'ver-cotizacion' && (
         <nav className="desktop-topbar">
-          <button className="brand-button" type="button" onClick={volverDashboard}>
+          <button
+            className="brand-button"
+            type="button"
+            onClick={volverDashboard}
+          >
             <span className="brand-mark">CM</span>
+
             <span>
               <strong>Cruzmonty Booking</strong>
               <small>Booking Suite</small>
@@ -268,7 +342,6 @@ export default function App() {
                 className={page === item.id ? 'active' : ''}
                 onClick={item.action}
               >
-                <span>{item.icon}</span>
                 {item.label}
               </button>
             ))}
@@ -276,13 +349,21 @@ export default function App() {
 
           <div className="topbar-user">
             <div className="avatar">
-              {(profile?.nombre || session.user.email || 'C').slice(0, 1).toUpperCase()}
+              {(profile?.nombre || session.user.email || 'C')
+                .slice(0, 1)
+                .toUpperCase()}
             </div>
+
             <div className="user-meta">
               <strong>{profile?.nombre || 'Usuario'}</strong>
               <small>{profile?.rol || 'usuario'}</small>
             </div>
-            <button type="button" className="logout-button" onClick={logout}>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={logout}
+            >
               Salir
             </button>
           </div>
@@ -297,7 +378,12 @@ export default function App() {
             <button
               key={item.id}
               type="button"
-              className={page === item.id || (item.id === 'more' && moreOpen) ? 'active' : ''}
+              className={
+                page === item.id ||
+                (item.id === 'more' && moreOpen)
+                  ? 'active'
+                  : ''
+              }
               onClick={item.action}
             >
               <span>{item.icon}</span>
@@ -308,18 +394,75 @@ export default function App() {
       )}
 
       {moreOpen && (
-        <div className="mobile-more-backdrop" onClick={() => setMoreOpen(false)}>
-          <div className="mobile-more-sheet" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="mobile-more-backdrop"
+          onClick={() => setMoreOpen(false)}
+        >
+          <div
+            className="mobile-more-sheet"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="sheet-handle" />
             <h3>Más opciones</h3>
 
             <div className="sheet-actions">
-              <button type="button" onClick={() => irA('comisiones')}>◇ Comisiones</button>
-              {esAdmin && <button type="button" onClick={() => irA('usuarios')}>◌ Usuarios</button>}
-              {esAdmin && <button type="button" onClick={() => irA('formatos')}>♪ Formatos</button>}
-              {esAdmin && <button type="button" onClick={() => irA('tipos-evento')}>◆ Tipos de evento</button>}
-              {esAdmin && <button type="button" onClick={() => irA('tarifas')}>◎ Tarifas</button>}
-              <button type="button" className="sheet-logout" onClick={logout}>Salir</button>
+              <button
+                type="button"
+                onClick={() => irA('clientes')}
+              >
+                ◉ Clientes
+              </button>
+
+              <button
+                type="button"
+                onClick={() => irA('comisiones')}
+              >
+                ◇ Comisiones
+              </button>
+
+              {esAdmin && (
+                <button
+                  type="button"
+                  onClick={() => irA('usuarios')}
+                >
+                  ◌ Usuarios
+                </button>
+              )}
+
+              {esAdmin && (
+                <button
+                  type="button"
+                  onClick={() => irA('formatos')}
+                >
+                  ♪ Formatos
+                </button>
+              )}
+
+              {esAdmin && (
+                <button
+                  type="button"
+                  onClick={() => irA('tipos-evento')}
+                >
+                  ◆ Tipos de evento
+                </button>
+              )}
+
+              {esAdmin && (
+                <button
+                  type="button"
+                  onClick={() => irA('tarifas')}
+                >
+                  ◎ Tarifas
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="sheet-logout"
+                onClick={logout}
+              >
+                Salir
+              </button>
             </div>
           </div>
         </div>

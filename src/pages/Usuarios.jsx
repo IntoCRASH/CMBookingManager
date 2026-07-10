@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import {
   getUsuarios,
@@ -8,7 +9,7 @@ import {
 } from '../lib/usuariosService';
 import { getMyProfile } from '../lib/profileService';
 
-const nuevoUsuario = {
+const usuarioInicial = {
   nombre: '',
   email: '',
   password: '',
@@ -20,317 +21,394 @@ const nuevoUsuario = {
 export default function Usuarios({ goHome }) {
   const [usuarios, setUsuarios] = useState([]);
   const [profile, setProfile] = useState(null);
-  const [editandoId, setEditandoId] = useState(null);
-  const [form, setForm] = useState({});
-  const [modalNuevoOpen, setModalNuevoOpen] = useState(false);
-  const [nuevo, setNuevo] = useState(nuevoUsuario);
+  const [form, setForm] = useState(usuarioInicial);
+  const [modoModal, setModoModal] = useState(null);
+  const [busqueda, setBusqueda] = useState('');
   const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(true);
 
   const esAdmin = profile?.rol === 'admin';
+  const modalOpen = Boolean(modoModal);
 
   useEffect(() => {
     cargar();
   }, []);
 
   async function cargar() {
-    const perfil = await getMyProfile();
-    setProfile(perfil);
+    try {
+      setCargando(true);
 
-    const data = await getUsuarios();
+      const perfil = await getMyProfile();
+      setProfile(perfil);
 
-    if (perfil?.rol === 'admin') {
-      setUsuarios(data);
-    } else {
-      setUsuarios(data.filter((u) => u.id === perfil?.id));
+      const data = await getUsuarios();
+      const lista = Array.isArray(data) ? data : [];
+
+      if (perfil?.rol === 'admin') {
+        setUsuarios(lista);
+      } else {
+        setUsuarios(lista.filter((usuario) => usuario.id === perfil?.id));
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudieron cargar los usuarios.');
+    } finally {
+      setCargando(false);
     }
   }
 
-  function abrirNuevo() {
-    setNuevo(nuevoUsuario);
+  function cerrarModal() {
+    setModoModal(null);
+    setForm(usuarioInicial);
     setError('');
-    setModalNuevoOpen(true);
   }
 
-  function editar(u) {
-    setEditandoId(u.id);
+  function abrirNuevo() {
+    setForm(usuarioInicial);
+    setError('');
+    setModoModal('nuevo');
+  }
+
+  function editar(usuario) {
     setForm({
-      nombre: u.nombre || '',
-      rol: u.rol || 'vendedor',
-      comision_porcentaje: u.comision_porcentaje ?? 10,
-      activo: u.activo ?? true,
+      id: usuario.id,
+      nombre: usuario.nombre || '',
+      email: '',
+      password: '',
+      rol: usuario.rol || 'vendedor',
+      comision_porcentaje: Number(usuario.comision_porcentaje ?? 10),
+      activo: Boolean(usuario.activo ?? true),
     });
+
+    setError('');
+    setModoModal('editar');
+  }
+
+  function duplicarUsuario(usuario) {
+    if (!esAdmin) {
+      toast.error('No tienes permiso para duplicar usuarios.');
+      return;
+    }
+
+    setForm({
+      nombre: `${usuario.nombre || 'Usuario'} copia`,
+      email: '',
+      password: '',
+      rol: usuario.rol || 'vendedor',
+      comision_porcentaje: Number(usuario.comision_porcentaje ?? 10),
+      activo: Boolean(usuario.activo ?? true),
+    });
+
+    setError('');
+    setModoModal('duplicar');
   }
 
   function cambiar(e) {
     const { name, value, type, checked } = e.target;
 
-    setForm({
-      ...form,
+    setForm((actual) => ({
+      ...actual,
       [name]: type === 'checkbox' ? checked : value,
-    });
+    }));
   }
 
-  function cambiarNuevo(e) {
-    const { name, value, type, checked } = e.target;
-
-    setNuevo({
-      ...nuevo,
-      [name]: type === 'checkbox' ? checked : value,
-    });
-  }
-
-  async function guardar(id) {
-    const cambios = esAdmin
-      ? {
-          nombre: form.nombre,
-          rol: form.rol,
-          comision_porcentaje: Number(form.comision_porcentaje || 0),
-          activo: form.activo,
-        }
-      : {
-          nombre: form.nombre,
-        };
-
-    await updateUsuario(id, cambios);
-
-    setEditandoId(null);
-    setForm({});
-    cargar();
-  }
-
-  async function guardarNuevo(e) {
+  async function guardar(e) {
     e.preventDefault();
     setError('');
 
-    if (!esAdmin) {
-      setError('No tienes permiso para crear usuarios.');
-      return;
-    }
-
-    if (!nuevo.nombre.trim()) {
+    if (!form.nombre.trim()) {
       setError('El nombre es obligatorio.');
       return;
     }
 
-    if (!nuevo.email.trim()) {
-      setError('El email es obligatorio.');
-      return;
-    }
-
-    if (!nuevo.password.trim()) {
-      setError('La contraseña temporal es obligatoria.');
-      return;
-    }
-
     try {
-      await crearUsuario({
-        nombre: nuevo.nombre.trim(),
-        email: nuevo.email.trim(),
-        password: nuevo.password,
-        rol: nuevo.rol,
-        comision_porcentaje: Number(nuevo.comision_porcentaje || 0),
-        activo: nuevo.activo,
-      });
+      if (modoModal === 'editar') {
+        const cambios = esAdmin
+          ? {
+              nombre: form.nombre.trim(),
+              rol: form.rol,
+              comision_porcentaje: Number(form.comision_porcentaje || 0),
+              activo: Boolean(form.activo),
+            }
+          : {
+              nombre: form.nombre.trim(),
+            };
 
-      setNuevo(nuevoUsuario);
-      setModalNuevoOpen(false);
-      cargar();
+        await updateUsuario(form.id, cambios);
+        toast.success('Usuario actualizado correctamente.');
+      } else {
+        if (!esAdmin) {
+          setError('No tienes permiso para crear usuarios.');
+          return;
+        }
+
+        if (!form.email.trim()) {
+          setError('El email es obligatorio.');
+          return;
+        }
+
+        if (!form.password.trim()) {
+          setError('La contraseña temporal es obligatoria.');
+          return;
+        }
+
+        await crearUsuario({
+          nombre: form.nombre.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          rol: form.rol,
+          comision_porcentaje: Number(form.comision_porcentaje || 0),
+          activo: Boolean(form.activo),
+        });
+
+        toast.success(
+          modoModal === 'duplicar'
+            ? 'Copia del usuario creada correctamente.'
+            : 'Usuario creado correctamente.'
+        );
+      }
+
+      cerrarModal();
+      await cargar();
     } catch (err) {
-      setError(err.message || 'No se pudo crear el usuario.');
+      console.error(err);
+      const mensaje = err.message || 'No se pudo guardar el usuario.';
+      setError(mensaje);
+      toast.error(mensaje);
     }
   }
 
-  async function borrarUsuario(u) {
+  async function borrarUsuario(usuario) {
     if (!esAdmin) {
-      alert('No tienes permiso para borrar usuarios.');
+      toast.error('No tienes permiso para borrar usuarios.');
       return;
     }
 
-    if (u.id === profile?.id) {
-      alert('No puedes borrar tu propio usuario.');
+    if (usuario.id === profile?.id) {
+      toast.error('No puedes borrar tu propio usuario.');
       return;
     }
 
     const confirmar = confirm(
-      `¿Deseas borrar definitivamente el usuario "${u.nombre || u.email}"?`
+      `¿Deseas borrar definitivamente el usuario "${usuario.nombre || usuario.email}"?`
     );
 
     if (!confirmar) return;
 
-    await deleteUsuario(u.id);
-    cargar();
+    try {
+      await deleteUsuario(usuario.id);
+      toast.success('Usuario eliminado correctamente.');
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudo borrar el usuario.');
+    }
   }
 
+  const usuariosFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+
+    if (!texto) return usuarios;
+
+    return usuarios.filter((usuario) =>
+      String(usuario.nombre || '')
+        .toLowerCase()
+        .includes(texto)
+    );
+  }, [usuarios, busqueda]);
+
   return (
-    <div className="dashboard">
+    <div className="dashboard usuarios-simple-page">
       <div className="top-bar">
         <div>
           <h1>Usuarios</h1>
-          <p>Roles y comisiones del equipo</p>
+          <p>Administración del equipo</p>
         </div>
 
-        <div style={{ display: 'flex', gap: 10 }}>
-          {esAdmin && (
-            <button onClick={abrirNuevo}>+ Nuevo Usuario</button>
-          )}
-
-          <button onClick={goHome}>← Dashboard</button>
-        </div>
+        <button type="button" onClick={goHome}>
+          ← Dashboard
+        </button>
       </div>
 
-      <div className="cotizaciones-list">
-        {usuarios.map((u) => (
-          <div key={u.id} className="cotizacion-item">
-            {editandoId === u.id ? (
-              <>
-                <div>
-                  <input
-                    name="nombre"
-                    value={form.nombre}
-                    onChange={cambiar}
-                    placeholder="Nombre"
-                  />
-                </div>
+      <div className="actions-row usuarios-simple-actions">
+        <input
+          type="search"
+          placeholder="Buscar usuario..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
 
-                {esAdmin ? (
-                  <>
-                    <div>
-                      <select name="rol" value={form.rol} onChange={cambiar}>
-                        <option value="admin">Admin</option>
-                        <option value="vendedor">Vendedor</option>
-                      </select>
-                    </div>
+        {esAdmin && (
+          <button type="button" onClick={abrirNuevo}>
+            + Nuevo Usuario
+          </button>
+        )}
+      </div>
 
-                    <div>
-                      <input
-                        type="number"
-                        name="comision_porcentaje"
-                        value={form.comision_porcentaje}
-                        onChange={cambiar}
-                        min="0"
-                        max="100"
-                      />
-                    </div>
+      <div className="usuarios-simple-lista">
+        <div className="usuarios-simple-header" aria-hidden="true">
+          <span>Usuario</span>
+          <span>Estado</span>
+          <span>Acciones</span>
+        </div>
 
-                    <div>
-                      <label className="check-row">
-                        <input
-                          type="checkbox"
-                          name="activo"
-                          checked={form.activo}
-                          onChange={cambiar}
-                        />
-                        Activo
-                      </label>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div>{form.rol}</div>
-                    <div>Comisión: {form.comision_porcentaje}%</div>
-                    <div>{form.activo ? 'Activo' : 'Inactivo'}</div>
-                  </>
+        {cargando ? (
+          <div className="usuarios-simple-empty">
+            Cargando usuarios...
+          </div>
+        ) : usuariosFiltrados.length === 0 ? (
+          <div className="usuarios-simple-empty">
+            No se encontraron usuarios.
+          </div>
+        ) : (
+          usuariosFiltrados.map((usuario) => (
+            <article
+              className="usuario-simple-row"
+              key={usuario.id}
+            >
+              <div className="usuario-simple-nombre">
+                <span className="usuario-simple-avatar">
+                  {(usuario.nombre || usuario.email || 'U')
+                    .trim()
+                    .slice(0, 1)
+                    .toUpperCase()}
+                </span>
+
+                <strong>{usuario.nombre || 'Sin nombre'}</strong>
+              </div>
+
+              <div className="usuario-simple-estado">
+                <span
+                  className={
+                    usuario.activo
+                      ? 'usuario-badge activo'
+                      : 'usuario-badge inactivo'
+                  }
+                >
+                  {usuario.activo ? 'Activo' : 'Inactivo'}
+                </span>
+              </div>
+
+              <div className="usuario-simple-acciones">
+                <button
+                  type="button"
+                  onClick={() => editar(usuario)}
+                >
+                  Editar
+                </button>
+
+                {esAdmin && (
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={() => duplicarUsuario(usuario)}
+                  >
+                    Duplicar
+                  </button>
                 )}
 
-                <div className="cot-menu">
-                  <button onClick={() => guardar(u.id)}>Guardar</button>
-                  <button onClick={() => setEditandoId(null)}>Cancelar</button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="cot-numero">{u.nombre || 'Sin nombre'}</div>
-
-                <div className="cot-cliente">
-                  <strong>{u.email || 'Sin email'}</strong>
-                  <div>{u.rol || 'vendedor'}</div>
-                </div>
-
-                <div className="cot-fecha">
-                  Comisión: {Number(u.comision_porcentaje || 0)}%
-                </div>
-
-                <div className="cot-estado">
-                  {u.activo ? 'Activo' : 'Inactivo'}
-                </div>
-
-                <div className="cot-menu">
-                  <button onClick={() => editar(u)}>Editar</button>
-
-                  {esAdmin && u.id !== profile?.id && (
-                    <button
-                      className="danger-btn"
-                      onClick={() => borrarUsuario(u)}
-                    >
-                      Borrar
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        ))}
+                {esAdmin && usuario.id !== profile?.id && (
+                  <button
+                    type="button"
+                    className="danger-btn"
+                    onClick={() => borrarUsuario(usuario)}
+                  >
+                    Borrar
+                  </button>
+                )}
+              </div>
+            </article>
+          ))
+        )}
       </div>
 
       <Modal
-        open={modalNuevoOpen}
-        title="Nuevo Usuario"
-        onClose={() => setModalNuevoOpen(false)}
+        open={modalOpen}
+        title={
+          modoModal === 'editar'
+            ? 'Editar Usuario'
+            : modoModal === 'duplicar'
+              ? 'Duplicar Usuario'
+              : 'Nuevo Usuario'
+        }
+        onClose={cerrarModal}
       >
-        <form onSubmit={guardarNuevo}>
+        <form onSubmit={guardar}>
           <label>Nombre *</label>
-          <input name="nombre" value={nuevo.nombre} onChange={cambiarNuevo} />
-
-          <label>Email *</label>
           <input
-            type="email"
-            name="email"
-            value={nuevo.email}
-            onChange={cambiarNuevo}
+            name="nombre"
+            value={form.nombre}
+            onChange={cambiar}
           />
 
-          <label>Contraseña temporal *</label>
-          <input
-            type="password"
-            name="password"
-            value={nuevo.password}
-            onChange={cambiarNuevo}
-          />
+          {modoModal !== 'editar' && (
+            <>
+              <label>Email *</label>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={cambiar}
+              />
 
-          <label>Rol</label>
-          <select name="rol" value={nuevo.rol} onChange={cambiarNuevo}>
-            <option value="admin">Admin</option>
-            <option value="vendedor">Vendedor</option>
-          </select>
+              <label>Contraseña temporal *</label>
+              <input
+                type="password"
+                name="password"
+                value={form.password}
+                onChange={cambiar}
+              />
+            </>
+          )}
 
-          <label>Comisión %</label>
-          <input
-            type="number"
-            name="comision_porcentaje"
-            value={nuevo.comision_porcentaje}
-            onChange={cambiarNuevo}
-            min="0"
-            max="100"
-          />
+          {esAdmin && (
+            <>
+              <label>Rol</label>
+              <select
+                name="rol"
+                value={form.rol}
+                onChange={cambiar}
+              >
+                <option value="admin">Admin</option>
+                <option value="vendedor">Vendedor</option>
+              </select>
 
-          <label className="check-row">
-            <input
-              type="checkbox"
-              name="activo"
-              checked={nuevo.activo}
-              onChange={cambiarNuevo}
-            />
-            Activo
-          </label>
+              <label>Comisión %</label>
+              <input
+                type="number"
+                name="comision_porcentaje"
+                value={form.comision_porcentaje}
+                onChange={cambiar}
+                min="0"
+                max="100"
+              />
+
+              <label className="check-row">
+                <input
+                  type="checkbox"
+                  name="activo"
+                  checked={form.activo}
+                  onChange={cambiar}
+                />
+                Activo
+              </label>
+            </>
+          )}
 
           {error && <p className="error">{error}</p>}
 
           <div className="modal-actions">
-            <button type="button" onClick={() => setModalNuevoOpen(false)}>
+            <button type="button" onClick={cerrarModal}>
               Cancelar
             </button>
 
-            <button type="submit">Crear usuario</button>
+            <button type="submit">
+              {modoModal === 'editar'
+                ? 'Guardar cambios'
+                : modoModal === 'duplicar'
+                  ? 'Crear copia'
+                  : 'Crear usuario'}
+            </button>
           </div>
         </form>
       </Modal>

@@ -6,6 +6,7 @@ import { getCotizaciones } from '../lib/cotizacionesService';
 export default function Dashboard({
   session,
   goTarifas,
+  goClientes,
   goNuevaCotizacion,
   goCotizaciones,
   goCalendario,
@@ -200,6 +201,7 @@ export default function Dashboard({
         <div className="quick-actions-grid">
           <button type="button" onClick={goNuevaCotizacion}>➕<span>Nueva cotización</span></button>
           <button type="button" onClick={goCotizaciones}>📄<span>Cotizaciones</span></button>
+          <button type="button" onClick={goClientes}>👥<span>Clientes</span></button>
           <button type="button" onClick={goCalendario}>📅<span>Calendario</span></button>
           <button type="button" onClick={goComisiones}>💰<span>Comisiones</span></button>
           {esAdmin && <button type="button" onClick={goUsuarios}>👤<span>Usuarios</span></button>}

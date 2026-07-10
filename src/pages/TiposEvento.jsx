@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import {
   getTodosTiposEventoConfig,
@@ -23,14 +24,23 @@ export default function TiposEvento({ goHome }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     cargar();
   }, []);
 
   async function cargar() {
-    const data = await getTodosTiposEventoConfig();
-    setTiposEvento(data);
+    try {
+      setCargando(true);
+      const data = await getTodosTiposEventoConfig();
+      setTiposEvento(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'No se pudieron cargar los tipos de evento.');
+    } finally {
+      setCargando(false);
+    }
   }
 
   function nuevo() {
@@ -41,11 +51,20 @@ export default function TiposEvento({ goHome }) {
 
   function editar(tipo) {
     setForm({
-      ...tipo,
-      multiplicador_honorarios: Number(tipo.multiplicador_honorarios || 1),
-      multiplicador_musicos: Number(tipo.multiplicador_musicos || 1),
-      multiplicador_sonido: Number(tipo.multiplicador_sonido || 1),
-      multiplicador_road_manager: Number(tipo.multiplicador_road_manager || 1),
+      id: tipo.id,
+      nombre: tipo.nombre || '',
+      multiplicador_honorarios: Number(
+        tipo.multiplicador_honorarios || 1
+      ),
+      multiplicador_musicos: Number(
+        tipo.multiplicador_musicos || 1
+      ),
+      multiplicador_sonido: Number(
+        tipo.multiplicador_sonido || 1
+      ),
+      multiplicador_road_manager: Number(
+        tipo.multiplicador_road_manager || 1
+      ),
       ensayo_extra: Number(tipo.ensayo_extra || 0),
       produccion_extra: Number(tipo.produccion_extra || 0),
       activo: Boolean(tipo.activo),
@@ -56,37 +75,44 @@ export default function TiposEvento({ goHome }) {
   }
 
   async function duplicar(tipo) {
-    const copia = {
-      ...tipo,
-      nombre: `${tipo.nombre || 'Tipo de evento'} copia`,
-      multiplicador_honorarios: Number(tipo.multiplicador_honorarios || 1),
-      multiplicador_musicos: Number(tipo.multiplicador_musicos || 1),
-      multiplicador_sonido: Number(tipo.multiplicador_sonido || 1),
-      multiplicador_road_manager: Number(tipo.multiplicador_road_manager || 1),
-      ensayo_extra: Number(tipo.ensayo_extra || 0),
-      produccion_extra: Number(tipo.produccion_extra || 0),
-      activo: Boolean(tipo.activo),
-    };
-
-    delete copia.id;
-    delete copia.created_at;
-    delete copia.updated_at;
-
     try {
+      const copia = {
+        nombre: `${tipo.nombre || 'Tipo de evento'} copia`,
+        multiplicador_honorarios: Number(
+          tipo.multiplicador_honorarios || 1
+        ),
+        multiplicador_musicos: Number(
+          tipo.multiplicador_musicos || 1
+        ),
+        multiplicador_sonido: Number(
+          tipo.multiplicador_sonido || 1
+        ),
+        multiplicador_road_manager: Number(
+          tipo.multiplicador_road_manager || 1
+        ),
+        ensayo_extra: Number(tipo.ensayo_extra || 0),
+        produccion_extra: Number(tipo.produccion_extra || 0),
+        activo: Boolean(tipo.activo),
+      };
+
       await saveTipoEventoConfig(copia);
-      cargar();
+      toast.success('Tipo de evento duplicado correctamente.');
+      await cargar();
     } catch (err) {
-      alert(err.message || 'No se pudo duplicar el tipo de evento.');
+      console.error(err);
+      toast.error(
+        err.message || 'No se pudo duplicar el tipo de evento.'
+      );
     }
   }
 
   function cambiar(e) {
     const { name, value, type, checked } = e.target;
 
-    setForm({
-      ...form,
+    setForm((actual) => ({
+      ...actual,
       [name]: type === 'checkbox' ? checked : value,
-    });
+    }));
   }
 
   async function guardar(e) {
@@ -114,7 +140,9 @@ export default function TiposEvento({ goHome }) {
     }
 
     if (Number(form.multiplicador_road_manager || 0) <= 0) {
-      setError('El multiplicador de road manager debe ser mayor que cero.');
+      setError(
+        'El multiplicador de Road Manager debe ser mayor que cero.'
+      );
       return;
     }
 
@@ -131,20 +159,40 @@ export default function TiposEvento({ goHome }) {
     try {
       await saveTipoEventoConfig({
         ...form,
-        multiplicador_honorarios: Number(form.multiplicador_honorarios || 1),
-        multiplicador_musicos: Number(form.multiplicador_musicos || 1),
-        multiplicador_sonido: Number(form.multiplicador_sonido || 1),
-        multiplicador_road_manager: Number(form.multiplicador_road_manager || 1),
+        nombre: form.nombre.trim(),
+        multiplicador_honorarios: Number(
+          form.multiplicador_honorarios || 1
+        ),
+        multiplicador_musicos: Number(
+          form.multiplicador_musicos || 1
+        ),
+        multiplicador_sonido: Number(
+          form.multiplicador_sonido || 1
+        ),
+        multiplicador_road_manager: Number(
+          form.multiplicador_road_manager || 1
+        ),
         ensayo_extra: Number(form.ensayo_extra || 0),
         produccion_extra: Number(form.produccion_extra || 0),
         activo: Boolean(form.activo),
       });
 
+      toast.success(
+        form.id
+          ? 'Tipo de evento actualizado correctamente.'
+          : 'Tipo de evento creado correctamente.'
+      );
+
       setModalOpen(false);
       setForm(nuevoRegistro);
-      cargar();
+      await cargar();
     } catch (err) {
-      setError(err.message || 'No se pudo guardar el tipo de evento.');
+      console.error(err);
+      const mensaje =
+        err.message || 'No se pudo guardar el tipo de evento.';
+
+      setError(mensaje);
+      toast.error(mensaje);
     }
   }
 
@@ -157,88 +205,114 @@ export default function TiposEvento({ goHome }) {
 
     try {
       await deleteTipoEventoConfig(id);
-      cargar();
+      toast.success('Tipo de evento eliminado correctamente.');
+      await cargar();
     } catch (err) {
-      alert(err.message || 'No se pudo borrar el tipo de evento.');
+      console.error(err);
+      toast.error(
+        err.message || 'No se pudo borrar el tipo de evento.'
+      );
     }
   }
 
-  const tiposFiltrados = tiposEvento.filter((tipo) =>
-    `${tipo.nombre} ${tipo.multiplicador_honorarios} ${tipo.multiplicador_musicos} ${tipo.multiplicador_sonido} ${tipo.multiplicador_road_manager} ${tipo.ensayo_extra} ${tipo.produccion_extra}`
-      .toLowerCase()
-      .includes(busqueda.toLowerCase())
-  );
+  const tiposFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+
+    if (!texto) return tiposEvento;
+
+    return tiposEvento.filter((tipo) =>
+      String(tipo.nombre || '')
+        .toLowerCase()
+        .includes(texto)
+    );
+  }, [tiposEvento, busqueda]);
 
   return (
-    <div className="dashboard">
+    <div className="dashboard tipos-evento-page">
       <div className="top-bar">
         <div>
           <h1>Tipos de Evento</h1>
-          <p>Configura multiplicadores, ensayos y producción por tipo de actividad</p>
+          <p>Configura multiplicadores, ensayos y producción</p>
         </div>
 
-        <button onClick={goHome}>← Dashboard</button>
+        <button type="button" onClick={goHome}>
+          ← Dashboard
+        </button>
       </div>
 
-      <div className="actions-row">
+      <div className="actions-row tipos-evento-actions">
         <input
+          type="search"
           placeholder="Buscar tipo de evento..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
 
-        <button onClick={nuevo}>➕ Nuevo Tipo</button>
+        <button type="button" onClick={nuevo}>
+          + Nuevo Tipo
+        </button>
       </div>
 
-      <div className="cotizaciones-list">
-        {tiposFiltrados.map((tipo) => (
-          <div className="tarifa-item" key={tipo.id}>
-            <div className="cot-numero">🎤 {tipo.nombre}</div>
+      <div className="tipos-evento-lista">
+        <div className="tipos-evento-header" aria-hidden="true">
+          <span>Tipo de evento</span>
+          <span>Acciones</span>
+        </div>
 
-            <div className="cot-cliente">
-              <strong>
-                Honorarios: x{Number(tipo.multiplicador_honorarios || 1)} · Músicos: x{Number(tipo.multiplicador_musicos || 1)}
-              </strong>
-              <div>
-                Sonido: x{Number(tipo.multiplicador_sonido || 1)} · Road Manager: x{Number(tipo.multiplicador_road_manager || 1)} · Ensayo: RD${' '}
-                {Number(tipo.ensayo_extra || 0).toLocaleString()} · Producción: RD${' '}
-                {Number(tipo.produccion_extra || 0).toLocaleString()}
-              </div>
-            </div>
-
-            <div className="cot-fecha">Tipo de evento</div>
-
-            <div className="cot-total">
-              x{Number(tipo.multiplicador_honorarios || 1)}
-            </div>
-
-            <div className="cot-estado">
-              <span className={tipo.activo ? 'estado activa' : 'estado inactiva'}>
-                {tipo.activo ? 'Activo' : 'Inactivo'}
-              </span>
-            </div>
-
-            <div className="cot-menu">
-              <button onClick={() => editar(tipo)}>Editar</button>
-
-              <button onClick={() => duplicar(tipo)}>
-                Duplicar
-              </button>
-
-              <button
-                className="danger-btn"
-                onClick={() => borrar(tipo.id, tipo.nombre)}
-              >
-                Borrar
-              </button>
-            </div>
+        {cargando ? (
+          <div className="tipos-evento-empty">
+            Cargando tipos de evento...
           </div>
-        ))}
+        ) : tiposFiltrados.length === 0 ? (
+          <div className="tipos-evento-empty">
+            No se encontraron tipos de evento.
+          </div>
+        ) : (
+          tiposFiltrados.map((tipo) => (
+            <article
+              className="tipo-evento-row"
+              key={tipo.id}
+            >
+              <div className="tipo-evento-nombre">
+                <span className="tipo-evento-icono">🎤</span>
+                <strong>{tipo.nombre || 'Sin nombre'}</strong>
+              </div>
+
+              <div className="tipo-evento-acciones">
+                <button
+                  type="button"
+                  onClick={() => editar(tipo)}
+                >
+                  Editar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => duplicar(tipo)}
+                >
+                  Duplicar
+                </button>
+
+                <button
+                  type="button"
+                  className="danger-btn"
+                  onClick={() => borrar(tipo.id, tipo.nombre)}
+                >
+                  Borrar
+                </button>
+              </div>
+            </article>
+          ))
+        )}
       </div>
 
       <Modal
         open={modalOpen}
-        title={form.id ? 'Editar Tipo de Evento' : 'Nuevo Tipo de Evento'}
+        title={
+          form.id
+            ? 'Editar Tipo de Evento'
+            : 'Nuevo Tipo de Evento'
+        }
         onClose={() => setModalOpen(false)}
       >
         <form onSubmit={guardar}>
@@ -323,11 +397,16 @@ export default function TiposEvento({ goHome }) {
           {error && <p className="error">{error}</p>}
 
           <div className="modal-actions">
-            <button type="button" onClick={() => setModalOpen(false)}>
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+            >
               Cancelar
             </button>
 
-            <button type="submit">Guardar</button>
+            <button type="submit">
+              Guardar
+            </button>
           </div>
         </form>
       </Modal>
