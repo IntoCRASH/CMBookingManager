@@ -25,7 +25,7 @@
   color: white;
   border-radius: 5px;
   cursor: pointer;
-  transition: .2s;
+  transition: 0.2s;
   font-size: 13px;
 }
 
@@ -38,7 +38,7 @@
   margin: auto;
   background: white;
   padding: 28px 34px;
-  box-shadow: 0 8px 28px rgba(0,0,0,.16);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
   box-sizing: border-box;
 }
 
@@ -53,7 +53,7 @@
 .vc-header h1 {
   margin: 0;
   font-size: 24px;
-  letter-spacing: .8px;
+  letter-spacing: 0.8px;
 }
 
 .vc-header p {
@@ -94,7 +94,7 @@
   padding-bottom: 5px;
   margin: 0 0 8px;
   font-size: 13px;
-  letter-spacing: .4px;
+  letter-spacing: 0.4px;
 }
 
 .vc-info-grid p {
@@ -166,7 +166,7 @@
 .vc-notas h3 {
   margin: 0 0 8px;
   font-size: 12.5px;
-  letter-spacing: .5px;
+  letter-spacing: 0.5px;
 }
 
 .disclaimer {
@@ -175,6 +175,15 @@
   color: #444;
   text-align: justify;
   margin: 0;
+}
+
+.disclaimer-paragraph {
+  margin: 0 0 8px;
+  page-break-inside: avoid;
+}
+
+.disclaimer-paragraph:last-child {
+  margin-bottom: 0;
 }
 
 .vc-footer {
@@ -188,6 +197,56 @@
 
 .error {
   color: darkred;
+}
+
+.vc-firma {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 28px;
+  margin-bottom: 22px;
+}
+
+.vc-firma-bloque {
+  width: 260px;
+  text-align: center;
+}
+
+.vc-firma-imagen {
+  display: block;
+  width: 190px;
+  max-height: 90px;
+  margin: 0 auto -6px;
+  object-fit: contain;
+}
+
+.vc-firma-linea {
+  width: 100%;
+  border-top: 1px solid #222;
+  margin-bottom: 7px;
+}
+
+.vc-firma-bloque strong,
+.vc-firma-bloque span,
+.vc-firma-bloque small {
+  display: block;
+}
+
+.vc-firma-bloque strong {
+  color: #111;
+  font-size: 12px;
+}
+
+.vc-firma-bloque span {
+  margin-top: 2px;
+  color: #222;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.vc-firma-bloque small {
+  margin-top: 2px;
+  color: #555;
+  font-size: 9px;
 }
 
 @media print {
@@ -257,149 +316,15 @@
     line-height: 1.18;
   }
 
+  .disclaimer-paragraph {
+    margin-bottom: 6px;
+  }
+
   .vc-footer {
     margin-top: 10px;
     padding-top: 6px;
   }
-}
-/* ===========================================
-   MÓVIL
-=========================================== */
 
-@media (max-width: 768px) {
-
-  .vc-page{
-    padding:12px;
-  }
-
-  .vc-actions{
-    max-width:100%;
-    flex-direction:column;
-  }
-
-  .vc-actions button{
-    width:100%;
-  }
-
-  .vc-document{
-
-    width:100%;
-    max-width:100%;
-
-    padding:18px;
-
-    box-sizing:border-box;
-  }
-
-  .vc-header{
-
-    flex-direction:column;
-    gap:14px;
-
-    align-items:flex-start;
-  }
-
-  .vc-box{
-
-    width:100%;
-    min-width:unset;
-  }
-
-  .vc-info-grid{
-
-    grid-template-columns:1fr;
-
-    gap:12px;
-  }
-
-  .vc-table{
-
-    display:block;
-
-    overflow-x:auto;
-
-    white-space:nowrap;
-  }
-
-  .vc-table td{
-
-    white-space:normal;
-  }
-
-  .vc-totales{
-
-    width:100%;
-  }
-
-  .vc-total-final{
-
-    font-size:18px !important;
-  }
-
-}
-
-.vc-firma {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 28px;
-  margin-bottom: 22px;
-}
-
-.vc-firma-bloque {
-  width: 260px;
-  text-align: center;
-}
-
-.vc-firma-imagen {
-  display: block;
-  width: 190px;
-  max-height: 90px;
-  margin: 0 auto -6px;
-  object-fit: contain;
-}
-
-.vc-firma-linea {
-  width: 100%;
-  border-top: 1px solid #222;
-  margin-bottom: 7px;
-}
-
-.vc-firma-bloque strong,
-.vc-firma-bloque span,
-.vc-firma-bloque small {
-  display: block;
-}
-
-.vc-firma-bloque strong {
-  color: #111;
-  font-size: 12px;
-}
-
-.vc-firma-bloque span {
-  margin-top: 2px;
-  color: #222;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.vc-firma-bloque small {
-  margin-top: 2px;
-  color: #555;
-  font-size: 9px;
-}
-
-@media (max-width: 768px) {
-  .vc-firma {
-    justify-content: center;
-  }
-
-  .vc-firma-bloque {
-    width: 100%;
-    max-width: 260px;
-  }
-}
-
-@media print {
   .vc-firma {
     margin-top: 18px;
     margin-bottom: 14px;
@@ -409,5 +334,70 @@
   .vc-firma-imagen {
     width: 170px;
     max-height: 75px;
+  }
+}
+
+@media (max-width: 768px) {
+  .vc-page {
+    padding: 12px;
+  }
+
+  .vc-actions {
+    max-width: 100%;
+    flex-direction: column;
+  }
+
+  .vc-actions button {
+    width: 100%;
+  }
+
+  .vc-document {
+    width: 100%;
+    max-width: 100%;
+    padding: 18px;
+    box-sizing: border-box;
+  }
+
+  .vc-header {
+    flex-direction: column;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .vc-box {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .vc-info-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .vc-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .vc-table td {
+    white-space: normal;
+  }
+
+  .vc-totales {
+    width: 100%;
+  }
+
+  .vc-total-final {
+    font-size: 18px !important;
+  }
+
+  .vc-firma {
+    justify-content: center;
+  }
+
+  .vc-firma-bloque {
+    width: 100%;
+    max-width: 260px;
   }
 }
