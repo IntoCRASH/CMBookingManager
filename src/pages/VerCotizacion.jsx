@@ -167,6 +167,22 @@ Fecha: <strong>{fechaLarga(cotizacion.fecha_evento)}</strong>
           </div>
         </section>
 
+        <section className="vc-firma">
+          <div className="vc-firma-bloque">
+            <img
+              src="/firma-cruzmonty.png"
+              alt="Firma de Pedro Cruz Montesino"
+              className="vc-firma-imagen"
+            />
+
+            <div className="vc-firma-linea" />
+
+            <strong>Pedro Cruz Montesino</strong>
+            <span>Cruzmonty</span>
+            <small>Artista / Representante autorizado</small>
+          </div>
+        </section>
+
         <section className="vc-notas">
           <h3>POLÍTICAS Y CONDICIONES</h3>
 
