@@ -17,7 +17,8 @@ export default function Dashboard({
   const [profile, setProfile] = useState(null);
   const [eventosHoy, setEventosHoy] = useState(0);
   const [proximoEvento, setProximoEvento] = useState(null);
-  const [cotizacionesPendientes, setCotizacionesPendientes] = useState(0);
+  const [cotizacionesPendientes, setCotizacionesPendientes] =
+    useState(0);
   const [balancePendiente, setBalancePendiente] = useState(0);
   const [cobradoMes, setCobradoMes] = useState(0);
 
@@ -36,15 +37,26 @@ export default function Dashboard({
   }
 
   function obtenerPagado(c) {
-    return Number(c.monto_pagado || c.total_pagado || c.pagado || 0);
+    return Number(
+      c.monto_pagado ||
+        c.total_pagado ||
+        c.pagado ||
+        0
+    );
   }
 
   function obtenerSaldoPendiente(c) {
-    if (c.saldo_pendiente !== undefined && c.saldo_pendiente !== null) {
+    if (
+      c.saldo_pendiente !== undefined &&
+      c.saldo_pendiente !== null
+    ) {
       return Number(c.saldo_pendiente || 0);
     }
 
-    return Math.max(Number(c.total || 0) - obtenerPagado(c), 0);
+    return Math.max(
+      Number(c.total || 0) - obtenerPagado(c),
+      0
+    );
   }
 
   async function cargarResumen() {
@@ -54,10 +66,15 @@ export default function Dashboard({
       const mesActual = hoy.slice(0, 7);
 
       const eventosConfirmados = cotizaciones
-        .filter((c) => c.fecha_evento && c.estado === 'Confirmada')
+        .filter(
+          (c) =>
+            c.fecha_evento &&
+            c.estado === 'Confirmada'
+        )
         .sort(
           (a, b) =>
-            new Date(a.fecha_evento) - new Date(b.fecha_evento)
+            new Date(a.fecha_evento) -
+            new Date(b.fecha_evento)
         );
 
       const eventosDeHoy = eventosConfirmados.filter(
@@ -91,9 +108,13 @@ export default function Dashboard({
         .filter(
           (c) =>
             c.fecha_evento &&
-            String(c.fecha_evento).slice(0, 7) === mesActual
+            String(c.fecha_evento).slice(0, 7) ===
+              mesActual
         )
-        .reduce((sum, c) => sum + obtenerPagado(c), 0);
+        .reduce(
+          (sum, c) => sum + obtenerPagado(c),
+          0
+        );
 
       setEventosHoy(eventosDeHoy.length);
       setProximoEvento(proximo || null);
@@ -106,54 +127,80 @@ export default function Dashboard({
   }
 
   function money(valor) {
-    return `RD$ ${Number(valor || 0).toLocaleString('es-DO')}`;
+    return `RD$ ${Number(valor || 0).toLocaleString(
+      'es-DO'
+    )}`;
   }
 
   function fechaCorta(fecha) {
-    if (!fecha) return { dia: '--', mes: '---' };
+    if (!fecha) {
+      return {
+        dia: '--',
+        mes: '---',
+      };
+    }
 
     const d = new Date(`${fecha}T00:00:00`);
 
     return {
-      dia: d.toLocaleDateString('es-DO', { day: '2-digit' }),
+      dia: d.toLocaleDateString('es-DO', {
+        day: '2-digit',
+      }),
+
       mes: d
-        .toLocaleDateString('es-DO', { month: 'short' })
+        .toLocaleDateString('es-DO', {
+          month: 'short',
+        })
         .replace('.', '')
         .toUpperCase(),
     };
   }
 
-  const fechaProximo = fechaCorta(proximoEvento?.fecha_evento);
+  const fechaProximo = fechaCorta(
+    proximoEvento?.fecha_evento
+  );
+
   const esAdmin = profile?.rol === 'admin';
 
   return (
     <div className="dashboard dashboard-mobile-first">
       <section className="mobile-welcome-card">
         <div>
-          <span className="eyebrow">Cruzmonty Booking Suite</span>
+          <span className="eyebrow">MiBooking</span>
 
           <h1>
-            Hola{profile?.nombre ? `, ${profile.nombre}` : ''}
+            Hola
+            {profile?.nombre
+              ? `, ${profile.nombre}`
+              : ''}
           </h1>
 
           <p>
-            Hoy, <strong>{APP_CONFIG.artista}</strong> tiene{' '}
-            <strong>{eventosHoy}</strong>{' '}
-            evento{eventosHoy !== 1 ? 's' : ''} confirmado
+            Hoy, <strong>{APP_CONFIG.artista}</strong>{' '}
+            tiene <strong>{eventosHoy}</strong>{' '}
+            evento
+            {eventosHoy !== 1 ? 's' : ''} confirmado
             {eventosHoy !== 1 ? 's' : ''}.
           </p>
         </div>
 
         <div className="profile-pill">
           <span>
-            {(profile?.nombre || session?.user?.email || 'C')
+            {(profile?.nombre ||
+              session?.user?.email ||
+              'C')
               .slice(0, 1)
               .toUpperCase()}
           </span>
 
           <div>
-            <strong>{profile?.nombre || 'Usuario'}</strong>
-            <small>{profile?.rol || 'usuario'}</small>
+            <strong>
+              {profile?.nombre || 'Usuario'}
+            </strong>
+
+            <small>
+              {profile?.rol || 'usuario'}
+            </small>
           </div>
         </div>
       </section>
@@ -214,7 +261,10 @@ export default function Dashboard({
         <div className="section-heading">
           <span>Próximo evento confirmado</span>
 
-          <button type="button" onClick={goCalendario}>
+          <button
+            type="button"
+            onClick={goCalendario}
+          >
             Agenda
           </button>
         </div>
@@ -251,11 +301,13 @@ export default function Dashboard({
           </div>
         ) : (
           <div className="empty-event-state">
-            <strong>No hay próximos eventos confirmados.</strong>
+            <strong>
+              No hay próximos eventos confirmados.
+            </strong>
 
             <span>
-              Cuando confirmes una cotización con fecha, aparecerá
-              aquí.
+              Cuando confirmes una cotización con
+              fecha, aparecerá aquí.
             </span>
           </div>
         )}
@@ -267,51 +319,75 @@ export default function Dashboard({
         </div>
 
         <div className="quick-actions-grid">
-          <button type="button" onClick={goCotizaciones}>
+          <button
+            type="button"
+            onClick={goCotizaciones}
+          >
             📄
             <span>Cotizaciones</span>
           </button>
 
-          <button type="button" onClick={goCalendario}>
+          <button
+            type="button"
+            onClick={goCalendario}
+          >
             📅
             <span>Calendario</span>
           </button>
 
-          <button type="button" onClick={goComisiones}>
+          <button
+            type="button"
+            onClick={goComisiones}
+          >
             💰
             <span>Comisiones</span>
           </button>
 
           {esAdmin && (
-            <button type="button" onClick={goPerfil}>
+            <button
+              type="button"
+              onClick={goPerfil}
+            >
               👤
               <span>Perfil</span>
             </button>
           )}
 
           {esAdmin && (
-            <button type="button" onClick={goUsuarios}>
+            <button
+              type="button"
+              onClick={goUsuarios}
+            >
               👥
               <span>Usuarios</span>
             </button>
           )}
 
           {esAdmin && (
-            <button type="button" onClick={goFormatos}>
+            <button
+              type="button"
+              onClick={goFormatos}
+            >
               🎵
               <span>Formatos</span>
             </button>
           )}
 
           {esAdmin && (
-            <button type="button" onClick={goTiposEvento}>
+            <button
+              type="button"
+              onClick={goTiposEvento}
+            >
               🎤
               <span>Tipos de evento</span>
             </button>
           )}
 
           {esAdmin && (
-            <button type="button" onClick={goTarifas}>
+            <button
+              type="button"
+              onClick={goTarifas}
+            >
               ⚙️
               <span>Tarifas</span>
             </button>

@@ -13,13 +13,14 @@ export default function Login() {
     setLoading(true);
     setError('');
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error: loginError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message);
+    if (loginError) {
+      setError(loginError.message);
     }
 
     setLoading(false);
@@ -28,13 +29,25 @@ export default function Login() {
   return (
     <div className="login-container">
       <form className="login-card" onSubmit={login}>
-        <h1>Cruzmonty Booking</h1>
+        <img
+          src="/mibooking-logo.png"
+          alt="MiBooking"
+          style={{
+            display: 'block',
+            width: 'min(100%, 380px)',
+            height: 'auto',
+            margin: '0 auto 28px',
+            objectFit: 'contain',
+          }}
+        />
 
         <input
           type="email"
           placeholder="Correo"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
+          required
         />
 
         <input
@@ -42,9 +55,11 @@ export default function Login() {
           placeholder="Contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          required
         />
 
-        <button disabled={loading}>
+        <button type="submit" disabled={loading}>
           {loading ? 'Entrando...' : 'Entrar'}
         </button>
 

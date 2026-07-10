@@ -24,11 +24,13 @@ export default function App() {
   const [page, setPage] = useState('dashboard');
   const [cotizacionId, setCotizacionId] = useState(null);
   const [moreOpen, setMoreOpen] = useState(false);
+
   const navigationHistory = useRef([]);
 
   useEffect(() => {
     async function loadSession() {
       const { data } = await supabase.auth.getSession();
+
       setSession(data.session);
       setLoading(false);
     }
@@ -88,6 +90,7 @@ export default function App() {
     );
 
     const mismaPagina = page === nombrePagina;
+
     const mismaCotizacion =
       String(cotizacionId ?? '') ===
       String(destinoCotizacionId ?? '');
@@ -377,12 +380,24 @@ export default function App() {
             className="brand-button"
             type="button"
             onClick={volverDashboard}
+            aria-label="Ir al inicio de MiBooking"
           >
-            <span className="brand-mark">CM</span>
+            <img
+              src="/mibooking-icon.png"
+              alt=""
+              aria-hidden="true"
+              style={{
+                display: 'block',
+                width: '48px',
+                height: '48px',
+                flex: '0 0 48px',
+                objectFit: 'contain',
+              }}
+            />
 
             <span>
-              <strong>Cruzmonty Booking</strong>
-              <small>Booking Suite</small>
+              <strong>MiBooking</strong>
+              <small>Música · Eventos · Negocio</small>
             </span>
           </button>
 
@@ -455,6 +470,7 @@ export default function App() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sheet-handle" />
+
             <h3>Más opciones</h3>
 
             <div className="sheet-actions">
