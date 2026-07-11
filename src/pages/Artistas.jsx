@@ -330,7 +330,7 @@ export default function Artistas({ goBack }) {
           <strong>
             {esPro
               ? 'MiBooking Pro'
-              : 'MiBooking Limitado'}
+              : 'MiBooking Básico'}
           </strong>
 
           <p>
@@ -345,22 +345,6 @@ export default function Artistas({ goBack }) {
             Límite alcanzado
           </span>
         )}
-      </section>
-
-      <section className="artistas-auth-card">
-        <div>
-          <span>Autorización protegida</span>
-
-          <strong>
-            El enlace nunca se muestra al agente
-          </strong>
-
-          <p>
-            MiBooking genera el enlace en el servidor y lo envía
-            directamente al correo del artista. Desde esta página
-            solamente puedes consultar el estado o reenviar el email.
-          </p>
-        </div>
       </section>
 
       <div className="actions-row artistas-actions">

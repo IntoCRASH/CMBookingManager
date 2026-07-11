@@ -103,12 +103,128 @@ async function createArtistSnapshotFields(
   };
 }
 
+async function getOwnedConfiguration(
+  table,
+  id,
+  artistaId,
+  label
+) {
+  if (!id) {
+    throw new Error(
+      `Selecciona ${label} para la cotización.`
+    );
+  }
+
+  const { data, error } = await supabase
+    .from(table)
+    .select('*')
+    .eq('id', id)
+    .eq('artista_id', artistaId)
+    .single();
+
+  if (error) {
+    throw new Error(
+      `${label} no pertenece al artista seleccionado.`
+    );
+  }
+
+  return data;
+}
+
+async function createConfigurationSnapshotFields(
+  cotizacion
+) {
+  const artistaId = Number(
+    cotizacion.artista_id
+  );
+
+  if (
+    !Number.isInteger(artistaId) ||
+    artistaId <= 0
+  ) {
+    throw new Error(
+      'Selecciona un artista válido.'
+    );
+  }
+
+  const [
+    zona,
+    formato,
+    tipoEvento,
+  ] = await Promise.all([
+    getOwnedConfiguration(
+      'provincias',
+      cotizacion.provincia_id,
+      artistaId,
+      'una zona'
+    ),
+
+    getOwnedConfiguration(
+      'formatos',
+      cotizacion.formato_id,
+      artistaId,
+      'un formato'
+    ),
+
+    getOwnedConfiguration(
+      'tipos_evento_config',
+      cotizacion.tipo_evento_config_id,
+      artistaId,
+      'un tipo de evento'
+    ),
+  ]);
+
+  const capturadoEn =
+    new Date().toISOString();
+
+  return {
+    zona_nombre_snapshot:
+      zona.nombre || '',
+
+    formato_nombre_snapshot:
+      formato.nombre || '',
+
+    tipo_evento_nombre_snapshot:
+      tipoEvento.nombre || '',
+
+    zona_snapshot: {
+      ...zona,
+      capturado_en: capturadoEn,
+    },
+
+    formato_snapshot: {
+      ...formato,
+      capturado_en: capturadoEn,
+    },
+
+    tipo_evento_snapshot: {
+      ...tipoEvento,
+      capturado_en: capturadoEn,
+    },
+
+    configuracion_artista_snapshot: {
+      artista_id: artistaId,
+      zona: {
+        ...zona,
+      },
+      formato: {
+        ...formato,
+      },
+      tipo_evento: {
+        ...tipoEvento,
+      },
+      capturado_en: capturadoEn,
+    },
+  };
+}
+
 async function prepareNewCotizacionPayload(
   payloadBase
 ) {
   const [
     businessSnapshotFields,
     artistSnapshotFields,
+    configurationSnapshotFields,
   ] = await Promise.all([
     payloadBase.perfil_negocio_snapshot &&
     payloadBase.politicas_condiciones
@@ -118,12 +234,17 @@ async function prepareNewCotizacionPayload(
     createArtistSnapshotFields(
       payloadBase.artista_id
     ),
+
+    createConfigurationSnapshotFields(
+      payloadBase
+    ),
   ]);
 
   return {
     ...payloadBase,
     ...businessSnapshotFields,
     ...artistSnapshotFields,
+    ...configurationSnapshotFields,
   };
 }
 
@@ -167,6 +288,29 @@ async function getCotizacionRawById(id) {
   return data;
 }
 
+function removeJoinedAndSystemFields(
+  payload
+) {
+  delete payload.id;
+  delete payload.clientes;
+  delete payload.provincias;
+  delete payload.artistas;
+  delete payload.vendedor;
+  delete payload.created_at;
+}
+
+function removeConfigurationSnapshots(
+  payload
+) {
+  delete payload.zona_nombre_snapshot;
+  delete payload.formato_nombre_snapshot;
+  delete payload.tipo_evento_nombre_snapshot;
+  delete payload.zona_snapshot;
+  delete payload.formato_snapshot;
+  delete payload.tipo_evento_snapshot;
+  delete payload.configuracion_artista_snapshot;
+}
+
 export async function saveCotizacion(
   cotizacion
 ) {
@@ -176,12 +320,8 @@ export async function saveCotizacion(
     const actual =
       await getCotizacionRawById(id);
 
-    delete payload.id;
-    delete payload.clientes;
-    delete payload.provincias;
-    delete payload.artistas;
-    delete payload.vendedor;
-    delete payload.created_at;
+    removeJoinedAndSystemFields(payload);
+    removeConfigurationSnapshots(payload);
 
     const artistaCambio =
       String(actual?.artista_id ?? '') !==
@@ -206,6 +346,16 @@ export async function saveCotizacion(
       delete payload.artista_snapshot;
     }
 
+    const configurationSnapshotFields =
+      await createConfigurationSnapshotFields(
+        payload
+      );
+
+    Object.assign(
+      payload,
+      configurationSnapshotFields
+    );
+
     payload.updated_at =
       new Date().toISOString();
 
@@ -223,13 +373,14 @@ export async function saveCotizacion(
 
   const payloadBase = { ...cotizacion };
 
-  delete payloadBase.id;
-  delete payloadBase.clientes;
-  delete payloadBase.provincias;
-  delete payloadBase.artistas;
-  delete payloadBase.vendedor;
-  delete payloadBase.created_at;
+  removeJoinedAndSystemFields(
+    payloadBase
+  );
+
   delete payloadBase.updated_at;
+  removeConfigurationSnapshots(
+    payloadBase
+  );
 
   const payloadConSnapshots =
     await prepareNewCotizacionPayload(
@@ -280,6 +431,13 @@ export async function getCotizaciones(
     );
   }
 
+  if (filtro.artista_id) {
+    query = query.eq(
+      'artista_id',
+      filtro.artista_id
+    );
+  }
+
   query = query.order('created_at', {
     ascending: false,
   });
@@ -304,17 +462,13 @@ export async function duplicarCotizacion(id) {
 
   const copia = { ...original };
 
-  delete copia.id;
+  removeJoinedAndSystemFields(copia);
   delete copia.numero;
-  delete copia.created_at;
   delete copia.updated_at;
-  delete copia.clientes;
-  delete copia.provincias;
-  delete copia.artistas;
 
   // La cotización duplicada obtiene
-  // las políticas, firma y datos del
-  // artista vigentes.
+  // las políticas, firma, artista y
+  // configuraciones vigentes.
   delete copia.perfil_negocio_snapshot;
   delete copia.politicas_condiciones;
 
@@ -324,6 +478,8 @@ export async function duplicarCotizacion(id) {
   delete copia.comision_porcentaje_snapshot;
   delete copia.comision_autorizada_snapshot;
   delete copia.artista_snapshot;
+
+  removeConfigurationSnapshots(copia);
 
   return saveCotizacion(copia);
 }

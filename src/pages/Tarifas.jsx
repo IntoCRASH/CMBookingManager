@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
+import { getMisArtistas } from '../lib/artistasService';
 import {
+  deleteProvincia,
   getProvincias,
   saveProvincia,
-  deleteProvincia,
 } from '../lib/provinciasService';
 
 const nuevoRegistro = {
@@ -18,6 +19,8 @@ const nuevoRegistro = {
 };
 
 export default function Tarifas({ goBack }) {
+  const [artistas, setArtistas] = useState([]);
+  const [artistaId, setArtistaId] = useState('');
   const [provincias, setProvincias] = useState([]);
   const [form, setForm] = useState(nuevoRegistro);
   const [modalOpen, setModalOpen] = useState(false);
@@ -25,24 +28,78 @@ export default function Tarifas({ goBack }) {
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(true);
 
+  const artistaSeleccionado = artistas.find(
+    (artista) =>
+      String(artista.id) === String(artistaId)
+  );
+
   useEffect(() => {
-    cargar();
+    cargarArtistas();
   }, []);
+
+  useEffect(() => {
+    if (!artistaId) {
+      setProvincias([]);
+      setCargando(false);
+      return;
+    }
+
+    cargar();
+  }, [artistaId]);
+
+  async function cargarArtistas() {
+    try {
+      setCargando(true);
+
+      const data = await getMisArtistas();
+      const lista = Array.isArray(data) ? data : [];
+
+      setArtistas(lista);
+
+      if (lista.length > 0) {
+        setArtistaId((actual) => actual || String(lista[0].id));
+      } else {
+        setCargando(false);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.message || 'No se pudieron cargar los artistas.'
+      );
+      setCargando(false);
+    }
+  }
 
   async function cargar() {
     try {
       setCargando(true);
-      const data = await getProvincias();
+
+      const data = await getProvincias(artistaId);
       setProvincias(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'No se pudieron cargar las tarifas.');
+      toast.error(
+        err.message || 'No se pudieron cargar las tarifas.'
+      );
     } finally {
       setCargando(false);
     }
   }
 
+  function cambiarArtista(event) {
+    setArtistaId(event.target.value);
+    setBusqueda('');
+    setModalOpen(false);
+    setForm(nuevoRegistro);
+    setError('');
+  }
+
   function nuevaProvincia() {
+    if (!artistaId) {
+      toast.error('Primero selecciona un artista.');
+      return;
+    }
+
     setForm(nuevoRegistro);
     setError('');
     setModalOpen(true);
@@ -53,8 +110,12 @@ export default function Tarifas({ goBack }) {
       id: provincia.id,
       nombre: provincia.nombre || '',
       honorarios: Number(provincia.honorarios || 0),
-      tarifa_musico: Number(provincia.tarifa_musico || 0),
-      dieta_musico: Number(provincia.dieta_musico || 0),
+      tarifa_musico: Number(
+        provincia.tarifa_musico || 0
+      ),
+      dieta_musico: Number(
+        provincia.dieta_musico || 0
+      ),
       transporte: Number(provincia.transporte || 0),
       sonido: Number(provincia.sonido || 0),
       activa: Boolean(provincia.activa),
@@ -65,28 +126,36 @@ export default function Tarifas({ goBack }) {
   }
 
   async function duplicarProvincia(provincia) {
+    if (!artistaId) return;
+
     try {
-      const copia = {
+      await saveProvincia({
+        artista_id: Number(artistaId),
         nombre: `${provincia.nombre || 'Zona'} copia`,
         honorarios: Number(provincia.honorarios || 0),
-        tarifa_musico: Number(provincia.tarifa_musico || 0),
-        dieta_musico: Number(provincia.dieta_musico || 0),
+        tarifa_musico: Number(
+          provincia.tarifa_musico || 0
+        ),
+        dieta_musico: Number(
+          provincia.dieta_musico || 0
+        ),
         transporte: Number(provincia.transporte || 0),
         sonido: Number(provincia.sonido || 0),
         activa: Boolean(provincia.activa),
-      };
+      });
 
-      await saveProvincia(copia);
       toast.success('Zona duplicada correctamente.');
       await cargar();
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'No se pudo duplicar la zona.');
+      toast.error(
+        err.message || 'No se pudo duplicar la zona.'
+      );
     }
   }
 
-  function cambiar(e) {
-    const { name, value, type, checked } = e.target;
+  function cambiar(event) {
+    const { name, value, type, checked } = event.target;
 
     setForm((actual) => ({
       ...actual,
@@ -94,9 +163,14 @@ export default function Tarifas({ goBack }) {
     }));
   }
 
-  async function guardar(e) {
-    e.preventDefault();
+  async function guardar(event) {
+    event.preventDefault();
     setError('');
+
+    if (!artistaId) {
+      setError('Primero selecciona un artista.');
+      return;
+    }
 
     if (!form.nombre.trim()) {
       setError('Debes escribir el nombre de la zona.');
@@ -106,10 +180,15 @@ export default function Tarifas({ goBack }) {
     try {
       await saveProvincia({
         ...form,
+        artista_id: Number(artistaId),
         nombre: form.nombre.trim(),
         honorarios: Number(form.honorarios || 0),
-        tarifa_musico: Number(form.tarifa_musico || 0),
-        dieta_musico: Number(form.dieta_musico || 0),
+        tarifa_musico: Number(
+          form.tarifa_musico || 0
+        ),
+        dieta_musico: Number(
+          form.dieta_musico || 0
+        ),
         transporte: Number(form.transporte || 0),
         sonido: Number(form.sonido || 0),
         activa: Boolean(form.activa),
@@ -126,26 +205,31 @@ export default function Tarifas({ goBack }) {
       await cargar();
     } catch (err) {
       console.error(err);
-      const mensaje = err.message || 'No se pudo guardar la zona.';
+
+      const mensaje =
+        err.message || 'No se pudo guardar la zona.';
+
       setError(mensaje);
       toast.error(mensaje);
     }
   }
 
   async function borrar(id, nombre) {
-    const ok = confirm(
+    const ok = window.confirm(
       `¿Deseas borrar definitivamente la zona "${nombre || 'Sin nombre'}"?`
     );
 
     if (!ok) return;
 
     try {
-      await deleteProvincia(id);
+      await deleteProvincia(id, artistaId);
       toast.success('Zona eliminada correctamente.');
       await cargar();
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'No se pudo borrar la zona.');
+      toast.error(
+        err.message || 'No se pudo borrar la zona.'
+      );
     }
   }
 
@@ -166,7 +250,7 @@ export default function Tarifas({ goBack }) {
       <div className="top-bar">
         <div>
           <h1>Tarifas</h1>
-          <p>Zonas y costos base</p>
+          <p>Zonas y costos base por artista</p>
         </div>
 
         <button type="button" onClick={goBack}>
@@ -174,32 +258,92 @@ export default function Tarifas({ goBack }) {
         </button>
       </div>
 
+      <section className="config-artista-card">
+        <div>
+          <span className="config-artista-kicker">
+            Configuración independiente
+          </span>
+
+          <strong>
+            Tarifas de{' '}
+            {artistaSeleccionado?.nombre ||
+              'un artista'}
+          </strong>
+
+          <p>
+            Cada artista conserva sus propias zonas,
+            honorarios, músicos, transporte y sonido.
+          </p>
+        </div>
+
+        <div className="config-artista-control">
+          <label htmlFor="tarifas-artista">
+            Artista
+          </label>
+
+          <select
+            id="tarifas-artista"
+            value={artistaId}
+            onChange={cambiarArtista}
+          >
+            <option value="">
+              Seleccionar artista
+            </option>
+
+            {artistas.map((artista) => (
+              <option key={artista.id} value={artista.id}>
+                {artista.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+      </section>
+
       <div className="actions-row tarifas-actions">
         <input
           type="search"
           placeholder="Buscar zona..."
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
+          onChange={(event) =>
+            setBusqueda(event.target.value)
+          }
+          disabled={!artistaId}
         />
 
-        <button type="button" onClick={nuevaProvincia}>
+        <button
+          type="button"
+          onClick={nuevaProvincia}
+          disabled={!artistaId}
+        >
           + Nueva Zona
         </button>
       </div>
 
       <div className="tarifas-lista">
-        <div className="tarifas-header" aria-hidden="true">
+        <div
+          className="tarifas-header"
+          aria-hidden="true"
+        >
           <span>Zona</span>
           <span>Acciones</span>
         </div>
 
-        {cargando ? (
+        {artistas.length === 0 ? (
+          <div className="config-artista-empty">
+            <strong>No tienes artistas activos.</strong>
+            <span>
+              Crea primero un artista desde la página
+              Artistas.
+            </span>
+          </div>
+        ) : cargando ? (
           <div className="tarifas-empty">
             Cargando zonas...
           </div>
         ) : provinciasFiltradas.length === 0 ? (
           <div className="tarifas-empty">
-            No se encontraron zonas.
+            Este artista todavía no tiene zonas
+            configuradas.
           </div>
         ) : (
           provinciasFiltradas.map((provincia) => (
@@ -209,7 +353,20 @@ export default function Tarifas({ goBack }) {
             >
               <div className="tarifa-nombre">
                 <span className="tarifa-icono">📍</span>
-                <strong>{provincia.nombre || 'Sin nombre'}</strong>
+
+                <div>
+                  <strong>
+                    {provincia.nombre || 'Sin nombre'}
+                  </strong>
+
+                  <small>
+                    Honorarios:{' '}
+                    RD${' '}
+                    {Number(
+                      provincia.honorarios || 0
+                    ).toLocaleString('es-DO')}
+                  </small>
+                </div>
               </div>
 
               <div className="tarifa-acciones">
@@ -222,7 +379,9 @@ export default function Tarifas({ goBack }) {
 
                 <button
                   type="button"
-                  onClick={() => duplicarProvincia(provincia)}
+                  onClick={() =>
+                    duplicarProvincia(provincia)
+                  }
                 >
                   Duplicar
                 </button>
@@ -231,7 +390,10 @@ export default function Tarifas({ goBack }) {
                   type="button"
                   className="danger-btn"
                   onClick={() =>
-                    borrar(provincia.id, provincia.nombre)
+                    borrar(
+                      provincia.id,
+                      provincia.nombre
+                    )
                   }
                 >
                   Borrar
@@ -248,14 +410,24 @@ export default function Tarifas({ goBack }) {
         onClose={() => setModalOpen(false)}
       >
         <form onSubmit={guardar}>
+          <p className="config-modal-context">
+            Artista:{' '}
+            <strong>
+              {artistaSeleccionado?.nombre ||
+                'No seleccionado'}
+            </strong>
+          </p>
+
           <label>Zona *</label>
+
           <input
             name="nombre"
             value={form.nombre}
             onChange={cambiar}
           />
 
-          <label>Honorarios Cruzmonty</label>
+          <label>Honorarios del artista</label>
+
           <input
             name="honorarios"
             type="number"
@@ -265,6 +437,7 @@ export default function Tarifas({ goBack }) {
           />
 
           <label>Tarifa por músico</label>
+
           <input
             name="tarifa_musico"
             type="number"
@@ -274,6 +447,7 @@ export default function Tarifas({ goBack }) {
           />
 
           <label>Dieta por músico</label>
+
           <input
             name="dieta_musico"
             type="number"
@@ -283,6 +457,7 @@ export default function Tarifas({ goBack }) {
           />
 
           <label>Transporte</label>
+
           <input
             name="transporte"
             type="number"
@@ -292,6 +467,7 @@ export default function Tarifas({ goBack }) {
           />
 
           <label>Alquiler de sonido</label>
+
           <input
             name="sonido"
             type="number"

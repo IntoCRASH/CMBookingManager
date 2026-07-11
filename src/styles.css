@@ -2865,3 +2865,479 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =========================================================
+   CONFIGURACIÓN INDEPENDIENTE POR ARTISTA
+========================================================= */
+
+.config-artista-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 360px);
+  gap: 22px;
+  align-items: center;
+  margin-bottom: 22px;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.76);
+  border-radius: 24px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.92),
+      rgba(245, 247, 255, 0.86)
+    );
+  backdrop-filter: blur(22px);
+  box-shadow: var(--shadow-xs);
+}
+
+.config-artista-card strong {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--text);
+  font-size: clamp(20px, 3vw, 28px);
+  letter-spacing: -0.04em;
+}
+
+.config-artista-card p {
+  max-width: 720px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.config-artista-kicker {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--accent-2);
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.config-artista-control label {
+  margin-top: 0;
+}
+
+.config-artista-control select {
+  background-color: rgba(255, 255, 255, 0.96);
+}
+
+.config-artista-empty {
+  display: grid;
+  gap: 5px;
+  padding: 28px 18px;
+  border: 1px dashed rgba(115, 87, 255, 0.22);
+  border-radius: 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.config-artista-empty strong {
+  color: var(--text);
+  font-size: 17px;
+}
+
+.config-artista-empty span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.config-modal-context {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(115, 87, 255, 0.14);
+  border-radius: 14px;
+  color: var(--muted);
+  background: rgba(115, 87, 255, 0.07);
+}
+
+.config-modal-context strong {
+  color: var(--text);
+}
+
+.tarifa-nombre > div,
+.formato-nombre > div,
+.tipo-evento-nombre > div {
+  min-width: 0;
+}
+
+.tarifa-nombre small,
+.formato-nombre small,
+.tipo-evento-nombre small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+@media (max-width: 760px) {
+  .config-artista-card {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 18px;
+  }
+}
+
+/* =========================================================
+   CALENDARIO MULTIARTISTA
+========================================================= */
+
+.calendario-page {
+  max-width: 1500px;
+}
+
+.calendario-mes-titulo {
+  text-transform: capitalize;
+}
+
+.calendario-controles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--shadow-xs);
+  backdrop-filter: blur(18px);
+}
+
+.calendario-controles button {
+  min-width: 146px;
+}
+
+.calendario-controles .calendario-hoy-btn {
+  min-width: 84px;
+  color: #4f35ff;
+  border: 1px solid rgba(115, 87, 255, 0.14);
+  background: rgba(115, 87, 255, 0.08);
+  box-shadow: none;
+}
+
+.calendario-estado {
+  padding: 42px 22px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  text-align: center;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.calendario-scroll {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.calendario-grid {
+  min-width: 1040px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.calendario-dia-header {
+  padding: 10px;
+  color: #4f35ff;
+  font-size: 12px;
+  font-weight: 950;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.calendario-dia {
+  min-height: 218px;
+  min-width: 0;
+  padding: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-xs);
+  backdrop-filter: blur(18px);
+}
+
+.calendario-dia-vacio {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: none;
+}
+
+.calendario-dia.es-hoy {
+  border-color: rgba(115, 87, 255, 0.42);
+  box-shadow:
+    0 0 0 3px rgba(115, 87, 255, 0.08),
+    var(--shadow-xs);
+}
+
+.calendario-dia.tiene-varios-eventos {
+  border-color: rgba(115, 87, 255, 0.22);
+}
+
+.calendario-dia-top {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.calendario-numero {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.calendario-dia.es-hoy .calendario-numero {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.calendario-eventos-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: #526079;
+  font-size: 9px;
+  font-weight: 950;
+  white-space: nowrap;
+  background: rgba(16, 24, 40, 0.06);
+}
+
+.calendario-eventos-count.multiple {
+  color: #5b3fd7;
+  border: 1px solid rgba(115, 87, 255, 0.14);
+  background: rgba(115, 87, 255, 0.11);
+}
+
+.calendario-eventos-lista {
+  max-height: 276px;
+  display: grid;
+  gap: 7px;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(115, 87, 255, 0.28) transparent;
+}
+
+.calendario-eventos-lista::-webkit-scrollbar {
+  width: 5px;
+}
+
+.calendario-eventos-lista::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(115, 87, 255, 0.28);
+}
+
+.calendario-evento {
+  position: relative;
+  margin: 0;
+  padding: 9px 9px 9px 12px;
+  overflow: hidden;
+  border: 1px solid rgba(16, 24, 40, 0.07);
+  border-left: 4px solid var(--artista-color);
+  border-radius: 12px;
+  font-size: 11px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--artista-fondo),
+      rgba(255, 255, 255, 0.84)
+    );
+  box-shadow: 0 7px 18px rgba(16, 24, 40, 0.05);
+}
+
+.calendario-evento.artista-color-0 {
+  --artista-color: #7357ff;
+  --artista-fondo: rgba(115, 87, 255, 0.12);
+}
+
+.calendario-evento.artista-color-1 {
+  --artista-color: #1687e8;
+  --artista-fondo: rgba(22, 135, 232, 0.12);
+}
+
+.calendario-evento.artista-color-2 {
+  --artista-color: #e83e76;
+  --artista-fondo: rgba(232, 62, 118, 0.11);
+}
+
+.calendario-evento.artista-color-3 {
+  --artista-color: #ed8a16;
+  --artista-fondo: rgba(237, 138, 22, 0.12);
+}
+
+.calendario-evento.artista-color-4 {
+  --artista-color: #169c68;
+  --artista-fondo: rgba(22, 156, 104, 0.11);
+}
+
+.calendario-evento.artista-color-5 {
+  --artista-color: #8b5bda;
+  --artista-fondo: rgba(139, 91, 218, 0.12);
+}
+
+.calendario-evento-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.calendario-evento-cabecera strong {
+  min-width: 0;
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 950;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendario-evento-hora {
+  flex: 0 0 auto;
+  padding: 2px 5px;
+  border-radius: 999px;
+  color: var(--artista-color);
+  font-size: 8px;
+  font-weight: 950;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.calendario-evento-venue,
+.calendario-evento-cliente {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendario-evento-venue {
+  margin-top: 4px;
+  color: var(--text-soft);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.calendario-evento-cliente {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+  opacity: 1;
+}
+
+.calendario-acciones {
+  display: flex;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.calendario-acciones button {
+  min-width: 0;
+  min-height: 25px;
+  flex: 1;
+  padding: 0 7px;
+  border-radius: 8px;
+  font-size: 9px;
+}
+
+@media (min-width: 1250px) {
+  .calendario-grid {
+    min-width: 0;
+  }
+
+  .calendario-dia {
+    min-height: 232px;
+  }
+}
+
+@media (max-width: 980px) {
+  .calendario-grid {
+    min-width: 980px;
+    grid-template-columns: repeat(7, minmax(130px, 1fr));
+    gap: 7px;
+  }
+
+  .calendario-dia {
+    min-height: 188px;
+    padding: 7px;
+  }
+
+  .calendario-eventos-lista {
+    max-height: 235px;
+  }
+
+  .calendario-evento {
+    padding: 7px 7px 7px 9px;
+  }
+
+  .calendario-acciones {
+    display: flex;
+  }
+}
+
+@media (max-width: 680px) {
+  .calendario-page {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .calendario-controles {
+    display: grid;
+    grid-template-columns: 1fr 72px 1fr;
+    gap: 7px;
+    padding: 9px;
+  }
+
+  .calendario-controles button,
+  .calendario-controles .calendario-hoy-btn {
+    min-width: 0;
+    min-height: 40px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  .calendario-grid {
+    min-width: 910px;
+    grid-template-columns: repeat(7, minmax(122px, 1fr));
+  }
+
+  .calendario-dia {
+    min-height: 178px;
+  }
+
+  .calendario-evento-cabecera strong {
+    font-size: 10.5px;
+  }
+
+  .calendario-evento-venue {
+    font-size: 9.5px;
+  }
+
+  .calendario-evento-cliente {
+    font-size: 8.5px;
+  }
+
+  .calendario-acciones button {
+    font-size: 8.5px;
+  }
+}
+

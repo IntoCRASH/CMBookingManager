@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
 import { getClientes, crearCliente } from '../lib/clientesService';
-import { getProvincias } from '../lib/provinciasService';
+import { getProvinciasActivas } from '../lib/provinciasService';
 import { getFormatosActivos } from '../lib/formatosService';
 import { calcularCotizacion } from '../lib/calcularCotizacion';
 import { getTiposEventoConfig } from '../lib/tiposEventoConfigService';
@@ -53,6 +53,9 @@ export default function NuevaCotizacion({
   const [formatos, setFormatos] = useState([]);
   const [tiposEvento, setTiposEvento] = useState([]);
   const [artistas, setArtistas] = useState([]);
+  const [cargandoConfiguracion, setCargandoConfiguracion] = useState(false);
+  const [artistaOriginalId, setArtistaOriginalId] = useState(null);
+  const [comisionOriginal, setComisionOriginal] = useState(null);
   const [form, setForm] = useState(formInicial);
   const [resultado, setResultado] = useState(null);
   const [error, setError] = useState('');
@@ -61,97 +64,168 @@ export default function NuevaCotizacion({
   const resultadoRef = useRef(null);
 
   useEffect(() => {
-    cargarDatos();
-
-    if (cotizacionId) {
-      cargarCotizacion();
-    }
+    inicializar();
   }, [cotizacionId]);
 
-  async function cargarCotizacion() {
-    const c = await getCotizacionById(cotizacionId);
+  useEffect(() => {
+    cargarConfiguracionArtista(form.artista_id);
+  }, [form.artista_id]);
 
-    setModoEdicion(true);
-
-    setForm({
-      ...formInicial,
-
-      id: c.id,
-
-      cliente_id: c.cliente_id,
-      cliente_nombre: c.clientes?.nombre || '',
-      cliente_telefono: c.clientes?.telefono || '',
-      cliente_empresa: c.clientes?.empresa || '',
-      cliente_email: c.clientes?.email || '',
-
-      artista_id: c.artista_id || '',
-      provincia_id: c.provincia_id,
-      formato_id: c.formato_id || '',
-
-      fecha_evento: c.fecha_evento || '',
-      tipo_evento_config_id: c.tipo_evento_config_id || '',
-      nombre_evento: c.nombre_evento || '',
-      venue: c.venue || '',
-      direccion_evento: c.direccion_evento || '',
-      hora_montaje: c.hora_montaje || '',
-      hora_inicio: c.hora_inicio || '',
-      hora_fin: c.hora_fin || '',
-      invitados: c.invitados || '',
-      contacto_evento: c.contacto_evento || '',
-      telefono_contacto: c.telefono_contacto || '',
-      observaciones: c.observaciones || '',
-
-      cantidad_musicos: c.cantidad_musicos || 1,
-      incluye_sonido: c.incluye_sonido,
-      descuento: c.descuento,
-      estado: c.estado,
-    });
-
-    setResultado({
-      honorarios: c.honorarios,
-      nomina: c.nomina,
-      dieta: c.dieta,
-      transporte: c.transporte,
-      sonido: c.sonido,
-      road_manager: c.road_manager,
-      subtotal: c.subtotal,
-      descuento: c.descuento,
-      monto_descuento: c.monto_descuento,
-      comision: c.comision,
-      total: c.total,
-    });
-  }
-
-  async function cargarDatos() {
+  async function inicializar() {
     try {
-      const [
-        clientesData,
-        provinciasData,
-        formatosData,
-        tiposEventoData,
-        artistasData,
-      ] = await Promise.all([
-        getClientes(),
-        getProvincias(),
-        getFormatosActivos(),
-        getTiposEventoConfig(),
-        getMisArtistas(),
-      ]);
+      const [clientesData, artistasData] =
+        await Promise.all([
+          getClientes(),
+          getMisArtistas(),
+        ]);
 
       setClientes(clientesData);
-      setProvincias(
-        provinciasData.filter((p) => p.activa)
-      );
-      setFormatos(formatosData);
-      setTiposEvento(tiposEventoData);
       setArtistas(artistasData);
+
+      if (cotizacionId) {
+        const c = await getCotizacionById(cotizacionId);
+
+        setModoEdicion(true);
+        setArtistaOriginalId(c.artista_id || null);
+        setComisionOriginal(
+          c.comision_porcentaje_snapshot ?? null
+        );
+
+        setForm({
+          ...formInicial,
+
+          id: c.id,
+
+          cliente_id: c.cliente_id,
+          cliente_nombre: c.clientes?.nombre || '',
+          cliente_telefono: c.clientes?.telefono || '',
+          cliente_empresa: c.clientes?.empresa || '',
+          cliente_email: c.clientes?.email || '',
+
+          artista_id: c.artista_id || '',
+          provincia_id: c.provincia_id || '',
+          formato_id: c.formato_id || '',
+
+          fecha_evento: c.fecha_evento || '',
+          tipo_evento_config_id:
+            c.tipo_evento_config_id || '',
+          nombre_evento: c.nombre_evento || '',
+          venue: c.venue || '',
+          direccion_evento:
+            c.direccion_evento || '',
+          hora_montaje: c.hora_montaje || '',
+          hora_inicio: c.hora_inicio || '',
+          hora_fin: c.hora_fin || '',
+          invitados: c.invitados || '',
+          contacto_evento:
+            c.contacto_evento || '',
+          telefono_contacto:
+            c.telefono_contacto || '',
+          observaciones: c.observaciones || '',
+
+          cantidad_musicos:
+            c.cantidad_musicos || 1,
+          incluye_sonido:
+            Boolean(c.incluye_sonido),
+          descuento: Number(c.descuento || 0),
+          estado:
+            c.estado ||
+            'Pendiente de aprobación',
+        });
+
+        setResultado({
+          honorarios: c.honorarios,
+          nomina: c.nomina,
+          dieta: c.dieta,
+          transporte: c.transporte,
+          sonido: c.sonido,
+          road_manager: c.road_manager,
+          subtotal: c.subtotal,
+          descuento: c.descuento,
+          monto_descuento: c.monto_descuento,
+          comision: c.comision,
+          total: c.total,
+          multiplicador_honorarios:
+            c.multiplicador_honorarios || 1,
+          ensayo_extra: c.ensayo_extra || 0,
+          produccion_extra:
+            c.produccion_extra || 0,
+        });
+
+        return;
+      }
+
+      setModoEdicion(false);
+      setArtistaOriginalId(null);
+      setComisionOriginal(null);
+
+      const autorizados = artistasData.filter(
+        (artista) =>
+          artista.estado_autorizacion ===
+          'autorizado'
+      );
+
+      setForm({
+        ...formInicial,
+        artista_id:
+          autorizados.length === 1
+            ? String(autorizados[0].id)
+            : '',
+      });
+
+      setResultado(null);
     } catch (err) {
       console.error(err);
 
+      const mensaje =
+        err.message ||
+        'No se pudieron cargar los datos de la cotización.';
+
+      setError(mensaje);
+      toast.error(mensaje);
+    }
+  }
+
+  async function cargarConfiguracionArtista(
+    artistaId
+  ) {
+    if (!artistaId) {
+      setProvincias([]);
+      setFormatos([]);
+      setTiposEvento([]);
+      setCargandoConfiguracion(false);
+      return;
+    }
+
+    try {
+      setCargandoConfiguracion(true);
+
+      const [
+        provinciasData,
+        formatosData,
+        tiposEventoData,
+      ] = await Promise.all([
+        getProvinciasActivas(artistaId),
+        getFormatosActivos(artistaId),
+        getTiposEventoConfig(artistaId),
+      ]);
+
+      setProvincias(provinciasData);
+      setFormatos(formatosData);
+      setTiposEvento(tiposEventoData);
+    } catch (err) {
+      console.error(err);
+
+      setProvincias([]);
+      setFormatos([]);
+      setTiposEvento([]);
+
       toast.error(
         err.message ||
-          'No se pudieron cargar los datos de la cotización.'
+          'No se pudo cargar la configuración del artista.'
       );
+    } finally {
+      setCargandoConfiguracion(false);
     }
   }
 
@@ -163,6 +237,25 @@ export default function NuevaCotizacion({
       [name]: type === 'checkbox' ? checked : value,
     });
 
+    setResultado(null);
+    setError('');
+  }
+
+  function seleccionarArtista(event) {
+    const artistaId = event.target.value;
+
+    setForm((actual) => ({
+      ...actual,
+      artista_id: artistaId,
+      provincia_id: '',
+      formato_id: '',
+      tipo_evento_config_id: '',
+      cantidad_musicos: 1,
+    }));
+
+    setProvincias([]);
+    setFormatos([]);
+    setTiposEvento([]);
     setResultado(null);
     setError('');
   }
@@ -245,7 +338,7 @@ export default function NuevaCotizacion({
       return false;
     }
 
-    if (!form.formato_id && !modoEdicion) {
+    if (!form.formato_id) {
       toast.error('Selecciona un formato.');
       return false;
     }
@@ -256,6 +349,29 @@ export default function NuevaCotizacion({
     }
 
     return true;
+  }
+
+  function obtenerComisionPorcentaje() {
+    const artistaSeleccionado = artistas.find(
+      (artista) =>
+        String(artista.id) ===
+        String(form.artista_id)
+    );
+
+    const conservaSnapshot =
+      modoEdicion &&
+      String(form.artista_id) ===
+        String(artistaOriginalId) &&
+      comisionOriginal !== null &&
+      comisionOriginal !== undefined;
+
+    if (conservaSnapshot) {
+      return Number(comisionOriginal || 0);
+    }
+
+    return Number(
+      artistaSeleccionado?.comision_porcentaje || 0
+    );
   }
 
   async function calcular(e) {
@@ -300,10 +416,7 @@ export default function NuevaCotizacion({
     }
 
     const comisionPorcentaje =
-      Number(
-        artistaSeleccionado.comision_porcentaje ||
-          0
-      ) / 100;
+      obtenerComisionPorcentaje() / 100;
 
     const calculo = calcularCotizacion({
       provincia,
@@ -476,7 +589,7 @@ export default function NuevaCotizacion({
             <select
               name="artista_id"
               value={form.artista_id}
-              onChange={cambiar}
+              onChange={seleccionarArtista}
               required
             >
               <option value="">
@@ -544,9 +657,16 @@ export default function NuevaCotizacion({
               name="tipo_evento_config_id"
               value={form.tipo_evento_config_id}
               onChange={cambiar}
+              disabled={!form.artista_id || cargandoConfiguracion}
               required
             >
-              <option value="">Seleccionar tipo de evento</option>
+              <option value="">
+                {!form.artista_id
+                  ? 'Selecciona primero un artista'
+                  : cargandoConfiguracion
+                    ? 'Cargando tipos de evento...'
+                    : 'Seleccionar tipo de evento'}
+              </option>
 
               {tiposEvento.map((tipo) => (
                 <option key={tipo.id} value={tipo.id}>
@@ -576,8 +696,15 @@ export default function NuevaCotizacion({
               name="provincia_id"
               value={form.provincia_id}
               onChange={cambiar}
+              disabled={!form.artista_id || cargandoConfiguracion}
             >
-              <option value="">Seleccionar zona</option>
+              <option value="">
+                {!form.artista_id
+                  ? 'Selecciona primero un artista'
+                  : cargandoConfiguracion
+                    ? 'Cargando zonas...'
+                    : 'Seleccionar zona'}
+              </option>
               {provincias.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.nombre}
@@ -683,11 +810,14 @@ export default function NuevaCotizacion({
                   name="formato_id"
                   value={form.formato_id}
                   onChange={seleccionarFormato}
+                  disabled={!form.artista_id || cargandoConfiguracion}
                 >
                   <option value="">
-                    {modoEdicion && !form.formato_id
-                      ? `Formato anterior`
-                      : 'Seleccionar formato'}
+                    {!form.artista_id
+                      ? 'Selecciona primero un artista'
+                      : cargandoConfiguracion
+                        ? 'Cargando formatos...'
+                        : 'Seleccionar formato'}
                   </option>
 
                   {formatos.map((f) => (
@@ -876,15 +1006,12 @@ export default function NuevaCotizacion({
               <span>
                 Comisión del agente{' '}
                 (
-                {Number(
-                  artistas.find(
-                    (artista) =>
-                      String(artista.id) ===
-                      String(form.artista_id)
-                  )?.comision_porcentaje || 0
-                ).toLocaleString('es-DO', {
-                  maximumFractionDigits: 2,
-                })}
+                {obtenerComisionPorcentaje().toLocaleString(
+                  'es-DO',
+                  {
+                    maximumFractionDigits: 2,
+                  }
+                )}
                 %)
               </span>
 

@@ -145,6 +145,36 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
   const cliente = cotizacion.clientes || {};
   const provincia = cotizacion.provincias || {};
   const venue = cotizacion.venue || 'lugar del evento';
+
+  const zonaSnapshot = normalizeSnapshot(
+    cotizacion.zona_snapshot
+  );
+
+  const formatoSnapshot = normalizeSnapshot(
+    cotizacion.formato_snapshot
+  );
+
+  const tipoEventoSnapshot = normalizeSnapshot(
+    cotizacion.tipo_evento_snapshot
+  );
+
+  const zonaNombre =
+    cotizacion.zona_nombre_snapshot ||
+    zonaSnapshot.nombre ||
+    provincia.nombre ||
+    'N/A';
+
+  const formatoNombre =
+    cotizacion.formato_nombre_snapshot ||
+    formatoSnapshot.nombre ||
+    '';
+
+  const tipoEventoNombre =
+    cotizacion.tipo_evento_nombre_snapshot ||
+    tipoEventoSnapshot.nombre ||
+    cotizacion.tipo_evento ||
+    '';
+
   const snapshot = normalizeSnapshot(
     cotizacion.perfil_negocio_snapshot
   );
@@ -235,11 +265,23 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
               </p>
             )}
 
+            {tipoEventoNombre && (
+              <p>
+                <strong>Tipo:</strong> {tipoEventoNombre}
+              </p>
+            )}
+
+            {formatoNombre && (
+              <p>
+                <strong>Formato:</strong> {formatoNombre}
+              </p>
+            )}
+
             <p>
               <strong>Venue:</strong> {venue}
             </p>
             <p>
-              <strong>Zona:</strong> {provincia.nombre || 'N/A'}
+              <strong>Zona:</strong> {zonaNombre}
             </p>
             <p>
               <strong>Sonido:</strong>{' '}
@@ -263,6 +305,21 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
               <td>
                 Presentación musical de <strong>{artista}</strong>
 
+                {formatoNombre && (
+                  <>
+                    <br />
+                    Formato: <strong>{formatoNombre}</strong>
+                  </>
+                )}
+
+                {tipoEventoNombre && (
+                  <>
+                    <br />
+                    Tipo de evento:{' '}
+                    <strong>{tipoEventoNombre}</strong>
+                  </>
+                )}
+
                 {cotizacion.nombre_evento && (
                   <>
                     <br />
@@ -274,7 +331,7 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
                 <br />
                 Lugar: <strong>{venue}</strong>
                 <br />
-                Zona: <strong>{provincia.nombre || 'N/A'}</strong>
+                Zona: <strong>{zonaNombre}</strong>
                 <br />
                 Fecha:{' '}
                 <strong>

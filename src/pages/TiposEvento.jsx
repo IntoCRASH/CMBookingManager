@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
+import { getMisArtistas } from '../lib/artistasService';
 import {
+  deleteTipoEventoConfig,
   getTodosTiposEventoConfig,
   saveTipoEventoConfig,
-  deleteTipoEventoConfig,
 } from '../lib/tiposEventoConfigService';
 
 const nuevoRegistro = {
@@ -19,6 +20,8 @@ const nuevoRegistro = {
 };
 
 export default function TiposEvento({ goBack }) {
+  const [artistas, setArtistas] = useState([]);
+  const [artistaId, setArtistaId] = useState('');
   const [tiposEvento, setTiposEvento] = useState([]);
   const [form, setForm] = useState(nuevoRegistro);
   const [modalOpen, setModalOpen] = useState(false);
@@ -26,24 +29,81 @@ export default function TiposEvento({ goBack }) {
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(true);
 
+  const artistaSeleccionado = artistas.find(
+    (artista) =>
+      String(artista.id) === String(artistaId)
+  );
+
   useEffect(() => {
-    cargar();
+    cargarArtistas();
   }, []);
+
+  useEffect(() => {
+    if (!artistaId) {
+      setTiposEvento([]);
+      setCargando(false);
+      return;
+    }
+
+    cargar();
+  }, [artistaId]);
+
+  async function cargarArtistas() {
+    try {
+      setCargando(true);
+
+      const data = await getMisArtistas();
+      const lista = Array.isArray(data) ? data : [];
+
+      setArtistas(lista);
+
+      if (lista.length > 0) {
+        setArtistaId((actual) => actual || String(lista[0].id));
+      } else {
+        setCargando(false);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.message || 'No se pudieron cargar los artistas.'
+      );
+      setCargando(false);
+    }
+  }
 
   async function cargar() {
     try {
       setCargando(true);
-      const data = await getTodosTiposEventoConfig();
+
+      const data =
+        await getTodosTiposEventoConfig(artistaId);
+
       setTiposEvento(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'No se pudieron cargar los tipos de evento.');
+      toast.error(
+        err.message ||
+          'No se pudieron cargar los tipos de evento.'
+      );
     } finally {
       setCargando(false);
     }
   }
 
+  function cambiarArtista(event) {
+    setArtistaId(event.target.value);
+    setBusqueda('');
+    setModalOpen(false);
+    setForm(nuevoRegistro);
+    setError('');
+  }
+
   function nuevo() {
+    if (!artistaId) {
+      toast.error('Primero selecciona un artista.');
+      return;
+    }
+
     setForm(nuevoRegistro);
     setError('');
     setModalOpen(true);
@@ -66,7 +126,9 @@ export default function TiposEvento({ goBack }) {
         tipo.multiplicador_road_manager || 1
       ),
       ensayo_extra: Number(tipo.ensayo_extra || 0),
-      produccion_extra: Number(tipo.produccion_extra || 0),
+      produccion_extra: Number(
+        tipo.produccion_extra || 0
+      ),
       activo: Boolean(tipo.activo),
     });
 
@@ -75,8 +137,11 @@ export default function TiposEvento({ goBack }) {
   }
 
   async function duplicar(tipo) {
+    if (!artistaId) return;
+
     try {
-      const copia = {
+      await saveTipoEventoConfig({
+        artista_id: Number(artistaId),
         nombre: `${tipo.nombre || 'Tipo de evento'} copia`,
         multiplicador_honorarios: Number(
           tipo.multiplicador_honorarios || 1
@@ -91,23 +156,28 @@ export default function TiposEvento({ goBack }) {
           tipo.multiplicador_road_manager || 1
         ),
         ensayo_extra: Number(tipo.ensayo_extra || 0),
-        produccion_extra: Number(tipo.produccion_extra || 0),
+        produccion_extra: Number(
+          tipo.produccion_extra || 0
+        ),
         activo: Boolean(tipo.activo),
-      };
+      });
 
-      await saveTipoEventoConfig(copia);
-      toast.success('Tipo de evento duplicado correctamente.');
+      toast.success(
+        'Tipo de evento duplicado correctamente.'
+      );
+
       await cargar();
     } catch (err) {
       console.error(err);
       toast.error(
-        err.message || 'No se pudo duplicar el tipo de evento.'
+        err.message ||
+          'No se pudo duplicar el tipo de evento.'
       );
     }
   }
 
-  function cambiar(e) {
-    const { name, value, type, checked } = e.target;
+  function cambiar(event) {
+    const { name, value, type, checked } = event.target;
 
     setForm((actual) => ({
       ...actual,
@@ -115,31 +185,46 @@ export default function TiposEvento({ goBack }) {
     }));
   }
 
-  async function guardar(e) {
-    e.preventDefault();
+  async function guardar(event) {
+    event.preventDefault();
     setError('');
 
+    if (!artistaId) {
+      setError('Primero selecciona un artista.');
+      return;
+    }
+
     if (!form.nombre.trim()) {
-      setError('El nombre del tipo de evento es obligatorio.');
+      setError(
+        'El nombre del tipo de evento es obligatorio.'
+      );
       return;
     }
 
     if (Number(form.multiplicador_honorarios || 0) <= 0) {
-      setError('El multiplicador de honorarios debe ser mayor que cero.');
+      setError(
+        'El multiplicador de honorarios debe ser mayor que cero.'
+      );
       return;
     }
 
     if (Number(form.multiplicador_musicos || 0) <= 0) {
-      setError('El multiplicador de músicos debe ser mayor que cero.');
+      setError(
+        'El multiplicador de músicos debe ser mayor que cero.'
+      );
       return;
     }
 
     if (Number(form.multiplicador_sonido || 0) <= 0) {
-      setError('El multiplicador de sonido debe ser mayor que cero.');
+      setError(
+        'El multiplicador de sonido debe ser mayor que cero.'
+      );
       return;
     }
 
-    if (Number(form.multiplicador_road_manager || 0) <= 0) {
+    if (
+      Number(form.multiplicador_road_manager || 0) <= 0
+    ) {
       setError(
         'El multiplicador de Road Manager debe ser mayor que cero.'
       );
@@ -152,13 +237,16 @@ export default function TiposEvento({ goBack }) {
     }
 
     if (Number(form.produccion_extra || 0) < 0) {
-      setError('La producción extra no puede ser negativa.');
+      setError(
+        'La producción extra no puede ser negativa.'
+      );
       return;
     }
 
     try {
       await saveTipoEventoConfig({
         ...form,
+        artista_id: Number(artistaId),
         nombre: form.nombre.trim(),
         multiplicador_honorarios: Number(
           form.multiplicador_honorarios || 1
@@ -173,7 +261,9 @@ export default function TiposEvento({ goBack }) {
           form.multiplicador_road_manager || 1
         ),
         ensayo_extra: Number(form.ensayo_extra || 0),
-        produccion_extra: Number(form.produccion_extra || 0),
+        produccion_extra: Number(
+          form.produccion_extra || 0
+        ),
         activo: Boolean(form.activo),
       });
 
@@ -188,8 +278,10 @@ export default function TiposEvento({ goBack }) {
       await cargar();
     } catch (err) {
       console.error(err);
+
       const mensaje =
-        err.message || 'No se pudo guardar el tipo de evento.';
+        err.message ||
+        'No se pudo guardar el tipo de evento.';
 
       setError(mensaje);
       toast.error(mensaje);
@@ -197,20 +289,25 @@ export default function TiposEvento({ goBack }) {
   }
 
   async function borrar(id, nombre) {
-    const ok = confirm(
+    const ok = window.confirm(
       `¿Deseas borrar definitivamente el tipo de evento "${nombre || 'Sin nombre'}"?`
     );
 
     if (!ok) return;
 
     try {
-      await deleteTipoEventoConfig(id);
-      toast.success('Tipo de evento eliminado correctamente.');
+      await deleteTipoEventoConfig(id, artistaId);
+
+      toast.success(
+        'Tipo de evento eliminado correctamente.'
+      );
+
       await cargar();
     } catch (err) {
       console.error(err);
       toast.error(
-        err.message || 'No se pudo borrar el tipo de evento.'
+        err.message ||
+          'No se pudo borrar el tipo de evento.'
       );
     }
   }
@@ -232,7 +329,11 @@ export default function TiposEvento({ goBack }) {
       <div className="top-bar">
         <div>
           <h1>Tipos de Evento</h1>
-          <p>Configura multiplicadores, ensayos y producción</p>
+
+          <p>
+            Multiplicadores, ensayos y producción por
+            artista
+          </p>
         </div>
 
         <button type="button" onClick={goBack}>
@@ -240,32 +341,92 @@ export default function TiposEvento({ goBack }) {
         </button>
       </div>
 
+      <section className="config-artista-card">
+        <div>
+          <span className="config-artista-kicker">
+            Configuración independiente
+          </span>
+
+          <strong>
+            Tipos de evento de{' '}
+            {artistaSeleccionado?.nombre ||
+              'un artista'}
+          </strong>
+
+          <p>
+            Los multiplicadores y costos extra se
+            aplican únicamente al artista seleccionado.
+          </p>
+        </div>
+
+        <div className="config-artista-control">
+          <label htmlFor="tipos-artista">
+            Artista
+          </label>
+
+          <select
+            id="tipos-artista"
+            value={artistaId}
+            onChange={cambiarArtista}
+          >
+            <option value="">
+              Seleccionar artista
+            </option>
+
+            {artistas.map((artista) => (
+              <option key={artista.id} value={artista.id}>
+                {artista.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+      </section>
+
       <div className="actions-row tipos-evento-actions">
         <input
           type="search"
           placeholder="Buscar tipo de evento..."
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
+          onChange={(event) =>
+            setBusqueda(event.target.value)
+          }
+          disabled={!artistaId}
         />
 
-        <button type="button" onClick={nuevo}>
+        <button
+          type="button"
+          onClick={nuevo}
+          disabled={!artistaId}
+        >
           + Nuevo Tipo
         </button>
       </div>
 
       <div className="tipos-evento-lista">
-        <div className="tipos-evento-header" aria-hidden="true">
+        <div
+          className="tipos-evento-header"
+          aria-hidden="true"
+        >
           <span>Tipo de evento</span>
           <span>Acciones</span>
         </div>
 
-        {cargando ? (
+        {artistas.length === 0 ? (
+          <div className="config-artista-empty">
+            <strong>No tienes artistas activos.</strong>
+            <span>
+              Crea primero un artista desde la página
+              Artistas.
+            </span>
+          </div>
+        ) : cargando ? (
           <div className="tipos-evento-empty">
             Cargando tipos de evento...
           </div>
         ) : tiposFiltrados.length === 0 ? (
           <div className="tipos-evento-empty">
-            No se encontraron tipos de evento.
+            Este artista todavía no tiene tipos de
+            evento configurados.
           </div>
         ) : (
           tiposFiltrados.map((tipo) => (
@@ -274,8 +435,22 @@ export default function TiposEvento({ goBack }) {
               key={tipo.id}
             >
               <div className="tipo-evento-nombre">
-                <span className="tipo-evento-icono">🎤</span>
-                <strong>{tipo.nombre || 'Sin nombre'}</strong>
+                <span className="tipo-evento-icono">
+                  🎤
+                </span>
+
+                <div>
+                  <strong>
+                    {tipo.nombre || 'Sin nombre'}
+                  </strong>
+
+                  <small>
+                    Honorarios x
+                    {Number(
+                      tipo.multiplicador_honorarios || 1
+                    ).toLocaleString('es-DO')}
+                  </small>
+                </div>
               </div>
 
               <div className="tipo-evento-acciones">
@@ -296,7 +471,9 @@ export default function TiposEvento({ goBack }) {
                 <button
                   type="button"
                   className="danger-btn"
-                  onClick={() => borrar(tipo.id, tipo.nombre)}
+                  onClick={() =>
+                    borrar(tipo.id, tipo.nombre)
+                  }
                 >
                   Borrar
                 </button>
@@ -316,7 +493,16 @@ export default function TiposEvento({ goBack }) {
         onClose={() => setModalOpen(false)}
       >
         <form onSubmit={guardar}>
+          <p className="config-modal-context">
+            Artista:{' '}
+            <strong>
+              {artistaSeleccionado?.nombre ||
+                'No seleccionado'}
+            </strong>
+          </p>
+
           <label>Nombre del tipo de evento *</label>
+
           <input
             name="nombre"
             value={form.nombre}
@@ -325,6 +511,7 @@ export default function TiposEvento({ goBack }) {
           />
 
           <label>Multiplicador de honorarios *</label>
+
           <input
             name="multiplicador_honorarios"
             type="number"
@@ -335,6 +522,7 @@ export default function TiposEvento({ goBack }) {
           />
 
           <label>Multiplicador de músicos *</label>
+
           <input
             name="multiplicador_musicos"
             type="number"
@@ -345,6 +533,7 @@ export default function TiposEvento({ goBack }) {
           />
 
           <label>Multiplicador de sonido *</label>
+
           <input
             name="multiplicador_sonido"
             type="number"
@@ -355,6 +544,7 @@ export default function TiposEvento({ goBack }) {
           />
 
           <label>Multiplicador Road Manager *</label>
+
           <input
             name="multiplicador_road_manager"
             type="number"
@@ -365,6 +555,7 @@ export default function TiposEvento({ goBack }) {
           />
 
           <label>Ensayo extra</label>
+
           <input
             name="ensayo_extra"
             type="number"
@@ -375,6 +566,7 @@ export default function TiposEvento({ goBack }) {
           />
 
           <label>Producción extra</label>
+
           <input
             name="produccion_extra"
             type="number"
