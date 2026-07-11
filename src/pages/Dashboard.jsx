@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getMyProfile } from '../lib/profileService';
 import { getCotizaciones } from '../lib/cotizacionesService';
 
 export default function Dashboard({
-  session,
   workspaceId,
   workspace,
   esArtista,
@@ -11,13 +9,13 @@ export default function Dashboard({
   goCotizaciones,
   goCalendario,
   goComisiones,
+  goDocumentos,
   goFormatos,
   goTiposEvento,
   goPerfil,
   goEquipo,
   goInvitaciones,
 }) {
-  const [profile, setProfile] = useState(null);
   const [eventosHoy, setEventosHoy] = useState(0);
   const [proximoEvento, setProximoEvento] = useState(null);
   const [cotizacionesPendientes, setCotizacionesPendientes] =
@@ -26,18 +24,8 @@ export default function Dashboard({
   const [cobradoMes, setCobradoMes] = useState(0);
 
   useEffect(() => {
-    cargarPerfil();
     cargarResumen();
   }, [workspaceId]);
-
-  async function cargarPerfil() {
-    try {
-      const currentProfile = await getMyProfile();
-      setProfile(currentProfile);
-    } catch (err) {
-      console.error(err);
-    }
-  }
 
   function obtenerPagado(cotizacion) {
     return Number(
@@ -170,10 +158,6 @@ export default function Dashboard({
     proximoEvento?.fecha_evento
   );
 
-  const nombreSaludo = String(profile?.nombre || '')
-    .trim()
-    .split(/\s+/)[0];
-
   const nombreArtista =
     workspace?.workspace_name || 'Artista';
 
@@ -183,9 +167,7 @@ export default function Dashboard({
         <div>
           <span className="eyebrow">MiBooking</span>
 
-          <h1>
-            Hola{nombreSaludo ? `, ${nombreSaludo}!` : '!'}
-          </h1>
+          <h1>Hola, {nombreArtista}!</h1>
 
           <p>
             Hoy, <strong>{nombreArtista}</strong> tiene{' '}
@@ -197,17 +179,13 @@ export default function Dashboard({
 
         <div className="profile-pill">
           <span>
-            {(profile?.nombre ||
-              session?.user?.email ||
-              'M')
+            {nombreArtista
               .slice(0, 1)
               .toUpperCase()}
           </span>
 
           <div>
-            <strong>
-              {profile?.nombre || 'Usuario'}
-            </strong>
+            <strong>{nombreArtista}</strong>
 
             <small>
               {esArtista ? 'Artista' : 'Gestor'}
@@ -340,6 +318,11 @@ export default function Dashboard({
           <button type="button" onClick={goComisiones}>
             💰
             <span>Comisiones</span>
+          </button>
+
+          <button type="button" onClick={goDocumentos}>
+            🗂️
+            <span>Documentos</span>
           </button>
 
           {esArtista ? (

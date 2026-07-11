@@ -1,0 +1,385 @@
+/* =========================================================
+   MIBOOKING — RIDERS TÉCNICOS
+========================================================= */
+
+.riders-page {
+  max-width: 1540px;
+}
+
+.riders-document-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(430px, 100%);
+  gap: 6px;
+  margin: 18px 0 2px;
+  padding: 5px;
+  border: 1px solid rgba(115, 87, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.riders-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.riders-document-tabs button,
+.riders-toolbar button {
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid var(--line, rgba(16, 24, 40, 0.08));
+  border-radius: 12px;
+  color: var(--text-soft, #25324b);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--shadow-xs, 0 6px 18px rgba(16, 24, 40, 0.06));
+}
+
+.riders-document-tabs button {
+  width: 100%;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.riders-document-tabs button:hover:not(:disabled),
+.riders-toolbar button:hover:not(:disabled) {
+  color: #4f35ff;
+  border-color: rgba(115, 87, 255, 0.2);
+  background: rgba(115, 87, 255, 0.08);
+  box-shadow: none;
+  transform: none;
+}
+
+.riders-document-tabs button.active,
+.riders-toolbar button.active {
+  color: #ffffff;
+  border-color: transparent;
+  background: linear-gradient(
+    135deg,
+    var(--accent, #21a7ff),
+    var(--accent-2, #7357ff)
+  );
+  box-shadow: 0 8px 20px rgba(115, 87, 255, 0.24);
+}
+
+.riders-list {
+  display: grid;
+  gap: 14px;
+}
+
+.rider-card {
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
+  background: var(--panel, #ffffff);
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.06);
+}
+
+.rider-card-main {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 0.9fr)
+    minmax(220px, 1.65fr)
+    minmax(140px, 1fr)
+    80px
+    105px;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+}
+
+.rider-card-main > div,
+.rider-card-main > span {
+  min-width: 0;
+}
+
+.rider-card-main span,
+.rider-number span {
+  display: block;
+  color: var(--muted, #64748b);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.rider-card-main strong {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--text, #0f172a);
+  font-size: 14px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rider-number strong {
+  color: var(--accent-2, #7357ff);
+}
+
+.rider-identity span,
+.rider-identity small {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rider-identity span {
+  color: var(--text-soft, #334155);
+}
+
+.rider-identity small {
+  color: var(--muted, #64748b);
+}
+
+.rider-status {
+  width: fit-content;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.rider-status.status-enviado,
+.rider-status.status-confirmado {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.rider-status.status-generado {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.rider-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 14px 18px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(248, 250, 252, 0.65);
+}
+
+.rider-card-actions button {
+  min-height: 38px;
+  padding: 9px 13px;
+  border-radius: 11px;
+}
+
+.rider-delete-button,
+.rider-delete-confirm {
+  border-color: rgba(239, 68, 68, 0.28) !important;
+  background: rgba(254, 226, 226, 0.75) !important;
+  color: #b91c1c !important;
+}
+
+.riders-empty {
+  padding: 52px 24px;
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+  border-radius: 20px;
+  text-align: center;
+}
+
+.rider-generator-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(330px, 0.72fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.rider-generator-form {
+  min-width: 0;
+}
+
+.rider-form-actions {
+  grid-column: 1 / -1;
+}
+
+.rider-preview-panel {
+  position: sticky;
+  top: 18px;
+}
+
+.rider-preview-paper {
+  min-height: 620px;
+  padding: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.1);
+  color: #0f172a;
+}
+
+.rider-preview-paper header {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.rider-preview-paper header img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+.rider-preview-paper header strong,
+.rider-preview-paper header span {
+  display: block;
+}
+
+.rider-preview-paper header strong {
+  font-size: 18px;
+}
+
+.rider-preview-paper header span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.rider-preview-paper h2 {
+  margin: 22px 0 12px;
+}
+
+.rider-preview-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 13px;
+  border-radius: 13px;
+  background: #f1f5f9;
+}
+
+.rider-preview-summary p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.rider-preview-members {
+  display: grid;
+  gap: 8px;
+}
+
+.rider-preview-members > div {
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.rider-preview-members strong,
+.rider-preview-members span,
+.rider-preview-members small {
+  display: block;
+}
+
+.rider-preview-members span,
+.rider-preview-members small {
+  margin-top: 3px;
+  color: #64748b;
+}
+
+.rider-preview-empty {
+  display: grid;
+  place-items: center;
+  min-height: 490px;
+  color: #64748b;
+  text-align: center;
+}
+
+.rider-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1700;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(9px);
+}
+
+.rider-modal {
+  width: min(620px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 22px;
+  border-radius: 20px;
+  background: var(--panel, #ffffff);
+  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.35);
+}
+
+.rider-modal h2 {
+  margin-top: 0;
+}
+
+.rider-delete-word {
+  margin: 15px 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+@media (max-width: 1050px) {
+  .rider-card-main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rider-generator-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rider-preview-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 680px) {
+  .rider-card-main {
+    grid-template-columns: 1fr;
+  }
+
+  .rider-identity span,
+  .rider-identity small,
+  .rider-card-main strong {
+    white-space: normal;
+  }
+
+  .rider-preview-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .riders-document-tabs,
+  .riders-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 680px) {
+  .riders-document-tabs {
+    width: 100%;
+  }
+
+  .riders-document-tabs button {
+    min-width: 0;
+    padding-inline: 10px;
+  }
+
+  .riders-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .riders-toolbar button {
+    width: 100%;
+  }
+}

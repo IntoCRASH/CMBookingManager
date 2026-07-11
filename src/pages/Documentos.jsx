@@ -25,6 +25,7 @@ import {
 import {
   generateContractPdfBlob,
 } from '../lib/contratoPdf';
+import Riders from './Riders';
 import './Documentos.css';
 
 const DELETE_CONFIRMATION_WORDS = [
@@ -135,6 +136,8 @@ export default function Documentos({
   const [cotizacion, setCotizacion] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [modo, setModo] = useState('lista');
+  const [documentSection, setDocumentSection] = useState('contratos');
+  const [riderInitialMode, setRiderInitialMode] = useState('lista');
   const [cargando, setCargando] = useState(true);
   const [cargandoCotizacion, setCargandoCotizacion] =
     useState(false);
@@ -1083,6 +1086,22 @@ export default function Documentos({
     }
   }
 
+  if (documentSection === 'riders') {
+    return (
+      <Riders
+        workspaceId={workspaceId}
+        workspace={workspace}
+        esArtista={esArtista}
+        goBack={goBack}
+        initialMode={riderInitialMode}
+        goContracts={() => {
+          setDocumentSection('contratos');
+          setRiderInitialMode('lista');
+        }}
+      />
+    );
+  }
+
   if (cargando) {
     return (
       <div className="dashboard documentos-page">
@@ -1109,6 +1128,22 @@ export default function Documentos({
         </button>
       </div>
 
+      <div className="documentos-section-tabs">
+        <button type="button" className="active">
+          Contratos
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setRiderInitialMode('lista');
+            setDocumentSection('riders');
+          }}
+        >
+          Riders técnicos
+        </button>
+      </div>
+
       <div className="documentos-toolbar">
         <button
           type="button"
@@ -1129,6 +1164,7 @@ export default function Documentos({
         >
           + Generar contrato
         </button>
+
       </div>
 
       {error && (

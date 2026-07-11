@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
+import RiderFormatoModal from './RiderFormatoModal';
 import {
   deleteFormato,
   getFormatos,
@@ -13,6 +14,14 @@ const nuevoRegistro = {
   activo: true,
 };
 
+function hasRiderConfig(formato) {
+  return Boolean(
+    formato?.rider_config &&
+      Array.isArray(formato.rider_config.integrantes) &&
+      formato.rider_config.integrantes.length > 0
+  );
+}
+
 export default function Formatos({
   workspaceId,
   workspace,
@@ -21,6 +30,7 @@ export default function Formatos({
   const [formatos, setFormatos] = useState([]);
   const [form, setForm] = useState(nuevoRegistro);
   const [modalOpen, setModalOpen] = useState(false);
+  const [riderFormato, setRiderFormato] = useState(null);
   const [busqueda, setBusqueda] = useState('');
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(true);
@@ -31,6 +41,7 @@ export default function Formatos({
   useEffect(() => {
     setBusqueda('');
     setModalOpen(false);
+    setRiderFormato(null);
     setForm(nuevoRegistro);
     setError('');
 
@@ -102,11 +113,21 @@ export default function Formatos({
             formato.cantidad_musicos || 1
           ),
           activo: Boolean(formato.activo),
+          rider_config:
+            formato.rider_config &&
+            typeof formato.rider_config === 'object'
+              ? formato.rider_config
+              : {},
         },
         workspaceId
       );
 
-      toast.success('Formato duplicado correctamente.');
+      toast.success(
+        hasRiderConfig(formato)
+          ? 'Formato y configuración técnica duplicados.'
+          : 'Formato duplicado correctamente.'
+      );
+
       await cargar();
     } catch (err) {
       console.error(err);
@@ -203,6 +224,16 @@ export default function Formatos({
     }
   }
 
+  function riderGuardado(saved) {
+    setFormatos((actuales) =>
+      actuales.map((item) =>
+        String(item.id) === String(saved.id)
+          ? saved
+          : item
+      )
+    );
+  }
+
   const formatosFiltrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
 
@@ -220,7 +251,10 @@ export default function Formatos({
       <div className="top-bar">
         <div>
           <h1>Formatos</h1>
-          <p>Formatos musicales de {nombreArtista}</p>
+          <p>
+            Formatos musicales y configuración técnica de{' '}
+            {nombreArtista}
+          </p>
         </div>
 
         <button type="button" onClick={goBack}>
@@ -237,9 +271,8 @@ export default function Formatos({
           <strong>Formatos de {nombreArtista}</strong>
 
           <p>
-            Estos formatos pertenecen exclusivamente al
-            Artista activo y estarán disponibles al crear
-            cotizaciones.
+            Cada Formato puede tener su propia formación,
+            lista de canales, monitores, backline y stage plot.
           </p>
         </div>
 
@@ -319,6 +352,19 @@ export default function Formatos({
                     ) !== 1
                       ? 's'
                       : ''}
+                    {' · '}
+                    <span
+                      style={{
+                        fontWeight: 850,
+                        color: hasRiderConfig(formato)
+                          ? '#15803d'
+                          : '#b45309',
+                      }}
+                    >
+                      {hasRiderConfig(formato)
+                        ? 'Rider configurado'
+                        : 'Rider pendiente'}
+                    </span>
                   </small>
                 </div>
               </div>
@@ -329,6 +375,13 @@ export default function Formatos({
                   onClick={() => editar(formato)}
                 >
                   Editar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRiderFormato(formato)}
+                >
+                  Configurar rider
                 </button>
 
                 <button
@@ -372,7 +425,7 @@ export default function Formatos({
             placeholder="Ej: Trío, Full Band, Orquesta full"
           />
 
-          <label>Cantidad de músicos *</label>
+          <label>Cantidad de músicos acompañantes *</label>
 
           <input
             name="cantidad_musicos"
@@ -381,6 +434,12 @@ export default function Formatos({
             value={form.cantidad_musicos}
             onChange={cambiar}
           />
+
+          <p style={{ marginTop: 8 }}>
+            La configuración del rider permite agregar al
+            Artista principal y ajustar manualmente la formación
+            completa en tarima.
+          </p>
 
           <label className="check-row">
             <input
@@ -408,6 +467,14 @@ export default function Formatos({
           </div>
         </form>
       </Modal>
+
+      <RiderFormatoModal
+        open={Boolean(riderFormato)}
+        formato={riderFormato}
+        workspaceId={workspaceId}
+        onClose={() => setRiderFormato(null)}
+        onSaved={riderGuardado}
+      />
     </div>
   );
 }

@@ -727,38 +727,36 @@ export default function App() {
             ))}
           </div>
 
-          <div className="workspace-topbar-context">
-            <span>Trabajando con</span>
-
-            {workspaces.length > 1 ? (
-              <select
-                value={activeWorkspace.workspace_id}
-                onChange={cambiarWorkspace}
-                aria-label="Seleccionar Artista"
-              >
-                {workspaces.map((workspace) => (
-                  <option
-                    key={workspace.workspace_id}
-                    value={workspace.workspace_id}
-                  >
-                    {workspace.workspace_name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <strong>{activeWorkspace.workspace_name}</strong>
-            )}
-          </div>
-
           <div className="topbar-user">
             <div className="avatar">
-              {(profile?.nombre || session.user.email || 'M')
+              {(activeWorkspace?.workspace_name || 'A')
                 .slice(0, 1)
                 .toUpperCase()}
             </div>
 
             <div className="user-meta">
-              <strong>{profile?.nombre || 'Usuario'}</strong>
+              {workspaces.length > 1 ? (
+                <select
+                  className="topbar-artist-select"
+                  value={activeWorkspace.workspace_id}
+                  onChange={cambiarWorkspace}
+                  aria-label="Seleccionar Artista"
+                >
+                  {workspaces.map((workspaceItem) => (
+                    <option
+                      key={workspaceItem.workspace_id}
+                      value={workspaceItem.workspace_id}
+                    >
+                      {workspaceItem.workspace_name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <strong>
+                  {activeWorkspace.workspace_name || 'Artista'}
+                </strong>
+              )}
+
               <small>{roleLabel}</small>
             </div>
 
@@ -770,6 +768,7 @@ export default function App() {
               Salir
             </button>
           </div>
+
         </nav>
       )}
 

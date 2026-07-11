@@ -9,6 +9,7 @@
 .documentos-toolbar {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
   margin: 18px 0 22px;
 }
@@ -16,13 +17,29 @@
 .documentos-toolbar button {
   min-height: 42px;
   padding: 10px 16px;
+  border: 1px solid var(--line, rgba(16, 24, 40, 0.08));
   border-radius: 12px;
+  color: var(--text-soft, #25324b);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--shadow-xs, 0 6px 18px rgba(16, 24, 40, 0.06));
+}
+
+.documentos-toolbar button:hover:not(:disabled) {
+  color: #4f35ff;
+  border-color: rgba(115, 87, 255, 0.2);
+  background: rgba(115, 87, 255, 0.08);
+  box-shadow: var(--shadow-xs, 0 6px 18px rgba(16, 24, 40, 0.06));
 }
 
 .documentos-toolbar button.active {
-  background: var(--primary);
-  color: #fff;
+  color: #ffffff;
   border-color: transparent;
+  background: linear-gradient(
+    135deg,
+    var(--accent, #21a7ff),
+    var(--accent-2, #7357ff)
+  );
+  box-shadow: 0 10px 24px rgba(115, 87, 255, 0.22);
 }
 
 .documentos-error {
@@ -60,7 +77,7 @@
   padding: 18px;
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 18px;
-  background: var(--card);
+  background: var(--surface-3, #ffffff);
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
 }
 
@@ -326,7 +343,7 @@
   overflow-y: auto;
   border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 20px;
-  background: var(--card);
+  background: var(--surface-3, #ffffff);
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
 }
 
@@ -371,7 +388,7 @@
   overflow-y: auto;
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 20px;
-  background: var(--card);
+  background: var(--surface-3, #ffffff);
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.42);
 }
 
@@ -548,5 +565,59 @@
 
   .documentos-delete-actions button {
     width: 100%;
+  }
+}
+
+/* Navegación principal entre Contratos y Riders. */
+.documentos-section-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(430px, 100%);
+  gap: 6px;
+  margin: 18px 0 2px;
+  padding: 5px;
+  border: 1px solid rgba(115, 87, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.documentos-section-tabs button {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 15px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: var(--text-soft, #25324b);
+  background: transparent;
+  box-shadow: none;
+}
+
+.documentos-section-tabs button:hover:not(:disabled) {
+  color: #4f35ff;
+  background: rgba(115, 87, 255, 0.08);
+  box-shadow: none;
+  transform: none;
+}
+
+.documentos-section-tabs button.active {
+  color: #ffffff;
+  border-color: transparent;
+  background: linear-gradient(
+    135deg,
+    var(--accent, #21a7ff),
+    var(--accent-2, #7357ff)
+  );
+  box-shadow: 0 8px 20px rgba(115, 87, 255, 0.24);
+}
+
+@media (max-width: 680px) {
+  .documentos-section-tabs {
+    width: 100%;
+  }
+
+  .documentos-section-tabs button {
+    min-width: 0;
+    padding-inline: 10px;
   }
 }
