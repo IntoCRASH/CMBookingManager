@@ -1,0 +1,552 @@
+/* =========================================================
+   MIBOOKING — DOCUMENTOS Y CONTRATOS
+========================================================= */
+
+.documentos-page {
+  max-width: 1540px;
+}
+
+.documentos-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 22px;
+}
+
+.documentos-toolbar button {
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 12px;
+}
+
+.documentos-toolbar button.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+.documentos-error {
+  margin-bottom: 18px;
+}
+
+.documentos-listado {
+  display: grid;
+  gap: 14px;
+}
+
+.documentos-empty {
+  padding: 34px;
+  text-align: center;
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.documentos-empty h2 {
+  margin: 0 0 8px;
+}
+
+.documentos-empty p {
+  margin: 0 auto 18px;
+  max-width: 620px;
+  color: var(--muted);
+}
+
+.documento-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.documento-card-main {
+  display: grid;
+  grid-template-columns:
+    minmax(120px, 0.8fr)
+    minmax(240px, 2fr)
+    minmax(100px, 0.75fr)
+    minmax(70px, 0.45fr)
+    minmax(100px, 0.7fr);
+  gap: 16px;
+  align-items: center;
+  min-width: 0;
+}
+
+.documento-card-main > div {
+  min-width: 0;
+}
+
+.documento-card-main span:not(.documento-status) {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.documento-card-main strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.documento-identidad span {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.documento-identidad small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.documento-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.documento-status.status-generado {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+}
+
+.documento-status.status-enviado {
+  color: #047857;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+}
+
+.documento-status.status-firmado {
+  color: #6d28d9;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.22);
+}
+
+.documento-status.status-borrador,
+.documento-status.status-reemplazado,
+.documento-status.status-cancelado {
+  color: var(--muted);
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.documento-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.documento-card-actions button {
+  min-height: 38px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.documentos-generator-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.65fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.documentos-form {
+  min-width: 0;
+}
+
+.documentos-form .form-section {
+  margin-bottom: 16px;
+}
+
+.documentos-help {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.documentos-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.documentos-form-actions {
+  grid-column: 1 / -1;
+}
+
+.documento-preview-panel {
+  position: sticky;
+  top: 92px;
+}
+
+.documento-preview-paper {
+  min-height: 720px;
+  padding: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
+  color: #1e293b;
+  background: #fff;
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.16);
+}
+
+.documento-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 16px;
+  margin-bottom: 22px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.documento-preview-header img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.documento-preview-header strong,
+.documento-preview-header span {
+  display: block;
+}
+
+.documento-preview-header strong {
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.documento-preview-header span {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.documento-preview-paper h2 {
+  margin: 0 0 18px;
+  color: #0f172a;
+  font-size: 17px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.documento-preview-summary {
+  padding: 14px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.documento-preview-summary p {
+  margin: 5px 0;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.documento-preview-clauses {
+  max-height: 490px;
+  padding-right: 6px;
+  overflow: hidden;
+}
+
+.documento-preview-clauses p {
+  margin: 0 0 12px;
+  color: #334155;
+  font-size: 10px;
+  line-height: 1.55;
+  text-align: justify;
+}
+
+.documento-preview-paper > small {
+  display: block;
+  margin-top: 16px;
+  color: #64748b;
+  font-size: 10px;
+  text-align: center;
+}
+
+.documento-preview-empty {
+  display: grid;
+  min-height: 520px;
+  place-items: center;
+  padding: 30px;
+  color: #64748b;
+  text-align: center;
+}
+
+.documentos-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 6, 23, 0.74);
+  backdrop-filter: blur(5px);
+}
+
+.documentos-email-modal {
+  width: min(620px, 100%);
+  max-height: calc(100vh - 36px);
+  padding: 24px;
+  overflow-y: auto;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
+}
+
+.documentos-email-modal h2 {
+  margin: 0 0 6px;
+}
+
+.documentos-email-modal p {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.documentos-email-modal label {
+  display: block;
+  margin-top: 13px;
+}
+
+.documentos-email-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+
+.documento-card-actions .documento-delete-button {
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.28);
+}
+
+.documento-card-actions .documento-delete-button:hover:not(:disabled) {
+  color: #ffffff;
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.documentos-delete-modal {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 36px);
+  padding: 26px;
+  overflow-y: auto;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.42);
+}
+
+.documentos-delete-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 14px;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  background: #dc2626;
+  font-size: 26px;
+  font-weight: 950;
+}
+
+.documentos-delete-modal h2 {
+  margin: 0 0 8px;
+  color: var(--text);
+}
+
+.documentos-delete-modal p {
+  margin: 0 0 16px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.documentos-delete-modal .documentos-delete-warning {
+  padding: 11px 13px;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 12px;
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.1);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.documentos-delete-modal label {
+  display: block;
+  margin: 18px 0 8px;
+}
+
+.documentos-delete-word {
+  display: inline-flex;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px dashed rgba(239, 68, 68, 0.48);
+  border-radius: 10px;
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+  font-size: 17px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  user-select: all;
+}
+
+.documentos-delete-modal input {
+  text-transform: uppercase;
+}
+
+.documentos-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.documentos-delete-actions .confirm-delete-button {
+  color: #ffffff;
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.documentos-delete-actions .confirm-delete-button:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.documentos-delete-actions .confirm-delete-button:disabled {
+  opacity: 0.45;
+}
+
+@media (max-width: 1180px) {
+  .documento-card {
+    grid-template-columns: 1fr;
+  }
+
+  .documento-card-actions {
+    justify-content: flex-start;
+  }
+
+  .documentos-generator-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .documento-preview-panel {
+    position: static;
+  }
+
+  .documento-preview-paper {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .documento-card-main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .documento-identidad {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 680px) {
+  .documentos-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .documento-card {
+    padding: 15px;
+  }
+
+  .documento-card-main {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .documento-identidad {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .documento-card-main strong,
+  .documento-identidad span,
+  .documento-identidad small {
+    white-space: normal;
+  }
+
+  .documento-card-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .documento-card-actions button {
+    width: 100%;
+  }
+
+  .documentos-mini-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .documento-preview-paper {
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  .documentos-email-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .documentos-email-actions button {
+    width: 100%;
+  }
+
+
+  .documentos-delete-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .documentos-delete-actions button {
+    width: 100%;
+  }
+}

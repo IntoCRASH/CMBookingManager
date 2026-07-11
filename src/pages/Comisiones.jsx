@@ -16,8 +16,7 @@ export default function Comisiones({
   const [estadoFiltro, setEstadoFiltro] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(true);
-  const [actualizandoId, setActualizandoId] =
-    useState(null);
+  const [actualizandoId, setActualizandoId] = useState(null);
 
   useEffect(() => {
     setEstadoFiltro('');
@@ -36,18 +35,14 @@ export default function Comisiones({
     try {
       setCargando(true);
 
-      const data =
-        await getWorkspaceCommissions(workspaceId);
+      const data = await getWorkspaceCommissions(workspaceId);
 
-      setComisiones(
-        Array.isArray(data) ? data : []
-      );
+      setComisiones(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
 
       toast.error(
-        err.message ||
-          'No se pudieron cargar las comisiones.'
+        err.message || 'No se pudieron cargar las comisiones.'
       );
     } finally {
       setCargando(false);
@@ -55,9 +50,7 @@ export default function Comisiones({
   }
 
   function money(valor) {
-    return `RD$ ${Number(valor || 0).toLocaleString(
-      'es-DO'
-    )}`;
+    return `RD$ ${Number(valor || 0).toLocaleString('es-DO')}`;
   }
 
   function fechaCorta(fecha) {
@@ -78,12 +71,6 @@ export default function Comisiones({
       : comision.artista_nombre;
   }
 
-  function emailContraparte(comision) {
-    return esArtista
-      ? comision.gestor_email
-      : '';
-  }
-
   function etiquetaContraparte() {
     return esArtista ? 'Gestor' : 'Artista';
   }
@@ -95,9 +82,7 @@ export default function Comisiones({
   }
 
   function textoAccion(settled) {
-    if (settled) {
-      return 'Marcar pendiente';
-    }
+    if (settled) return 'Reabrir';
 
     return esArtista
       ? 'Marcar pagada'
@@ -109,14 +94,11 @@ export default function Comisiones({
       comision.settlement_status === 'settled';
 
     try {
-      setActualizandoId(
-        comision.cotizacion_id
-      );
+      setActualizandoId(comision.cotizacion_id);
 
       await setWorkspaceCommissionStatus({
         workspaceId,
-        cotizacionId:
-          comision.cotizacion_id,
+        cotizacionId: comision.cotizacion_id,
         settled: !settledActual,
       });
 
@@ -133,8 +115,7 @@ export default function Comisiones({
       console.error(err);
 
       toast.error(
-        err.message ||
-          'No se pudo actualizar la comisión.'
+        err.message || 'No se pudo actualizar la comisión.'
       );
     } finally {
       setActualizandoId(null);
@@ -142,14 +123,12 @@ export default function Comisiones({
   }
 
   const filtradas = useMemo(() => {
-    const texto =
-      busqueda.trim().toLowerCase();
+    const texto = busqueda.trim().toLowerCase();
 
     return comisiones.filter((comision) => {
       const coincideEstado =
         !estadoFiltro ||
-        comision.settlement_status ===
-          estadoFiltro;
+        comision.settlement_status === estadoFiltro;
 
       const contenido = [
         comision.numero,
@@ -166,63 +145,42 @@ export default function Comisiones({
         .toLowerCase();
 
       const coincideBusqueda =
-        !texto ||
-        contenido.includes(texto);
+        !texto || contenido.includes(texto);
 
-      return (
-        coincideEstado &&
-        coincideBusqueda
-      );
+      return coincideEstado && coincideBusqueda;
     });
-  }, [
-    comisiones,
-    estadoFiltro,
-    busqueda,
-  ]);
+  }, [comisiones, estadoFiltro, busqueda]);
 
-  const totalComisiones =
-    filtradas.reduce(
+  const totalComisiones = filtradas.reduce(
+    (sum, comision) =>
+      sum + Number(comision.comision || 0),
+    0
+  );
+
+  const totalPendientes = filtradas
+    .filter(
+      (comision) =>
+        comision.settlement_status !== 'settled'
+    )
+    .reduce(
       (sum, comision) =>
-        sum +
-        Number(comision.comision || 0),
+        sum + Number(comision.comision || 0),
       0
     );
 
-  const totalPendientes =
-    filtradas
-      .filter(
-        (comision) =>
-          comision.settlement_status !==
-          'settled'
-      )
-      .reduce(
-        (sum, comision) =>
-          sum +
-          Number(
-            comision.comision || 0
-          ),
-        0
-      );
-
-  const totalLiquidadas =
-    filtradas
-      .filter(
-        (comision) =>
-          comision.settlement_status ===
-          'settled'
-      )
-      .reduce(
-        (sum, comision) =>
-          sum +
-          Number(
-            comision.comision || 0
-          ),
-        0
-      );
+  const totalLiquidadas = filtradas
+    .filter(
+      (comision) =>
+        comision.settlement_status === 'settled'
+    )
+    .reduce(
+      (sum, comision) =>
+        sum + Number(comision.comision || 0),
+      0
+    );
 
   const nombreWorkspace =
-    workspace?.workspace_name ||
-    'el Artista';
+    workspace?.workspace_name || 'el Artista';
 
   return (
     <div className="dashboard comisiones-page">
@@ -232,8 +190,8 @@ export default function Comisiones({
 
           <p>
             {esArtista
-              ? `Comisiones que debes pagar en ${nombreWorkspace}`
-              : `Comisiones que debes cobrar de ${nombreWorkspace}`}
+              ? `Comisiones que ${nombreWorkspace} debe pagar`
+              : `Comisiones que ${nombreWorkspace} debe pagarte`}
           </p>
         </div>
 
@@ -253,19 +211,13 @@ export default function Comisiones({
               : 'Total ganado'}
           </span>
 
-          <strong>
-            {money(totalComisiones)}
-          </strong>
+          <strong>{money(totalComisiones)}</strong>
         </div>
 
         <div className="comision-resumen-card cantidad">
-          <span>
-            Cotizaciones con comisión
-          </span>
+          <span>Cotizaciones con comisión</span>
 
-          <strong>
-            {filtradas.length}
-          </strong>
+          <strong>{filtradas.length}</strong>
         </div>
 
         <div className="comision-resumen-card pendiente">
@@ -275,21 +227,15 @@ export default function Comisiones({
               : 'Pendiente de cobrar'}
           </span>
 
-          <strong>
-            {money(totalPendientes)}
-          </strong>
+          <strong>{money(totalPendientes)}</strong>
         </div>
 
         <div className="comision-resumen-card cobrada">
           <span>
-            {esArtista
-              ? 'Pagadas'
-              : 'Cobradas'}
+            {esArtista ? 'Pagadas' : 'Cobradas'}
           </span>
 
-          <strong>
-            {money(totalLiquidadas)}
-          </strong>
+          <strong>{money(totalLiquidadas)}</strong>
         </div>
       </section>
 
@@ -309,23 +255,14 @@ export default function Comisiones({
         <select
           value={estadoFiltro}
           onChange={(event) =>
-            setEstadoFiltro(
-              event.target.value
-            )
+            setEstadoFiltro(event.target.value)
           }
         >
-          <option value="">
-            Todos los estados
-          </option>
-
-          <option value="pending">
-            Pendiente
-          </option>
+          <option value="">Todos los estados</option>
+          <option value="pending">Pendiente</option>
 
           <option value="settled">
-            {esArtista
-              ? 'Pagada'
-              : 'Cobrada'}
+            {esArtista ? 'Pagada' : 'Cobrada'}
           </option>
         </select>
       </div>
@@ -337,14 +274,10 @@ export default function Comisiones({
         >
           <span>Cotización</span>
           <span>Cliente / Evento</span>
-          <span>
-            {etiquetaContraparte()}
-          </span>
+          <span>{etiquetaContraparte()}</span>
           <span>Fecha</span>
-          <span>Total</span>
           <span>Comisión</span>
           <span>Estado</span>
-          <span>Acción</span>
         </div>
 
         {cargando ? (
@@ -353,25 +286,20 @@ export default function Comisiones({
           </div>
         ) : filtradas.length === 0 ? (
           <div className="comisiones-empty">
-            No hay comisiones registradas
-            con esos filtros.
+            No hay comisiones registradas con esos filtros.
           </div>
         ) : (
           filtradas.map((comision) => {
             const settled =
-              comision.settlement_status ===
-              'settled';
+              comision.settlement_status === 'settled';
 
             const actualizando =
-              actualizandoId ===
-              comision.cotizacion_id;
+              actualizandoId === comision.cotizacion_id;
 
             return (
               <article
                 className="comision-row"
-                key={
-                  comision.cotizacion_id
-                }
+                key={comision.cotizacion_id}
               >
                 <div
                   className="comision-numero"
@@ -386,8 +314,7 @@ export default function Comisiones({
                   data-label="Cliente / Evento"
                 >
                   <strong>
-                    {comision.cliente_nombre ||
-                      'Cliente'}
+                    {comision.cliente_nombre || 'Cliente'}
                   </strong>
 
                   <span>
@@ -397,118 +324,71 @@ export default function Comisiones({
                   </span>
 
                   {comision.venue && (
-                    <small>
-                      {comision.venue}
-                    </small>
+                    <small>{comision.venue}</small>
                   )}
                 </div>
 
                 <div
                   className="comision-contraparte"
-                  data-label={
-                    etiquetaContraparte()
-                  }
+                  data-label={etiquetaContraparte()}
                 >
                   <strong>
-                    {nombreContraparte(
-                      comision
-                    )}
+                    {nombreContraparte(comision) ||
+                      etiquetaContraparte()}
                   </strong>
-
-                  {emailContraparte(
-                    comision
-                  ) && (
-                    <small>
-                      {emailContraparte(
-                        comision
-                      )}
-                    </small>
-                  )}
-
-                  <span>
-                    {esArtista
-                      ? 'Recibe esta comisión'
-                      : 'Paga esta comisión'}
-                  </span>
                 </div>
 
                 <div
                   className="comision-fecha"
                   data-label="Fecha"
                 >
-                  {fechaCorta(
-                    comision.fecha_evento
-                  )}
-                </div>
-
-                <div
-                  className="comision-total"
-                  data-label="Total"
-                >
-                  {money(comision.total)}
+                  {fechaCorta(comision.fecha_evento)}
                 </div>
 
                 <div
                   className="comision-monto"
                   data-label="Comisión"
                 >
-                  {money(
-                    comision.comision
-                  )}
+                  <strong>{money(comision.comision)}</strong>
 
                   {Number(
-                    comision.comision_porcentaje ||
-                      0
+                    comision.comision_porcentaje || 0
                   ) > 0 && (
                     <small>
                       {Number(
                         comision.comision_porcentaje
-                      ).toLocaleString(
-                        'es-DO',
-                        {
-                          maximumFractionDigits: 2,
-                        }
-                      )}
+                      ).toLocaleString('es-DO', {
+                        maximumFractionDigits: 2,
+                      })}
                       %
                     </small>
                   )}
                 </div>
 
-                <div data-label="Estado">
+                <div
+                  className="comision-estado-accion"
+                  data-label="Estado"
+                >
                   <span
                     className={
                       `comision-badge ` +
-                      (settled
-                        ? 'cobrada'
-                        : 'pendiente')
+                      (settled ? 'cobrada' : 'pendiente')
                     }
                   >
-                    {etiquetaEstado(
-                      settled
-                    )}
+                    {etiquetaEstado(settled)}
                   </span>
-                </div>
 
-                <div className="comision-accion">
                   <button
                     type="button"
                     className={
-                      settled
-                        ? 'secondary-state-btn'
-                        : ''
+                      settled ? 'secondary-state-btn' : ''
                     }
                     disabled={actualizando}
-                    onClick={() =>
-                      cambiarEstado(
-                        comision
-                      )
-                    }
+                    onClick={() => cambiarEstado(comision)}
                   >
                     {actualizando
                       ? 'Guardando...'
-                      : textoAccion(
-                          settled
-                        )}
+                      : textoAccion(settled)}
                   </button>
                 </div>
               </article>

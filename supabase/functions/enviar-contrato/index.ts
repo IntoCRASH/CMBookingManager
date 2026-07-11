@@ -1,0 +1,374 @@
+import { createClient } from 'npm:@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
+};
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'application/json',
+    },
+  });
+}
+
+function escapeHtml(value: unknown) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = '';
+
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    const chunk = bytes.subarray(
+      index,
+      Math.min(index + chunkSize, bytes.length)
+    );
+
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
+}
+
+Deno.serve(async (request) => {
+  if (request.method === 'OPTIONS') {
+    return new Response('ok', {
+      headers: corsHeaders,
+    });
+  }
+
+  if (request.method !== 'POST') {
+    return json(
+      { ok: false, error: 'Método no permitido.' },
+      405
+    );
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const serviceRoleKey = Deno.env.get(
+      'SUPABASE_SERVICE_ROLE_KEY'
+    );
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL');
+
+    if (
+      !supabaseUrl ||
+      !anonKey ||
+      !serviceRoleKey ||
+      !resendApiKey ||
+      !fromEmail
+    ) {
+      throw new Error(
+        'Faltan secretos requeridos para enviar contratos.'
+      );
+    }
+
+    const authorization =
+      request.headers.get('Authorization') || '';
+
+    if (!authorization) {
+      return json(
+        { ok: false, error: 'No hay una sesión activa.' },
+        401
+      );
+    }
+
+    const body = await request.json();
+
+    const contratoId = Number(body?.contratoId);
+    const workspaceId = Number(body?.workspaceId);
+    const destinatario = String(
+      body?.destinatario || ''
+    ).trim();
+    const asunto = String(body?.asunto || '').trim();
+    const mensaje = String(body?.mensaje || '').trim();
+
+    if (
+      !Number.isFinite(contratoId) ||
+      contratoId <= 0 ||
+      !Number.isFinite(workspaceId) ||
+      workspaceId <= 0
+    ) {
+      return json(
+        {
+          ok: false,
+          error: 'El contrato o el Artista no es válido.',
+        },
+        400
+      );
+    }
+
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        destinatario
+      )
+    ) {
+      return json(
+        {
+          ok: false,
+          error: 'El correo del destinatario no es válido.',
+        },
+        400
+      );
+    }
+
+    const userClient = createClient(
+      supabaseUrl,
+      anonKey,
+      {
+        global: {
+          headers: {
+            Authorization: authorization,
+          },
+        },
+      }
+    );
+
+    const {
+      data: { user },
+      error: userError,
+    } = await userClient.auth.getUser();
+
+    if (userError || !user) {
+      return json(
+        { ok: false, error: 'La sesión no es válida.' },
+        401
+      );
+    }
+
+    // Esta consulta usa RLS y confirma que el usuario pertenece
+    // al workspace del contrato.
+    const { data: contract, error: contractError } =
+      await userClient
+        .from('contratos')
+        .select(`
+          id,
+          workspace_id,
+          cotizacion_id,
+          numero,
+          estado,
+          pdf_path,
+          datos_snapshot
+        `)
+        .eq('id', contratoId)
+        .eq('workspace_id', workspaceId)
+        .single();
+
+    if (contractError || !contract) {
+      return json(
+        {
+          ok: false,
+          error:
+            contractError?.message ||
+            'No tienes acceso a este contrato.',
+        },
+        403
+      );
+    }
+
+    if (!contract.pdf_path) {
+      return json(
+        {
+          ok: false,
+          error:
+            'El contrato todavía no tiene un PDF guardado.',
+        },
+        400
+      );
+    }
+
+    const adminClient = createClient(
+      supabaseUrl,
+      serviceRoleKey
+    );
+
+    const { data: pdfFile, error: pdfError } =
+      await adminClient.storage
+        .from('contratos-pdf')
+        .download(contract.pdf_path);
+
+    if (pdfError || !pdfFile) {
+      throw new Error(
+        pdfError?.message ||
+          'No se pudo descargar el PDF del contrato.'
+      );
+    }
+
+    const snapshot =
+      contract.datos_snapshot || {};
+    const artist = snapshot.artist || {};
+    const client = snapshot.client || {};
+    const event = snapshot.event || {};
+
+    const safeSubject =
+      asunto ||
+      `Contrato ${contract.numero} - ${
+        artist.artistic_name || 'MiBooking'
+      }`;
+
+    const safeMessage =
+      mensaje ||
+      `Adjuntamos el contrato correspondiente al evento ${
+        event.name || event.type || ''
+      }.`;
+
+    const htmlMessage = escapeHtml(safeMessage)
+      .replaceAll('\n', '<br />');
+
+    const appPublicUrl =
+      Deno.env.get('APP_PUBLIC_URL') || '';
+
+    const logoUrl = appPublicUrl
+      ? `${appPublicUrl.replace(/\/+$/, '')}/mibooking-icon.png`
+      : '';
+
+    const emailHtml = `
+      <div style="margin:0;padding:24px;background:#f1f5f9;font-family:Arial,sans-serif;color:#0f172a;">
+        <div style="max-width:680px;margin:0 auto;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e2e8f0;">
+          <div style="padding:22px 26px;background:#0f172a;color:#ffffff;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              ${
+                logoUrl
+                  ? `<img src="${escapeHtml(
+                      logoUrl
+                    )}" alt="MiBooking" width="44" height="44" style="display:block;object-fit:contain;" />`
+                  : ''
+              }
+              <div>
+                <div style="font-size:22px;font-weight:800;">MiBooking</div>
+                <div style="font-size:12px;color:#cbd5e1;">Música · Eventos · Negocio</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="padding:28px 26px;">
+            <h1 style="margin:0 0 8px;font-size:21px;">
+              Contrato ${escapeHtml(contract.numero)}
+            </h1>
+
+            <p style="margin:0 0 20px;color:#64748b;">
+              ${escapeHtml(
+                artist.artistic_name || 'Presentación artística'
+              )}
+              ${
+                event.date
+                  ? ` · ${escapeHtml(event.date)}`
+                  : ''
+              }
+            </p>
+
+            <div style="font-size:15px;line-height:1.65;">
+              ${htmlMessage}
+            </div>
+
+            <div style="margin-top:24px;padding:15px;border-radius:12px;background:#f8fafc;">
+              <strong>Documento adjunto:</strong>
+              ${escapeHtml(contract.numero)}.pdf
+              ${
+                client.name
+                  ? `<br /><strong>Contratante:</strong> ${escapeHtml(
+                      client.name
+                    )}`
+                  : ''
+              }
+              ${
+                event.name || event.type
+                  ? `<br /><strong>Evento:</strong> ${escapeHtml(
+                      event.name || event.type
+                    )}`
+                  : ''
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const pdfContent = arrayBufferToBase64(
+      await pdfFile.arrayBuffer()
+    );
+
+    const resendResponse = await fetch(
+      'https://api.resend.com/emails',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: [destinatario],
+          subject: safeSubject,
+          html: emailHtml,
+          attachments: [
+            {
+              filename: `Contrato-${contract.numero}.pdf`,
+              content: pdfContent,
+            },
+          ],
+        }),
+      }
+    );
+
+    const resendResult = await resendResponse.json();
+
+    if (!resendResponse.ok) {
+      throw new Error(
+        resendResult?.message ||
+          'El proveedor de correo rechazó el envío.'
+      );
+    }
+
+    const { error: updateError } = await adminClient
+      .from('contratos')
+      .update({
+        estado: 'Enviado',
+        destinatario_email: destinatario,
+        enviado_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', contratoId)
+      .eq('workspace_id', workspaceId);
+
+    if (updateError) {
+      console.error(
+        'El correo fue enviado, pero no se actualizó el contrato:',
+        updateError
+      );
+    }
+
+    return json({
+      ok: true,
+      emailId: resendResult?.id || null,
+      destinatario,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return json(
+      {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'No se pudo enviar el contrato.',
+      },
+      500
+    );
+  }
+});

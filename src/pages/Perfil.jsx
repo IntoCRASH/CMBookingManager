@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
   DEFAULT_BUSINESS_POLICIES_TEMPLATE,
+  DEFAULT_CONTRACT_SETTINGS,
+  DEFAULT_CONTRACT_TEMPLATE,
   getMyBusinessProfile,
   getMyProfile,
   getWorkspaceArtistProfile,
@@ -9,6 +11,7 @@ import {
   saveWorkspaceArtistProfile,
   uploadMyBusinessAsset,
 } from '../lib/profileService';
+import { CONTRACT_VARIABLES } from '../lib/contratoTemplate';
 
 const MAX_PNG_SIZE = 5 * 1024 * 1024;
 
@@ -30,6 +33,9 @@ const formInicial = {
   porcentaje_adelanto: 50,
   condiciones_pago:
     DEFAULT_BUSINESS_POLICIES_TEMPLATE,
+
+  ...DEFAULT_CONTRACT_SETTINGS,
+
   logo_path: '',
   firma_path: '',
 };
@@ -195,6 +201,74 @@ export default function Perfil({
           perfilNegocio?.condiciones_pago?.trim() ||
           DEFAULT_BUSINESS_POLICIES_TEMPLATE,
 
+        plantilla_contrato:
+          perfilNegocio?.plantilla_contrato?.trim() ||
+          DEFAULT_CONTRACT_TEMPLATE,
+
+        cantidad_sets_contrato: Number(
+          perfilNegocio?.cantidad_sets_contrato ??
+          DEFAULT_CONTRACT_SETTINGS.cantidad_sets_contrato
+        ),
+
+        duracion_set_contrato: Number(
+          perfilNegocio?.duracion_set_contrato ??
+          DEFAULT_CONTRACT_SETTINGS.duracion_set_contrato
+        ),
+
+        duracion_receso_contrato: Number(
+          perfilNegocio?.duracion_receso_contrato ??
+          DEFAULT_CONTRACT_SETTINGS.duracion_receso_contrato
+        ),
+
+        dias_anticipo_contrato: Number(
+          perfilNegocio?.dias_anticipo_contrato ??
+          DEFAULT_CONTRACT_SETTINGS.dias_anticipo_contrato
+        ),
+
+        dias_saldo_contrato: Number(
+          perfilNegocio?.dias_saldo_contrato ??
+          DEFAULT_CONTRACT_SETTINGS.dias_saldo_contrato
+        ),
+
+        tarifa_hora_extra_contrato: Number(
+          perfilNegocio?.tarifa_hora_extra_contrato ??
+          DEFAULT_CONTRACT_SETTINGS.tarifa_hora_extra_contrato
+        ),
+
+        dias_cancelacion_contrato: Number(
+          perfilNegocio?.dias_cancelacion_contrato ??
+          DEFAULT_CONTRACT_SETTINGS.dias_cancelacion_contrato
+        ),
+
+        servicios_incluidos_contrato:
+          perfilNegocio?.servicios_incluidos_contrato?.trim() ||
+          DEFAULT_CONTRACT_SETTINGS.servicios_incluidos_contrato,
+
+        servicios_excluidos_contrato:
+          perfilNegocio?.servicios_excluidos_contrato?.trim() ||
+          DEFAULT_CONTRACT_SETTINGS.servicios_excluidos_contrato,
+
+        hospitalidad_contrato:
+          perfilNegocio?.hospitalidad_contrato?.trim() ||
+          DEFAULT_CONTRACT_SETTINGS.hospitalidad_contrato,
+
+        transporte_hospedaje_contrato:
+          perfilNegocio?.transporte_hospedaje_contrato?.trim() ||
+          DEFAULT_CONTRACT_SETTINGS.transporte_hospedaje_contrato,
+
+        jurisdiccion_contrato:
+          perfilNegocio?.jurisdiccion_contrato?.trim() ||
+          perfilNegocio?.ciudad ||
+          DEFAULT_CONTRACT_SETTINGS.jurisdiccion_contrato,
+
+        lugar_firma_contrato:
+          perfilNegocio?.lugar_firma_contrato?.trim() ||
+          DEFAULT_CONTRACT_SETTINGS.lugar_firma_contrato,
+
+        anexos_contrato:
+          perfilNegocio?.anexos_contrato?.trim() ||
+          DEFAULT_CONTRACT_SETTINGS.anexos_contrato,
+
         logo_path:
           perfilNegocio?.logo_path || '',
 
@@ -245,6 +319,21 @@ export default function Perfil({
       ...actual,
       condiciones_pago:
         DEFAULT_BUSINESS_POLICIES_TEMPLATE,
+    }));
+  }
+
+  function restaurarPlantillaContrato() {
+    const confirmar = window.confirm(
+      '¿Restaurar la plantilla contractual recomendada?'
+    );
+
+    if (!confirmar) return;
+
+    setForm((actual) => ({
+      ...actual,
+      ...DEFAULT_CONTRACT_SETTINGS,
+      plantilla_contrato:
+        DEFAULT_CONTRACT_TEMPLATE,
     }));
   }
 
@@ -343,6 +432,37 @@ export default function Perfil({
       );
 
       return false;
+    }
+
+    if (!form.plantilla_contrato.trim()) {
+      toast.error(
+        'La plantilla del contrato no puede estar vacía.'
+      );
+
+      return false;
+    }
+
+    const numericContractFields = [
+      ['cantidad_sets_contrato', 1, null, 'La cantidad de sets'],
+      ['duracion_set_contrato', 1, null, 'La duración de cada set'],
+      ['duracion_receso_contrato', 0, null, 'La duración del receso'],
+      ['dias_anticipo_contrato', 0, null, 'Los días del anticipo'],
+      ['dias_saldo_contrato', 0, null, 'Los días del saldo'],
+      ['tarifa_hora_extra_contrato', 0, null, 'La tarifa por hora adicional'],
+      ['dias_cancelacion_contrato', 0, null, 'La ventana de cancelación'],
+    ];
+
+    for (const [field, min, max, label] of numericContractFields) {
+      const value = Number(form[field]);
+
+      if (
+        !Number.isFinite(value) ||
+        value < min ||
+        (max !== null && value > max)
+      ) {
+        toast.error(`${label} no es válida.`);
+        return false;
+      }
     }
 
     return true;
@@ -917,6 +1037,255 @@ export default function Perfil({
               <p style={{ marginTop: 14 }}>
                 Los cambios realizados aquí se aplicarán
                 únicamente a cotizaciones nuevas.
+              </p>
+            </section>
+
+            <section className="form-section form-full">
+              <h2>Configuración contractual</h2>
+
+              <p>
+                Estos valores se cargarán automáticamente
+                cuando el Artista o un Gestor genere un
+                contrato desde una cotización confirmada o
+                aprobada.
+              </p>
+
+              <div className="form-grid">
+                <div>
+                  <label htmlFor="contrato-sets">
+                    Cantidad habitual de sets
+                  </label>
+
+                  <input
+                    id="contrato-sets"
+                    type="number"
+                    min="1"
+                    name="cantidad_sets_contrato"
+                    value={form.cantidad_sets_contrato}
+                    onChange={cambiar}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="contrato-duracion-set">
+                    Minutos por set
+                  </label>
+
+                  <input
+                    id="contrato-duracion-set"
+                    type="number"
+                    min="1"
+                    name="duracion_set_contrato"
+                    value={form.duracion_set_contrato}
+                    onChange={cambiar}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="contrato-receso">
+                    Minutos de receso
+                  </label>
+
+                  <input
+                    id="contrato-receso"
+                    type="number"
+                    min="0"
+                    name="duracion_receso_contrato"
+                    value={form.duracion_receso_contrato}
+                    onChange={cambiar}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="contrato-dias-anticipo">
+                    Anticipo: días antes del evento
+                  </label>
+
+                  <input
+                    id="contrato-dias-anticipo"
+                    type="number"
+                    min="0"
+                    name="dias_anticipo_contrato"
+                    value={form.dias_anticipo_contrato}
+                    onChange={cambiar}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="contrato-dias-saldo">
+                    Saldo: días antes del evento
+                  </label>
+
+                  <input
+                    id="contrato-dias-saldo"
+                    type="number"
+                    min="0"
+                    name="dias_saldo_contrato"
+                    value={form.dias_saldo_contrato}
+                    onChange={cambiar}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="contrato-hora-extra">
+                    Tarifa por hora adicional
+                  </label>
+
+                  <input
+                    id="contrato-hora-extra"
+                    type="number"
+                    min="0"
+                    name="tarifa_hora_extra_contrato"
+                    value={form.tarifa_hora_extra_contrato}
+                    onChange={cambiar}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="contrato-cancelacion">
+                    Ventana de cancelación (días)
+                  </label>
+
+                  <input
+                    id="contrato-cancelacion"
+                    type="number"
+                    min="0"
+                    name="dias_cancelacion_contrato"
+                    value={form.dias_cancelacion_contrato}
+                    onChange={cambiar}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="contrato-jurisdiccion">
+                    Jurisdicción
+                  </label>
+
+                  <input
+                    id="contrato-jurisdiccion"
+                    type="text"
+                    name="jurisdiccion_contrato"
+                    value={form.jurisdiccion_contrato}
+                    onChange={cambiar}
+                  />
+                </div>
+
+                <div className="form-full">
+                  <label htmlFor="contrato-lugar-firma">
+                    Lugar habitual de firma
+                  </label>
+
+                  <input
+                    id="contrato-lugar-firma"
+                    type="text"
+                    name="lugar_firma_contrato"
+                    value={form.lugar_firma_contrato}
+                    onChange={cambiar}
+                  />
+                </div>
+              </div>
+
+              <label htmlFor="contrato-servicios-incluidos">
+                Servicios incluidos por defecto
+              </label>
+
+              <textarea
+                id="contrato-servicios-incluidos"
+                name="servicios_incluidos_contrato"
+                value={form.servicios_incluidos_contrato}
+                onChange={cambiar}
+                rows="4"
+              />
+
+              <label htmlFor="contrato-servicios-excluidos">
+                Servicios excluidos por defecto
+              </label>
+
+              <textarea
+                id="contrato-servicios-excluidos"
+                name="servicios_excluidos_contrato"
+                value={form.servicios_excluidos_contrato}
+                onChange={cambiar}
+                rows="4"
+              />
+
+              <label htmlFor="contrato-hospitalidad">
+                Hospitalidad por defecto
+              </label>
+
+              <textarea
+                id="contrato-hospitalidad"
+                name="hospitalidad_contrato"
+                value={form.hospitalidad_contrato}
+                onChange={cambiar}
+                rows="4"
+              />
+
+              <label htmlFor="contrato-transporte">
+                Transporte y hospedaje por defecto
+              </label>
+
+              <textarea
+                id="contrato-transporte"
+                name="transporte_hospedaje_contrato"
+                value={form.transporte_hospedaje_contrato}
+                onChange={cambiar}
+                rows="4"
+              />
+
+              <label htmlFor="contrato-anexos">
+                Anexos por defecto
+              </label>
+
+              <textarea
+                id="contrato-anexos"
+                name="anexos_contrato"
+                value={form.anexos_contrato}
+                onChange={cambiar}
+                rows="3"
+              />
+
+              <label htmlFor="contrato-plantilla">
+                Plantilla del contrato
+              </label>
+
+              <p>
+                Las variables se sustituyen al generar cada
+                contrato y el texto final queda congelado
+                junto con los datos del evento.
+              </p>
+
+              <div style={variablesStyle}>
+                {CONTRACT_VARIABLES.map((variable) => (
+                  <code
+                    key={variable}
+                    style={variableStyle}
+                  >
+                    {variable}
+                  </code>
+                ))}
+              </div>
+
+              <textarea
+                id="contrato-plantilla"
+                name="plantilla_contrato"
+                value={form.plantilla_contrato}
+                onChange={cambiar}
+                rows="38"
+                placeholder={DEFAULT_CONTRACT_TEMPLATE}
+              />
+
+              <button
+                type="button"
+                onClick={restaurarPlantillaContrato}
+                style={{ marginTop: 8 }}
+              >
+                Restaurar contrato recomendado
+              </button>
+
+              <p style={{ marginTop: 14 }}>
+                Los cambios se aplicarán únicamente a
+                contratos nuevos.
               </p>
             </section>
           </div>

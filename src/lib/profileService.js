@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { requireWorkspaceId } from './workspaceService';
+import { DEFAULT_CONTRACT_TEMPLATE } from './contratoTemplate';
 
 const BUSINESS_PROFILE_BUCKET = 'perfiles-negocio';
 const MAX_PNG_SIZE = 5 * 1024 * 1024;
@@ -12,6 +13,34 @@ El balance restante deberá completarse conforme a las condiciones indicadas en 
 Cualquier cambio en la fecha, horario, lugar, formato artístico o requerimientos técnicos puede producir ajustes en el precio.
 
 Las cancelaciones y reprogramaciones estarán sujetas a los términos acordados y a la disponibilidad del Artista.`;
+
+export { DEFAULT_CONTRACT_TEMPLATE };
+
+export const DEFAULT_CONTRACT_SETTINGS = {
+  cantidad_sets_contrato: 2,
+  duracion_set_contrato: 45,
+  duracion_receso_contrato: 30,
+  dias_anticipo_contrato: 30,
+  dias_saldo_contrato: 7,
+  tarifa_hora_extra_contrato: 0,
+  dias_cancelacion_contrato: 14,
+  servicios_incluidos_contrato:
+    'Presentación artística conforme al formato contratado.',
+  servicios_excluidos_contrato:
+    'DJ, luces, tarima, energía eléctrica y cualquier servicio no indicado expresamente.',
+  hospitalidad_contrato:
+    'Área privada y segura, agua potable, hielo, vasos, servilletas y alimentación para el equipo cuando corresponda.',
+  transporte_hospedaje_contrato:
+    'Según lo incluido en la cotización y las coordinaciones escritas entre las partes.',
+  jurisdiccion_contrato:
+    'Santiago de los Caballeros',
+  lugar_firma_contrato:
+    'Santiago de los Caballeros, República Dominicana',
+  anexos_contrato:
+    'Cotización aprobada y rider técnico, cuando aplique.',
+  plantilla_contrato:
+    DEFAULT_CONTRACT_TEMPLATE,
+};
 
 async function getAuthenticatedUser() {
   const { data, error } = await supabase.auth.getUser();
@@ -345,6 +374,74 @@ export async function saveMyBusinessProfile(
 
     condiciones_pago: String(
       profile.condiciones_pago || ''
+    ).trim(),
+
+    plantilla_contrato: String(
+      profile.plantilla_contrato ||
+        DEFAULT_CONTRACT_TEMPLATE
+    ).trim(),
+
+    cantidad_sets_contrato: Math.max(
+      1,
+      Number(profile.cantidad_sets_contrato || 2)
+    ),
+
+    duracion_set_contrato: Math.max(
+      1,
+      Number(profile.duracion_set_contrato || 45)
+    ),
+
+    duracion_receso_contrato: Math.max(
+      0,
+      Number(profile.duracion_receso_contrato || 0)
+    ),
+
+    dias_anticipo_contrato: Math.max(
+      0,
+      Number(profile.dias_anticipo_contrato || 0)
+    ),
+
+    dias_saldo_contrato: Math.max(
+      0,
+      Number(profile.dias_saldo_contrato || 0)
+    ),
+
+    tarifa_hora_extra_contrato: Math.max(
+      0,
+      Number(profile.tarifa_hora_extra_contrato || 0)
+    ),
+
+    dias_cancelacion_contrato: Math.max(
+      0,
+      Number(profile.dias_cancelacion_contrato || 0)
+    ),
+
+    servicios_incluidos_contrato: String(
+      profile.servicios_incluidos_contrato || ''
+    ).trim(),
+
+    servicios_excluidos_contrato: String(
+      profile.servicios_excluidos_contrato || ''
+    ).trim(),
+
+    hospitalidad_contrato: String(
+      profile.hospitalidad_contrato || ''
+    ).trim(),
+
+    transporte_hospedaje_contrato: String(
+      profile.transporte_hospedaje_contrato || ''
+    ).trim(),
+
+    jurisdiccion_contrato: String(
+      profile.jurisdiccion_contrato || ''
+    ).trim(),
+
+    lugar_firma_contrato: String(
+      profile.lugar_firma_contrato || ''
+    ).trim(),
+
+    anexos_contrato: String(
+      profile.anexos_contrato || ''
     ).trim(),
 
     logo_path: String(profile.logo_path || '').trim(),

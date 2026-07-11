@@ -43,12 +43,20 @@ const formInicial = {
 export default function NuevaCotizacion({
   workspaceId,
   workspace,
+  workspaces = [],
   esArtista,
   cotizacionId,
   goBack,
   goHome,
   onCotizacionGuardada,
 }) {
+  const workspaceInicialId =
+    cotizacionId || esArtista
+      ? String(workspaceId || '')
+      : '';
+
+  const [cotizacionWorkspaceId, setCotizacionWorkspaceId] =
+    useState(workspaceInicialId);
   const [clientes, setClientes] = useState([]);
   const [provincias, setProvincias] = useState([]);
   const [formatos, setFormatos] = useState([]);
@@ -58,23 +66,79 @@ export default function NuevaCotizacion({
   const [error, setError] = useState('');
   const [modoEdicion, setModoEdicion] = useState(false);
   const [mostrarDetallesEvento, setMostrarDetallesEvento] = useState(false);
-  const [cargando, setCargando] = useState(true);
+  const [cargando, setCargando] = useState(Boolean(workspaceInicialId));
   const resultadoRef = useRef(null);
 
-  const comisionPorcentaje = esArtista
+  const workspacesDisponibles =
+    Array.isArray(workspaces) && workspaces.length > 0
+      ? workspaces
+      : workspace
+        ? [workspace]
+        : [];
+
+  const artistasDisponibles = workspacesDisponibles.filter(
+    (item) => item?.member_status === 'active'
+  );
+
+  const workspaceCotizacion =
+    artistasDisponibles.find(
+      (item) =>
+        String(item.workspace_id) === String(cotizacionWorkspaceId)
+    ) ||
+    (String(workspace?.workspace_id) === String(cotizacionWorkspaceId)
+      ? workspace
+      : null);
+
+  const cotizacionEsArtista = Boolean(
+    workspaceCotizacion?.is_owner ||
+      workspaceCotizacion?.member_role === 'owner' ||
+      (String(workspaceCotizacion?.workspace_id) === String(workspaceId) &&
+        esArtista)
+  );
+
+  const comisionPorcentaje = cotizacionEsArtista
     ? 0
-    : Number(workspace?.commission_percentage || 0);
+    : Number(workspaceCotizacion?.commission_percentage || 0);
+
+  const mostrarSelectorArtista =
+    !esArtista || artistasDisponibles.length > 1;
+
+  const artistaSeleccionado = Boolean(
+    cotizacionWorkspaceId && workspaceCotizacion
+  );
+
+  useEffect(() => {
+    const nextWorkspaceId = cotizacionId
+      ? String(workspaceId || '')
+      : esArtista
+        ? String(workspaceId || '')
+        : '';
+
+    setCotizacionWorkspaceId(nextWorkspaceId);
+    setClientes([]);
+    setProvincias([]);
+    setFormatos([]);
+    setTiposEvento([]);
+    setForm(formInicial);
+    setResultado(null);
+    setError('');
+    setModoEdicion(false);
+    setMostrarDetallesEvento(false);
+    setCargando(Boolean(nextWorkspaceId));
+  }, [cotizacionId, workspaceId, esArtista]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function inicializar() {
+      if (!cotizacionWorkspaceId) {
+        setCargando(false);
+        return;
+      }
+
       try {
         setCargando(true);
         setError('');
-        setForm(formInicial);
-        setResultado(null);
-        setModoEdicion(false);
 
         const [
           clientesData,
@@ -82,23 +146,29 @@ export default function NuevaCotizacion({
           formatosData,
           tiposEventoData,
         ] = await Promise.all([
-          getClientes(workspaceId),
-          getProvincias(workspaceId),
-          getFormatosActivos(workspaceId),
-          getTiposEventoConfig(workspaceId),
+          getClientes(cotizacionWorkspaceId),
+          getProvincias(cotizacionWorkspaceId),
+          getFormatosActivos(cotizacionWorkspaceId),
+          getTiposEventoConfig(cotizacionWorkspaceId),
         ]);
 
         if (cancelled) return;
 
-        setClientes(clientesData);
-        setProvincias(provinciasData.filter((zona) => zona.activa));
-        setFormatos(formatosData);
-        setTiposEvento(tiposEventoData);
+        setClientes(Array.isArray(clientesData) ? clientesData : []);
+        setProvincias(
+          (Array.isArray(provinciasData) ? provinciasData : []).filter(
+            (zona) => zona.activa
+          )
+        );
+        setFormatos(Array.isArray(formatosData) ? formatosData : []);
+        setTiposEvento(
+          Array.isArray(tiposEventoData) ? tiposEventoData : []
+        );
 
         if (cotizacionId) {
           const cotizacion = await getCotizacionById(
             cotizacionId,
-            workspaceId
+            cotizacionWorkspaceId
           );
 
           if (cancelled) return;
@@ -124,7 +194,7 @@ export default function NuevaCotizacion({
     return () => {
       cancelled = true;
     };
-  }, [cotizacionId, workspaceId]);
+  }, [cotizacionId, cotizacionWorkspaceId]);
 
   function cargarCotizacionEnFormulario(c) {
     setModoEdicion(true);
@@ -187,6 +257,23 @@ export default function NuevaCotizacion({
     });
   }
 
+  function seleccionarArtista(e) {
+    if (modoEdicion) return;
+
+    const nextWorkspaceId = e.target.value;
+
+    setCotizacionWorkspaceId(nextWorkspaceId);
+    setClientes([]);
+    setProvincias([]);
+    setFormatos([]);
+    setTiposEvento([]);
+    setForm(formInicial);
+    setResultado(null);
+    setError('');
+    setMostrarDetallesEvento(false);
+    setCargando(Boolean(nextWorkspaceId));
+  }
+
   function cambiar(e) {
     const { name, value, type, checked } = e.target;
 
@@ -237,6 +324,11 @@ export default function NuevaCotizacion({
   }
 
   function validar() {
+    if (!artistaSeleccionado) {
+      toast.error('Selecciona el Artista que deseas cotizar.');
+      return false;
+    }
+
     if (!form.cliente_id && !form.cliente_nombre.trim()) {
       toast.error(
         'Selecciona un cliente o escribe el nombre del cliente.'
@@ -304,7 +396,8 @@ export default function NuevaCotizacion({
       cantidadMusicos: Number(form.cantidad_musicos),
       incluyeSonido: form.incluye_sonido,
       descuento: Number(form.descuento),
-      aplicarComision: !esArtista && comisionPorcentaje > 0,
+      aplicarComision:
+        !cotizacionEsArtista && comisionPorcentaje > 0,
       comisionPorcentaje: comisionPorcentaje / 100,
       tipoEventoConfig: tipoEventoSeleccionado,
     });
@@ -329,7 +422,7 @@ export default function NuevaCotizacion({
         empresa: form.cliente_empresa.trim() || null,
         email: form.cliente_email.trim() || null,
       },
-      workspaceId
+      cotizacionWorkspaceId
     );
 
     return nuevoCliente.id;
@@ -375,9 +468,9 @@ export default function NuevaCotizacion({
       const guardada = await saveCotizacion(
         {
           id: form.id,
-          workspace_id: workspaceId,
+          workspace_id: cotizacionWorkspaceId,
           cliente_id: clienteIdFinal,
-          vendedor_id: esArtista ? null : user?.id || null,
+          vendedor_id: cotizacionEsArtista ? null : user?.id || null,
           provincia_id: form.provincia_id,
           formato_id: form.formato_id || null,
 
@@ -406,7 +499,7 @@ export default function NuevaCotizacion({
 
           ...resultado,
         },
-        workspaceId
+        cotizacionWorkspaceId
       );
 
       toast.success(
@@ -416,7 +509,10 @@ export default function NuevaCotizacion({
       );
 
       if (onCotizacionGuardada) {
-        onCotizacionGuardada(guardada.id);
+        onCotizacionGuardada(
+          guardada.id,
+          cotizacionWorkspaceId
+        );
       }
     } catch (err) {
       console.error(err);
@@ -432,7 +528,11 @@ export default function NuevaCotizacion({
   if (cargando) {
     return (
       <div className="dashboard">
-        Cargando datos de {workspace?.workspace_name || 'Artista'}...
+        Cargando datos de{' '}
+        {workspaceCotizacion?.workspace_name ||
+          workspace?.workspace_name ||
+          'Artista'}
+        ...
       </div>
     );
   }
@@ -445,9 +545,14 @@ export default function NuevaCotizacion({
             {modoEdicion ? 'Editar Cotización' : 'Nueva Cotización'}
           </h1>
           <p>
-            {workspace?.workspace_name || 'Artista'}
+            {workspaceCotizacion?.workspace_name ||
+              (mostrarSelectorArtista
+                ? 'Selecciona un Artista'
+                : workspace?.workspace_name || 'Artista')}
             {' · '}
-            {esArtista ? 'Cuenta de Artista' : 'Cuenta de Gestor'}
+            {cotizacionEsArtista
+              ? 'Cuenta de Artista'
+              : 'Cuenta de Gestor'}
           </p>
         </div>
 
@@ -457,7 +562,49 @@ export default function NuevaCotizacion({
       </div>
 
       <form className="form-cotizacion" onSubmit={calcular}>
-        <div className="form-grid">
+        {mostrarSelectorArtista && (
+          <section
+            className="form-section form-full"
+            style={{ marginBottom: 20 }}
+          >
+            <h2>Artista</h2>
+
+            <label>Artista a cotizar *</label>
+            <select
+              name="cotizacion_workspace_id"
+              value={cotizacionWorkspaceId}
+              onChange={seleccionarArtista}
+              disabled={modoEdicion}
+              required
+            >
+              <option value="">Seleccionar Artista</option>
+
+              {artistasDisponibles.map((item) => (
+                <option
+                  key={item.workspace_id}
+                  value={item.workspace_id}
+                >
+                  {item.workspace_name}
+                </option>
+              ))}
+            </select>
+
+            <small
+              style={{
+                display: 'block',
+                marginTop: 8,
+                color: 'var(--muted)',
+              }}
+            >
+              {modoEdicion
+                ? 'El Artista no puede cambiarse al editar una cotización.'
+                : 'Al elegirlo se cargarán sus clientes, zonas, formatos, tarifas y tipos de evento.'}
+            </small>
+          </section>
+        )}
+
+        {artistaSeleccionado ? (
+          <div className="form-grid">
           <section className="form-section">
             <h2>Cliente</h2>
 
@@ -753,7 +900,16 @@ export default function NuevaCotizacion({
               </button>
             </div>
           </section>
-        </div>
+          </div>
+        ) : (
+          <div className="workspace-state-card">
+            <h2>Selecciona un Artista</h2>
+            <p>
+              Elige el Artista para cargar la información necesaria
+              y comenzar la cotización.
+            </p>
+          </div>
+        )}
       </form>
 
       {resultado && (
@@ -873,7 +1029,7 @@ export default function NuevaCotizacion({
             <div className="fila">
               <span>
                 Comisión
-                {esArtista
+                {cotizacionEsArtista
                   ? ' (Artista: no aplica)'
                   : ` (${comisionPorcentaje}%)`}
               </span>

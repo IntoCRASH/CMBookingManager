@@ -20,6 +20,7 @@ import Cotizaciones from './pages/Cotizaciones';
 import Calendario from './pages/Calendario';
 import PagosCotizacion from './pages/PagosCotizacion';
 import Comisiones from './pages/Comisiones';
+import Documentos from './pages/Documentos';
 import Formatos from './pages/Formatos';
 import TiposEvento from './pages/TiposEvento';
 import Perfil from './pages/Perfil';
@@ -180,6 +181,38 @@ export default function App() {
   }
 
   function abrirCotizacion(id) {
+    navegarA('ver-cotizacion', id);
+  }
+
+  function abrirCotizacionGuardada(id, cotizacionWorkspaceId) {
+    const targetWorkspaceId = Number(
+      cotizacionWorkspaceId || activeWorkspace?.workspace_id
+    );
+
+    if (
+      Number.isFinite(targetWorkspaceId) &&
+      targetWorkspaceId > 0 &&
+      targetWorkspaceId !== Number(activeWorkspace?.workspace_id)
+    ) {
+      try {
+        const selected = selectWorkspace(
+          workspaces,
+          targetWorkspaceId,
+          session?.user?.id
+        );
+
+        setActiveWorkspace(selected);
+        setWorkspaceVersion((current) => current + 1);
+      } catch (error) {
+        console.error(error);
+        setAccountError(
+          error.message ||
+            'La cotización se guardó, pero no se pudo abrir el Artista seleccionado.'
+        );
+        return;
+      }
+    }
+
     navegarA('ver-cotizacion', id);
   }
 
@@ -347,6 +380,11 @@ export default function App() {
         action: () => irA('calendario'),
       },
       {
+        id: 'documentos',
+        label: 'Documentos',
+        action: () => irA('documentos'),
+      },
+      {
         id: 'comisiones',
         label: 'Comisiones',
         action: () => irA('comisiones'),
@@ -490,10 +528,11 @@ export default function App() {
         contenido = (
           <NuevaCotizacion
             {...sharedProps}
+            workspaces={workspaces}
             session={session}
             cotizacionId={cotizacionId}
             goBack={volverAtras}
-            onCotizacionGuardada={abrirCotizacion}
+            onCotizacionGuardada={abrirCotizacionGuardada}
           />
         );
         break;
@@ -537,6 +576,15 @@ export default function App() {
           <PagosCotizacion
             {...sharedProps}
             cotizacionId={cotizacionId}
+            goBack={volverAtras}
+          />
+        );
+        break;
+
+      case 'documentos':
+        contenido = (
+          <Documentos
+            {...sharedProps}
             goBack={volverAtras}
           />
         );
@@ -586,6 +634,7 @@ export default function App() {
             session={session}
             goCotizaciones={() => irA('cotizaciones')}
             goCalendario={() => irA('calendario')}
+            goDocumentos={() => irA('documentos')}
             goComisiones={() => irA('comisiones')}
           />
         );
@@ -614,6 +663,7 @@ export default function App() {
             goTarifas={() => irA('tarifas')}
             goCotizaciones={() => irA('cotizaciones')}
             goCalendario={() => irA('calendario')}
+            goDocumentos={() => irA('documentos')}
             goComisiones={() => irA('comisiones')}
             goFormatos={() => irA('formatos')}
             goTiposEvento={() => irA('tipos-evento')}
@@ -792,6 +842,10 @@ export default function App() {
             <div className="sheet-actions">
               <button type="button" onClick={() => irA('clientes')}>
                 ◉ Clientes
+              </button>
+
+              <button type="button" onClick={() => irA('documentos')}>
+                ▤ Documentos
               </button>
 
               <button type="button" onClick={() => irA('comisiones')}>
