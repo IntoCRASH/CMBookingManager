@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
-import { getMisArtistas } from '../lib/artistasService';
 import {
   deleteFormato,
   getFormatos,
@@ -14,9 +13,11 @@ const nuevoRegistro = {
   activo: true,
 };
 
-export default function Formatos({ goBack }) {
-  const [artistas, setArtistas] = useState([]);
-  const [artistaId, setArtistaId] = useState('');
+export default function Formatos({
+  workspaceId,
+  workspace,
+  goBack,
+}) {
   const [formatos, setFormatos] = useState([]);
   const [form, setForm] = useState(nuevoRegistro);
   const [modalOpen, setModalOpen] = useState(false);
@@ -24,75 +25,47 @@ export default function Formatos({ goBack }) {
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(true);
 
-  const artistaSeleccionado = artistas.find(
-    (artista) =>
-      String(artista.id) === String(artistaId)
-  );
+  const nombreArtista =
+    workspace?.workspace_name || 'Artista activo';
 
   useEffect(() => {
-    cargarArtistas();
-  }, []);
+    setBusqueda('');
+    setModalOpen(false);
+    setForm(nuevoRegistro);
+    setError('');
 
-  useEffect(() => {
-    if (!artistaId) {
+    if (!workspaceId) {
       setFormatos([]);
       setCargando(false);
       return;
     }
 
     cargar();
-  }, [artistaId]);
-
-  async function cargarArtistas() {
-    try {
-      setCargando(true);
-
-      const data = await getMisArtistas();
-      const lista = Array.isArray(data) ? data : [];
-
-      setArtistas(lista);
-
-      if (lista.length > 0) {
-        setArtistaId((actual) => actual || String(lista[0].id));
-      } else {
-        setCargando(false);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(
-        err.message || 'No se pudieron cargar los artistas.'
-      );
-      setCargando(false);
-    }
-  }
+  }, [workspaceId]);
 
   async function cargar() {
     try {
       setCargando(true);
+      setError('');
 
-      const data = await getFormatos(artistaId);
+      const data = await getFormatos(workspaceId);
       setFormatos(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      toast.error(
-        err.message || 'No se pudieron cargar los formatos.'
-      );
+
+      const mensaje =
+        err.message || 'No se pudieron cargar los formatos.';
+
+      setError(mensaje);
+      toast.error(mensaje);
     } finally {
       setCargando(false);
     }
   }
 
-  function cambiarArtista(event) {
-    setArtistaId(event.target.value);
-    setBusqueda('');
-    setModalOpen(false);
-    setForm(nuevoRegistro);
-    setError('');
-  }
-
   function nuevo() {
-    if (!artistaId) {
-      toast.error('Primero selecciona un artista.');
+    if (!workspaceId) {
+      toast.error('No hay un Artista activo.');
       return;
     }
 
@@ -116,22 +89,28 @@ export default function Formatos({ goBack }) {
   }
 
   async function duplicar(formato) {
-    if (!artistaId) return;
+    if (!workspaceId) {
+      toast.error('No hay un Artista activo.');
+      return;
+    }
 
     try {
-      await saveFormato({
-        artista_id: Number(artistaId),
-        nombre: `${formato.nombre || 'Formato'} copia`,
-        cantidad_musicos: Number(
-          formato.cantidad_musicos || 1
-        ),
-        activo: Boolean(formato.activo),
-      });
+      await saveFormato(
+        {
+          nombre: `${formato.nombre || 'Formato'} copia`,
+          cantidad_musicos: Number(
+            formato.cantidad_musicos || 1
+          ),
+          activo: Boolean(formato.activo),
+        },
+        workspaceId
+      );
 
       toast.success('Formato duplicado correctamente.');
       await cargar();
     } catch (err) {
       console.error(err);
+
       toast.error(
         err.message || 'No se pudo duplicar el formato.'
       );
@@ -151,8 +130,8 @@ export default function Formatos({ goBack }) {
     event.preventDefault();
     setError('');
 
-    if (!artistaId) {
-      setError('Primero selecciona un artista.');
+    if (!workspaceId) {
+      setError('No hay un Artista activo.');
       return;
     }
 
@@ -169,15 +148,17 @@ export default function Formatos({ goBack }) {
     }
 
     try {
-      await saveFormato({
-        ...form,
-        artista_id: Number(artistaId),
-        nombre: form.nombre.trim(),
-        cantidad_musicos: Number(
-          form.cantidad_musicos
-        ),
-        activo: Boolean(form.activo),
-      });
+      await saveFormato(
+        {
+          ...form,
+          nombre: form.nombre.trim(),
+          cantidad_musicos: Number(
+            form.cantidad_musicos
+          ),
+          activo: Boolean(form.activo),
+        },
+        workspaceId
+      );
 
       toast.success(
         form.id
@@ -200,18 +181,22 @@ export default function Formatos({ goBack }) {
   }
 
   async function borrar(id, nombre) {
-    const ok = window.confirm(
-      `¿Deseas borrar definitivamente el formato "${nombre || 'Sin nombre'}"?`
+    const confirmado = window.confirm(
+      `¿Deseas borrar definitivamente el formato "${
+        nombre || 'Sin nombre'
+      }"?`
     );
 
-    if (!ok) return;
+    if (!confirmado) return;
 
     try {
-      await deleteFormato(id, artistaId);
+      await deleteFormato(id, workspaceId);
+
       toast.success('Formato eliminado correctamente.');
       await cargar();
     } catch (err) {
       console.error(err);
+
       toast.error(
         err.message || 'No se pudo borrar el formato.'
       );
@@ -235,7 +220,7 @@ export default function Formatos({ goBack }) {
       <div className="top-bar">
         <div>
           <h1>Formatos</h1>
-          <p>Formatos musicales por artista</p>
+          <p>Formatos musicales de {nombreArtista}</p>
         </div>
 
         <button type="button" onClick={goBack}>
@@ -246,41 +231,21 @@ export default function Formatos({ goBack }) {
       <section className="config-artista-card">
         <div>
           <span className="config-artista-kicker">
-            Configuración independiente
+            Configuración del Artista
           </span>
 
-          <strong>
-            Formatos de{' '}
-            {artistaSeleccionado?.nombre ||
-              'un artista'}
-          </strong>
+          <strong>Formatos de {nombreArtista}</strong>
 
           <p>
-            Cada artista puede ofrecer agrupaciones y
-            cantidades de músicos diferentes.
+            Estos formatos pertenecen exclusivamente al
+            Artista activo y estarán disponibles al crear
+            cotizaciones.
           </p>
         </div>
 
         <div className="config-artista-control">
-          <label htmlFor="formatos-artista">
-            Artista
-          </label>
-
-          <select
-            id="formatos-artista"
-            value={artistaId}
-            onChange={cambiarArtista}
-          >
-            <option value="">
-              Seleccionar artista
-            </option>
-
-            {artistas.map((artista) => (
-              <option key={artista.id} value={artista.id}>
-                {artista.nombre}
-              </option>
-            ))}
-          </select>
+          <label>Artista activo</label>
+          <strong>{nombreArtista}</strong>
         </div>
       </section>
 
@@ -292,13 +257,13 @@ export default function Formatos({ goBack }) {
           onChange={(event) =>
             setBusqueda(event.target.value)
           }
-          disabled={!artistaId}
+          disabled={!workspaceId}
         />
 
         <button
           type="button"
           onClick={nuevo}
-          disabled={!artistaId}
+          disabled={!workspaceId}
         >
           + Nuevo Formato
         </button>
@@ -313,12 +278,12 @@ export default function Formatos({ goBack }) {
           <span>Acciones</span>
         </div>
 
-        {artistas.length === 0 ? (
+        {!workspaceId ? (
           <div className="config-artista-empty">
-            <strong>No tienes artistas activos.</strong>
+            <strong>No hay un Artista activo.</strong>
             <span>
-              Crea primero un artista desde la página
-              Artistas.
+              Selecciona un Artista para consultar sus
+              formatos.
             </span>
           </div>
         ) : cargando ? (
@@ -327,8 +292,8 @@ export default function Formatos({ goBack }) {
           </div>
         ) : formatosFiltrados.length === 0 ? (
           <div className="formatos-empty">
-            Este artista todavía no tiene formatos
-            configurados.
+            {error ||
+              'Este Artista todavía no tiene formatos configurados.'}
           </div>
         ) : (
           formatosFiltrados.map((formato) => (
@@ -395,11 +360,7 @@ export default function Formatos({ goBack }) {
       >
         <form onSubmit={guardar}>
           <p className="config-modal-context">
-            Artista:{' '}
-            <strong>
-              {artistaSeleccionado?.nombre ||
-                'No seleccionado'}
-            </strong>
+            Artista: <strong>{nombreArtista}</strong>
           </p>
 
           <label>Nombre del formato *</label>

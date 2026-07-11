@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { supabase } from '../lib/supabaseClient';
 import {
   getCotizaciones,
   duplicarCotizacion,
   cancelarCotizacion,
+  eliminarCotizacion,
 } from '../lib/cotizacionesService';
 
 export default function Cotizaciones({
+  workspaceId,
   goBack,
   nuevaCotizacion,
   abrirCotizacion,
@@ -22,7 +23,7 @@ export default function Cotizaciones({
 
   useEffect(() => {
     cargar();
-  }, []);
+  }, [workspaceId]);
 
   useEffect(() => {
     function cerrarMenu() {
@@ -47,11 +48,17 @@ export default function Cotizaciones({
   async function cargar() {
     try {
       setCargando(true);
-      const data = await getCotizaciones();
+
+      const data = await getCotizaciones({
+        workspaceId,
+      });
+
       setCotizaciones(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'No se pudieron cargar las cotizaciones.');
+      toast.error(
+        err.message || 'No se pudieron cargar las cotizaciones.'
+      );
     } finally {
       setCargando(false);
     }
@@ -60,20 +67,22 @@ export default function Cotizaciones({
   const filtradas = useMemo(() => {
     const textoBusqueda = buscar.trim().toLowerCase();
 
-    return cotizaciones.filter((c) => {
+    return cotizaciones.filter((cotizacion) => {
       const texto = [
-        c.numero,
-        c.clientes?.nombre,
-        c.nombre_evento,
-        c.tipo_evento,
-        c.venue,
+        cotizacion.numero,
+        cotizacion.clientes?.nombre,
+        cotizacion.nombre_evento,
+        cotizacion.tipo_evento,
+        cotizacion.venue,
       ]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
 
-      const cumpleTexto = !textoBusqueda || texto.includes(textoBusqueda);
-      const cumpleEstado = !estado || c.estado === estado;
+      const cumpleTexto =
+        !textoBusqueda || texto.includes(textoBusqueda);
+      const cumpleEstado =
+        !estado || cotizacion.estado === estado;
 
       return cumpleTexto && cumpleEstado;
     });
@@ -86,11 +95,14 @@ export default function Cotizaciones({
   function fechaCorta(fecha) {
     if (!fecha) return '--';
 
-    return new Date(`${fecha}T00:00:00`).toLocaleDateString('es-DO', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
+    return new Date(`${fecha}T00:00:00`).toLocaleDateString(
+      'es-DO',
+      {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }
+    );
   }
 
   function claseEstado(valor) {
@@ -107,32 +119,37 @@ export default function Cotizaciones({
 
     try {
       setMenuAbierto(null);
-      await duplicarCotizacion(id);
+      await duplicarCotizacion(id, workspaceId);
       toast.success('Cotización duplicada correctamente.');
       await cargar();
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'No se pudo duplicar la cotización.');
+      toast.error(
+        err.message || 'No se pudo duplicar la cotización.'
+      );
     }
   }
 
   async function eliminar(id) {
-    if (!window.confirm('¿Eliminar definitivamente esta cotización?')) return;
+    if (
+      !window.confirm(
+        '¿Eliminar definitivamente esta cotización?'
+      )
+    ) {
+      return;
+    }
 
     try {
-      const { error } = await supabase
-        .from('cotizaciones')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      await eliminarCotizacion(id, workspaceId);
 
       setMenuAbierto(null);
       toast.success('Cotización eliminada correctamente.');
       await cargar();
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'No se pudo eliminar la cotización.');
+      toast.error(
+        err.message || 'No se pudo eliminar la cotización.'
+      );
     }
   }
 
@@ -141,54 +158,63 @@ export default function Cotizaciones({
 
     try {
       setMenuAbierto(null);
-      await cancelarCotizacion(id);
+      await cancelarCotizacion(id, workspaceId);
       toast.success('Cotización cancelada correctamente.');
       await cargar();
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'No se pudo cancelar la cotización.');
+      toast.error(
+        err.message || 'No se pudo cancelar la cotización.'
+      );
     }
   }
 
   return (
     <div className="dashboard cotizaciones-page">
-       <div className="top-bar">
+      <div className="top-bar">
         <div>
           <h1>Cotizaciones</h1>
-           <p>{filtradas.length} registro{filtradas.length !== 1 ? 's' : ''}</p>
+          <p>
+            {filtradas.length} registro
+            {filtradas.length !== 1 ? 's' : ''}
+          </p>
         </div>
 
         <div className="top-bar-actions">
-        <button
-           type="button"
-           className="primary-button"
-           onClick={nuevaCotizacion}
-            >
+          <button
+            type="button"
+            className="primary-button"
+            onClick={nuevaCotizacion}
+          >
             + Nueva cotización
           </button>
 
-        <button type="button" onClick={goBack}>
-      ← Atrás
-    </button>
-  </div>
-</div>
+          <button type="button" onClick={goBack}>
+            ← Atrás
+          </button>
+        </div>
+      </div>
 
       <div className="cotizaciones-filtros">
         <input
           type="search"
           placeholder="Buscar por número, cliente, evento o venue..."
           value={buscar}
-          onChange={(e) => setBuscar(e.target.value)}
+          onChange={(event) => setBuscar(event.target.value)}
         />
 
         <select
           value={estado}
-          onChange={(e) => setEstado(e.target.value)}
+          onChange={(event) => setEstado(event.target.value)}
         >
           <option value="">Todos los estados</option>
           <option value="Pendiente">Pendiente</option>
-          <option value="Pendiente de aprobación">Pendiente de aprobación</option>
-          <option value="Pendiente de cobro">Pendiente de cobro</option>
+          <option value="Pendiente de aprobación">
+            Pendiente de aprobación
+          </option>
+          <option value="Pendiente de cobro">
+            Pendiente de cobro
+          </option>
           <option value="Confirmada">Confirmada</option>
           <option value="Realizada">Realizada</option>
           <option value="Cancelada">Cancelada</option>
@@ -196,7 +222,10 @@ export default function Cotizaciones({
       </div>
 
       <div className="cotizaciones-table">
-        <div className="cotizaciones-table-header" aria-hidden="true">
+        <div
+          className="cotizaciones-table-header"
+          aria-hidden="true"
+        >
           <span>Número</span>
           <span>Cliente / Evento</span>
           <span>Fecha</span>
@@ -206,40 +235,69 @@ export default function Cotizaciones({
         </div>
 
         {cargando ? (
-          <div className="cotizaciones-empty">Cargando cotizaciones...</div>
+          <div className="cotizaciones-empty">
+            Cargando cotizaciones...
+          </div>
         ) : filtradas.length === 0 ? (
           <div className="cotizaciones-empty">
             No se encontraron cotizaciones.
           </div>
         ) : (
-          filtradas.map((c) => (
+          filtradas.map((cotizacion) => (
             <article
               className={`cotizacion-row ${
-                menuAbierto === c.id ? 'menu-activo' : ''
+                menuAbierto === cotizacion.id
+                  ? 'menu-activo'
+                  : ''
               }`}
-              key={c.id}
+              key={cotizacion.id}
             >
-              <div className="cotizacion-numero" data-label="Número">
-                {c.numero || `#${c.id}`}
+              <div
+                className="cotizacion-numero"
+                data-label="Número"
+              >
+                {cotizacion.numero || `#${cotizacion.id}`}
               </div>
 
-              <div className="cotizacion-cliente" data-label="Cliente / Evento">
-                <strong>{c.clientes?.nombre || 'Cliente sin nombre'}</strong>
-                <span>{c.nombre_evento || c.tipo_evento || 'Evento sin nombre'}</span>
-                {c.venue && <small>{c.venue}</small>}
+              <div
+                className="cotizacion-cliente"
+                data-label="Cliente / Evento"
+              >
+                <strong>
+                  {cotizacion.clientes?.nombre ||
+                    'Cliente sin nombre'}
+                </strong>
+                <span>
+                  {cotizacion.nombre_evento ||
+                    cotizacion.tipo_evento ||
+                    'Evento sin nombre'}
+                </span>
+                {cotizacion.venue && (
+                  <small>{cotizacion.venue}</small>
+                )}
               </div>
 
-              <div className="cotizacion-fecha" data-label="Fecha">
-                {fechaCorta(c.fecha_evento)}
+              <div
+                className="cotizacion-fecha"
+                data-label="Fecha"
+              >
+                {fechaCorta(cotizacion.fecha_evento)}
               </div>
 
-              <div className="cotizacion-total" data-label="Total">
-                {money(c.total)}
+              <div
+                className="cotizacion-total"
+                data-label="Total"
+              >
+                {money(cotizacion.total)}
               </div>
 
               <div data-label="Estado">
-                <span className={`cotizacion-estado estado-${claseEstado(c.estado)}`}>
-                  {c.estado || 'Sin estado'}
+                <span
+                  className={`cotizacion-estado estado-${claseEstado(
+                    cotizacion.estado
+                  )}`}
+                >
+                  {cotizacion.estado || 'Sin estado'}
                 </span>
               </div>
 
@@ -252,19 +310,23 @@ export default function Cotizaciones({
                   className="cotizacion-menu-button"
                   aria-label="Abrir acciones"
                   onClick={() =>
-                    setMenuAbierto(menuAbierto === c.id ? null : c.id)
+                    setMenuAbierto(
+                      menuAbierto === cotizacion.id
+                        ? null
+                        : cotizacion.id
+                    )
                   }
                 >
                   ⋮
                 </button>
 
-                {menuAbierto === c.id && (
+                {menuAbierto === cotizacion.id && (
                   <div className="menu-popup cotizaciones-menu-popup">
                     <button
                       type="button"
                       onClick={() => {
                         setMenuAbierto(null);
-                        abrirCotizacion(c.id);
+                        abrirCotizacion(cotizacion.id);
                       }}
                     >
                       👁 Ver
@@ -274,7 +336,7 @@ export default function Cotizaciones({
                       type="button"
                       onClick={() => {
                         setMenuAbierto(null);
-                        editarCotizacion(c.id);
+                        editarCotizacion(cotizacion.id);
                       }}
                     >
                       ✏ Editar
@@ -284,7 +346,7 @@ export default function Cotizaciones({
                       type="button"
                       onClick={() => {
                         setMenuAbierto(null);
-                        abrirPagos(c.id);
+                        abrirPagos(cotizacion.id);
                       }}
                     >
                       💰 Pagos
@@ -292,14 +354,14 @@ export default function Cotizaciones({
 
                     <button
                       type="button"
-                      onClick={() => duplicar(c.id)}
+                      onClick={() => duplicar(cotizacion.id)}
                     >
                       📋 Duplicar
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => cancelar(c.id)}
+                      onClick={() => cancelar(cotizacion.id)}
                     >
                       ❌ Cancelar
                     </button>
@@ -307,7 +369,7 @@ export default function Cotizaciones({
                     <button
                       type="button"
                       className="danger"
-                      onClick={() => eliminar(c.id)}
+                      onClick={() => eliminar(cotizacion.id)}
                     >
                       🗑 Eliminar
                     </button>

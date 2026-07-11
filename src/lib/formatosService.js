@@ -1,67 +1,48 @@
 import { supabase } from './supabaseClient';
+import { requireWorkspaceId } from './workspaceService';
 
-function validarArtistaId(artistaId) {
-  const id = Number(artistaId);
-
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new Error('Selecciona un artista válido.');
-  }
-
-  return id;
-}
-
-export async function getFormatos(artistaId) {
-  const id = validarArtistaId(artistaId);
+export async function getFormatos(workspaceId) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
 
   const { data, error } = await supabase
     .from('formatos')
     .select('*')
-    .eq('artista_id', id)
-    .order('cantidad_musicos', {
-      ascending: true,
-    });
+    .eq('workspace_id', currentWorkspaceId)
+    .order('cantidad_musicos', { ascending: true });
 
   if (error) throw error;
 
   return data || [];
 }
 
-export async function getFormatosActivos(artistaId) {
-  const id = validarArtistaId(artistaId);
+export async function getFormatosActivos(workspaceId) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
 
   const { data, error } = await supabase
     .from('formatos')
     .select('*')
-    .eq('artista_id', id)
+    .eq('workspace_id', currentWorkspaceId)
     .eq('activo', true)
-    .order('cantidad_musicos', {
-      ascending: true,
-    });
+    .order('cantidad_musicos', { ascending: true });
 
   if (error) throw error;
 
   return data || [];
 }
 
-export async function saveFormato(formato) {
-  const artistaId = validarArtistaId(
-    formato.artista_id
-  );
+export async function saveFormato(formato, workspaceId) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
 
   const payload = {
-    artista_id: artistaId,
+    workspace_id: currentWorkspaceId,
     nombre: String(formato.nombre || '').trim(),
-    cantidad_musicos: Number(
-      formato.cantidad_musicos || 1
-    ),
-    activo: Boolean(formato.activo ?? true),
+    cantidad_musicos: Number(formato.cantidad_musicos || 1),
+    activo: formato.activo ?? true,
     updated_at: new Date().toISOString(),
   };
 
   if (!payload.nombre) {
-    throw new Error(
-      'El nombre del formato es obligatorio.'
-    );
+    throw new Error('El nombre del formato es obligatorio.');
   }
 
   if (payload.cantidad_musicos <= 0) {
@@ -75,7 +56,7 @@ export async function saveFormato(formato) {
       .from('formatos')
       .update(payload)
       .eq('id', formato.id)
-      .eq('artista_id', artistaId)
+      .eq('workspace_id', currentWorkspaceId)
       .select()
       .single();
 
@@ -95,18 +76,14 @@ export async function saveFormato(formato) {
   return data;
 }
 
-export async function deleteFormato(
-  id,
-  artistaId
-) {
-  const artistaIdValido =
-    validarArtistaId(artistaId);
+export async function deleteFormato(id, workspaceId) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
 
   const { error } = await supabase
     .from('formatos')
     .delete()
     .eq('id', id)
-    .eq('artista_id', artistaIdValido);
+    .eq('workspace_id', currentWorkspaceId);
 
   if (error) throw error;
 

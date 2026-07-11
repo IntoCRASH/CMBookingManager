@@ -1,30 +1,17 @@
 import { supabase } from './supabaseClient';
+import { requireWorkspaceId } from './workspaceService';
 
 const BUSINESS_PROFILE_BUCKET = 'perfiles-negocio';
 const MAX_PNG_SIZE = 5 * 1024 * 1024;
 const SIGNED_URL_DURATION = 60 * 60 * 6;
 
-export const DEFAULT_BUSINESS_POLICIES_TEMPLATE = `El uso de nuestros proveedores de sonido es altamente recomendado, pero no obligatorio.
+export const DEFAULT_BUSINESS_POLICIES_TEMPLATE = `La fecha se considera reservada únicamente después de recibir el avance acordado.
 
-Tenga en cuenta que, de no optar por nuestra recomendación de proveedor de sonido, se proveerá un Rider Técnico con requerimientos esenciales muy específicos.
+El balance restante deberá completarse conforme a las condiciones indicadas en la cotización.
 
-Nuestra presentación tiene una duración de **una hora y treinta minutos (1:30)**, de forma continua o dividida en dos (2) sets de cuarenta y cinco (45) minutos cada uno. Debe especificar su preferencia.
+Cualquier cambio en la fecha, horario, lugar, formato artístico o requerimientos técnicos puede producir ajustes en el precio.
 
-Se debe proveer **amenidades y refrigerio**, mesa y sillas con snack o almuerzo, según lo acordado con el cliente.
-
-Para separar la fecha es imprescindible realizar un adelanto del **{{porcentaje_adelanto}}% del monto acordado** a la cuenta **{{cuenta_bancaria}}** del **{{nombre_banco}}**, a nombre de **{{nombre_completo}}**, Cédula o ID **{{identificacion}}**, con su nombre adjunto y fecha del evento como concepto.
-
-El {{porcentaje_restante}}% restante se requiere **EN EFECTIVO antes de iniciar la actividad.**
-
-Nuestra tarifa incluye transporte y viáticos en localidades donde es necesario.
-
-El {{porcentaje_adelanto}}% inicial no es reembolsable si el cliente cancela.
-
-Posponer a una nueva fecha es necesario con veintiún (21) días de antelación a la fecha inicial.
-
-Otras condiciones aplicables y contrato obligatorio podrían ser provistos al momento de solicitar la factura final para la contratación del artista y fecha deseada.
-
-**¡Es un privilegio poder servirle. Estamos a su entera disposición!**`;
+Las cancelaciones y reprogramaciones estarán sujetas a los términos acordados y a la disponibilidad del Artista.`;
 
 async function getAuthenticatedUser() {
   const { data, error } = await supabase.auth.getUser();
@@ -38,7 +25,145 @@ async function getAuthenticatedUser() {
   return data.user;
 }
 
-async function createSignedAssetUrl(path) {
+async function getWorkspace(workspaceId) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
+
+  const { data, error } = await supabase
+    .from('workspaces')
+    .select(`
+      id,
+      owner_user_id,
+      nombre,
+      nombre_legal,
+      email_contacto,
+      telefono_contacto,
+      spotify_url,
+      activo
+    `)
+    .eq('id', currentWorkspaceId)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
+function validarSpotify(value) {
+  const cleanValue = String(value || '').trim();
+
+  if (!cleanValue) return true;
+
+  try {
+    const url = new URL(cleanValue);
+
+    return (
+      ['http:', 'https:'].includes(url.protocol) &&
+      url.hostname.toLowerCase().includes('spotify.com')
+    );
+  } catch {
+    return false;
+  }
+}
+
+export async function getWorkspaceArtistProfile(workspaceId) {
+  const workspace = await getWorkspace(workspaceId);
+
+  return {
+    workspace_id: workspace.id,
+    owner_user_id: workspace.owner_user_id,
+    nombre_artistico: workspace.nombre || '',
+    email_artistico: workspace.email_contacto || '',
+    telefono_artistico: workspace.telefono_contacto || '',
+    spotify_url: workspace.spotify_url || '',
+    activo: Boolean(workspace.activo),
+  };
+}
+
+export async function saveWorkspaceArtistProfile(
+  artistProfile,
+  workspaceId
+) {
+  const user = await getAuthenticatedUser();
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
+  const workspace = await getWorkspace(currentWorkspaceId);
+
+  if (workspace.owner_user_id !== user.id) {
+    throw new Error(
+      'Solo el Artista puede modificar su identidad artística.'
+    );
+  }
+
+  const nombreArtistico = String(
+    artistProfile.nombre_artistico || ''
+  ).trim();
+
+  const emailArtistico = String(
+    artistProfile.email_artistico || ''
+  ).trim();
+
+  const telefonoArtistico = String(
+    artistProfile.telefono_artistico || ''
+  ).trim();
+
+  const spotifyUrl = String(
+    artistProfile.spotify_url || ''
+  ).trim();
+
+  if (!nombreArtistico) {
+    throw new Error('El nombre artístico es obligatorio.');
+  }
+
+  if (
+    emailArtistico &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailArtistico)
+  ) {
+    throw new Error(
+      'Escribe un correo de contratación válido.'
+    );
+  }
+
+  if (!validarSpotify(spotifyUrl)) {
+    throw new Error(
+      'Introduce un enlace válido del perfil de Spotify.'
+    );
+  }
+
+  const { data, error } = await supabase
+    .from('workspaces')
+    .update({
+      nombre: nombreArtistico,
+      email_contacto: emailArtistico || null,
+      telefono_contacto: telefonoArtistico || null,
+      spotify_url: spotifyUrl || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', currentWorkspaceId)
+    .eq('owner_user_id', user.id)
+    .select(`
+      id,
+      owner_user_id,
+      nombre,
+      email_contacto,
+      telefono_contacto,
+      spotify_url,
+      activo
+    `)
+    .single();
+
+  if (error) throw error;
+
+  return {
+    workspace_id: data.id,
+    owner_user_id: data.owner_user_id,
+    nombre_artistico: data.nombre || '',
+    email_artistico: data.email_contacto || '',
+    telefono_artistico: data.telefono_contacto || '',
+    spotify_url: data.spotify_url || '',
+    activo: Boolean(data.activo),
+  };
+}
+
+export async function getBusinessAssetSignedUrl(path) {
   if (!path) return '';
 
   const { data, error } = await supabase.storage
@@ -61,8 +186,8 @@ async function includeAssetUrls(profile) {
   if (!profile) return null;
 
   const [logoUrl, firmaUrl] = await Promise.all([
-    createSignedAssetUrl(profile.logo_path),
-    createSignedAssetUrl(profile.firma_path),
+    getBusinessAssetSignedUrl(profile.logo_path),
+    getBusinessAssetSignedUrl(profile.firma_path),
   ]);
 
   return {
@@ -70,145 +195,6 @@ async function includeAssetUrls(profile) {
     logo_url: logoUrl,
     firma_url: firmaUrl,
   };
-}
-
-function normalizePercentage(value) {
-  const numberValue = Number(value ?? 0);
-
-  if (!Number.isFinite(numberValue)) return 0;
-
-  return Math.min(Math.max(numberValue, 0), 100);
-}
-
-function stringValue(value) {
-  return String(value ?? '').trim();
-}
-
-function createVersionToken() {
-  const randomPart =
-    globalThis.crypto?.randomUUID?.() ||
-    Math.random().toString(36).slice(2);
-
-  return `${Date.now()}-${randomPart}`;
-}
-
-export function buildBusinessProfileSnapshot(profile) {
-  if (!profile) return null;
-
-  const porcentajeAdelanto = normalizePercentage(
-    profile.porcentaje_adelanto
-  );
-
-  return {
-    perfil_negocio_id: profile.id || null,
-    user_id: profile.user_id || null,
-
-    nombre_completo: stringValue(
-      profile.nombre_completo
-    ),
-
-    direccion: stringValue(profile.direccion),
-    ciudad: stringValue(profile.ciudad),
-    pais: stringValue(profile.pais),
-
-    codigo_postal: stringValue(
-      profile.codigo_postal
-    ),
-
-    telefono: stringValue(profile.telefono),
-
-    identificacion: stringValue(
-      profile.identificacion
-    ),
-
-    cuenta_bancaria: stringValue(
-      profile.cuenta_bancaria
-    ),
-
-    nombre_banco: stringValue(
-      profile.nombre_banco
-    ),
-
-    porcentaje_adelanto: porcentajeAdelanto,
-
-    porcentaje_restante: Math.max(
-      100 - porcentajeAdelanto,
-      0
-    ),
-
-    condiciones_pago: stringValue(
-      profile.condiciones_pago ||
-        DEFAULT_BUSINESS_POLICIES_TEMPLATE
-    ),
-
-    logo_path: stringValue(profile.logo_path),
-    firma_path: stringValue(profile.firma_path),
-    capturado_en: new Date().toISOString(),
-  };
-}
-
-export function renderBusinessPolicies(
-  template,
-  snapshot
-) {
-  const source = stringValue(
-    template ||
-      snapshot?.condiciones_pago ||
-      DEFAULT_BUSINESS_POLICIES_TEMPLATE
-  );
-
-  const values = {
-    nombre_completo: stringValue(
-      snapshot?.nombre_completo
-    ),
-
-    direccion: stringValue(snapshot?.direccion),
-    ciudad: stringValue(snapshot?.ciudad),
-    pais: stringValue(snapshot?.pais),
-
-    codigo_postal: stringValue(
-      snapshot?.codigo_postal
-    ),
-
-    telefono: stringValue(snapshot?.telefono),
-
-    identificacion: stringValue(
-      snapshot?.identificacion
-    ),
-
-    cuenta_bancaria: stringValue(
-      snapshot?.cuenta_bancaria
-    ),
-
-    nombre_banco: stringValue(
-      snapshot?.nombre_banco
-    ),
-
-    porcentaje_adelanto: String(
-      normalizePercentage(
-        snapshot?.porcentaje_adelanto
-      )
-    ),
-
-    porcentaje_restante: String(
-      normalizePercentage(
-        snapshot?.porcentaje_restante ??
-          100 -
-            normalizePercentage(
-              snapshot?.porcentaje_adelanto
-            )
-      )
-    ),
-  };
-
-  return source.replace(
-    /\{\{\s*([a-z0-9_]+)\s*\}\}/gi,
-    (_match, key) => values[key] ?? ''
-  );
-}
-
-export async function getBusinessAssetUrl(path) {
-  return createSignedAssetUrl(path);
 }
 
 export async function getMyProfile() {
@@ -225,13 +211,13 @@ export async function getMyProfile() {
   return data;
 }
 
-export async function getMyBusinessProfile() {
-  const user = await getAuthenticatedUser();
+export async function getMyBusinessProfile(workspaceId) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
 
   const { data, error } = await supabase
     .from('perfiles_negocio')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('workspace_id', currentWorkspaceId)
     .maybeSingle();
 
   if (error) throw error;
@@ -239,50 +225,35 @@ export async function getMyBusinessProfile() {
   return includeAssetUrls(data);
 }
 
-export async function getBusinessProfileForQuotes() {
-  const ownProfile = await getMyBusinessProfile();
-
-  if (ownProfile) return ownProfile;
-
-  const { data, error } = await supabase.rpc(
-    'get_perfil_negocio_para_cotizacion'
-  );
-
-  if (error) throw error;
-
-  const businessProfile = Array.isArray(data)
-    ? data[0]
-    : data;
-
-  return includeAssetUrls(
-    businessProfile || null
-  );
+export async function getBusinessProfileForQuotes(workspaceId) {
+  return getMyBusinessProfile(workspaceId);
 }
 
 export async function uploadMyBusinessAsset(
   file,
-  assetType
+  assetType,
+  workspaceId
 ) {
   const user = await getAuthenticatedUser();
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
+  const workspace = await getWorkspace(currentWorkspaceId);
 
-  if (!file) {
+  if (workspace.owner_user_id !== user.id) {
     throw new Error(
-      'No se seleccionó ningún archivo.'
+      'Solo el Artista puede modificar el logo y la firma.'
     );
   }
 
-  const normalizedType = String(
-    assetType || ''
-  )
+  if (!file) {
+    throw new Error('No se seleccionó ningún archivo.');
+  }
+
+  const normalizedType = String(assetType || '')
     .trim()
     .toLowerCase();
 
-  if (
-    !['logo', 'firma'].includes(normalizedType)
-  ) {
-    throw new Error(
-      'Tipo de archivo de perfil inválido.'
-    );
+  if (!['logo', 'firma'].includes(normalizedType)) {
+    throw new Error('Tipo de archivo de perfil inválido.');
   }
 
   const isPng =
@@ -292,9 +263,7 @@ export async function uploadMyBusinessAsset(
       .endsWith('.png');
 
   if (!isPng) {
-    throw new Error(
-      'El archivo debe estar en formato PNG.'
-    );
+    throw new Error('El archivo debe estar en formato PNG.');
   }
 
   if (file.size > MAX_PNG_SIZE) {
@@ -304,98 +273,217 @@ export async function uploadMyBusinessAsset(
   }
 
   const path =
-    `${user.id}/${normalizedType}/` +
-    `${createVersionToken()}.png`;
+    `workspace/${currentWorkspaceId}/${normalizedType}.png`;
 
   const { error } = await supabase.storage
     .from(BUSINESS_PROFILE_BUCKET)
     .upload(path, file, {
-      upsert: false,
+      upsert: true,
       contentType: 'image/png',
-      cacheControl: '3600',
+      cacheControl: '0',
     });
 
   if (error) throw error;
 
   return {
     path,
-    url: await createSignedAssetUrl(path),
+    url: await getBusinessAssetSignedUrl(path),
   };
 }
 
 export async function saveMyBusinessProfile(
-  profile
+  profile,
+  workspaceId
 ) {
   const user = await getAuthenticatedUser();
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
+  const workspace = await getWorkspace(currentWorkspaceId);
 
-  const porcentajeAdelanto =
-    normalizePercentage(
-      profile.porcentaje_adelanto
+  if (workspace.owner_user_id !== user.id) {
+    throw new Error(
+      'Solo el Artista puede modificar el perfil comercial.'
     );
+  }
+
+  const porcentajeAdelanto = Number(
+    profile.porcentaje_adelanto ?? 0
+  );
 
   const payload = {
-    user_id: user.id,
+    workspace_id: currentWorkspaceId,
+    user_id: workspace.owner_user_id,
 
-    nombre_completo: stringValue(
-      profile.nombre_completo
-    ),
+    nombre_completo: String(
+      profile.nombre_completo || ''
+    ).trim(),
 
-    direccion: stringValue(profile.direccion),
-    ciudad: stringValue(profile.ciudad),
-    pais: stringValue(profile.pais),
+    direccion: String(profile.direccion || '').trim(),
+    ciudad: String(profile.ciudad || '').trim(),
+    pais: String(profile.pais || '').trim(),
+    codigo_postal: String(
+      profile.codigo_postal || ''
+    ).trim(),
 
-    codigo_postal: stringValue(
-      profile.codigo_postal
-    ),
+    telefono: String(profile.telefono || '').trim(),
+    identificacion: String(
+      profile.identificacion || ''
+    ).trim(),
 
-    telefono: stringValue(profile.telefono),
+    cuenta_bancaria: String(
+      profile.cuenta_bancaria || ''
+    ).trim(),
 
-    identificacion: stringValue(
-      profile.identificacion
-    ),
+    nombre_banco: String(
+      profile.nombre_banco || ''
+    ).trim(),
 
-    cuenta_bancaria: stringValue(
-      profile.cuenta_bancaria
-    ),
+    porcentaje_adelanto: Number.isFinite(
+      porcentajeAdelanto
+    )
+      ? porcentajeAdelanto
+      : 0,
 
-    nombre_banco: stringValue(
-      profile.nombre_banco
-    ),
+    condiciones_pago: String(
+      profile.condiciones_pago || ''
+    ).trim(),
 
-    porcentaje_adelanto: porcentajeAdelanto,
+    logo_path: String(profile.logo_path || '').trim(),
+    firma_path: String(profile.firma_path || '').trim(),
 
-    condiciones_pago: stringValue(
-      profile.condiciones_pago ||
-        DEFAULT_BUSINESS_POLICIES_TEMPLATE
-    ),
-
-    logo_path: stringValue(profile.logo_path),
-    firma_path: stringValue(profile.firma_path),
     updated_at: new Date().toISOString(),
   };
 
-  const { data, error } = await supabase
+  const { data: existing, error: findError } = await supabase
     .from('perfiles_negocio')
-    .upsert(payload, {
-      onConflict: 'user_id',
-    })
-    .select()
-    .single();
+    .select('user_id, workspace_id')
+    .eq('workspace_id', currentWorkspaceId)
+    .maybeSingle();
 
-  if (error) throw error;
+  if (findError) throw findError;
+
+  let result;
+
+  if (existing?.user_id) {
+    const { data, error } = await supabase
+      .from('perfiles_negocio')
+      .update(payload)
+      .eq('workspace_id', currentWorkspaceId)
+      .eq('user_id', workspace.owner_user_id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    result = data;
+  } else {
+    const { data, error } = await supabase
+      .from('perfiles_negocio')
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    result = data;
+  }
 
   if (payload.nombre_completo) {
-    const { error: profileError } =
-      await supabase
-        .from('profiles')
-        .update({
-          nombre: payload.nombre_completo,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        nombre: payload.nombre_completo,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', workspace.owner_user_id);
 
     if (profileError) throw profileError;
   }
 
-  return includeAssetUrls(data);
+  return includeAssetUrls(result);
+}
+
+export function buildBusinessProfileSnapshot(profile) {
+  if (!profile) return null;
+
+  return {
+    workspace_id: profile.workspace_id,
+
+    nombre_completo: profile.nombre_completo || '',
+    direccion: profile.direccion || '',
+    ciudad: profile.ciudad || '',
+    pais: profile.pais || '',
+    codigo_postal: profile.codigo_postal || '',
+    telefono: profile.telefono || '',
+    identificacion: profile.identificacion || '',
+
+    cuenta_bancaria: profile.cuenta_bancaria || '',
+    nombre_banco: profile.nombre_banco || '',
+
+    porcentaje_adelanto: Number(
+      profile.porcentaje_adelanto || 0
+    ),
+
+    condiciones_pago: profile.condiciones_pago || '',
+
+    logo_path: profile.logo_path || '',
+    firma_path: profile.firma_path || '',
+
+    captured_at: new Date().toISOString(),
+  };
+}
+
+export function renderBusinessPolicies(
+  conditions,
+  snapshot = {}
+) {
+  const parts = [];
+
+  const advance = Number(
+    snapshot.porcentaje_adelanto || 0
+  );
+
+  if (advance > 0) {
+    parts.push(
+      `Se requiere un avance de ${advance}% para reservar la fecha.`
+    );
+  }
+
+  const bank = String(
+    snapshot.nombre_banco || ''
+  ).trim();
+
+  const account = String(
+    snapshot.cuenta_bancaria || ''
+  ).trim();
+
+  const ownerName = String(
+    snapshot.nombre_completo || ''
+  ).trim();
+
+  const identification = String(
+    snapshot.identificacion || ''
+  ).trim();
+
+  if (bank || account) {
+    const bankParts = [
+      bank ? `Banco: ${bank}.` : '',
+      account ? `Cuenta: ${account}.` : '',
+      ownerName ? `Titular: ${ownerName}.` : '',
+      identification
+        ? `Identificación: ${identification}.`
+        : '',
+    ].filter(Boolean);
+
+    parts.push(bankParts.join(' '));
+  }
+
+  const cleanConditions = String(
+    conditions || ''
+  ).trim();
+
+  if (cleanConditions) {
+    parts.push(cleanConditions);
+  }
+
+  return parts.join('\n\n');
 }

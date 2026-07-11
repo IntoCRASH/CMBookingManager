@@ -1,24 +1,13 @@
 import { supabase } from './supabaseClient';
+import { requireWorkspaceId } from './workspaceService';
 
-function validarArtistaId(artistaId) {
-  const id = Number(artistaId);
-
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new Error('Selecciona un artista válido.');
-  }
-
-  return id;
-}
-
-export async function getTiposEventoConfig(
-  artistaId
-) {
-  const id = validarArtistaId(artistaId);
+export async function getTiposEventoConfig(workspaceId) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
 
   const { data, error } = await supabase
     .from('tipos_evento_config')
     .select('*')
-    .eq('artista_id', id)
+    .eq('workspace_id', currentWorkspaceId)
     .eq('activo', true)
     .order('nombre', { ascending: true });
 
@@ -27,15 +16,13 @@ export async function getTiposEventoConfig(
   return data || [];
 }
 
-export async function getTodosTiposEventoConfig(
-  artistaId
-) {
-  const id = validarArtistaId(artistaId);
+export async function getTodosTiposEventoConfig(workspaceId) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
 
   const { data, error } = await supabase
     .from('tipos_evento_config')
     .select('*')
-    .eq('artista_id', id)
+    .eq('workspace_id', currentWorkspaceId)
     .order('nombre', { ascending: true });
 
   if (error) throw error;
@@ -43,33 +30,36 @@ export async function getTodosTiposEventoConfig(
   return data || [];
 }
 
-export async function saveTipoEventoConfig(tipo) {
-  const artistaId = validarArtistaId(
-    tipo.artista_id
-  );
+export async function saveTipoEventoConfig(
+  tipo,
+  workspaceId
+) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
 
   const payload = {
-    artista_id: artistaId,
+    workspace_id: currentWorkspaceId,
     nombre: String(tipo.nombre || '').trim(),
+
     multiplicador_honorarios: Number(
       tipo.multiplicador_honorarios || 1
     ),
+
     multiplicador_musicos: Number(
       tipo.multiplicador_musicos || 1
     ),
+
     multiplicador_sonido: Number(
       tipo.multiplicador_sonido || 1
     ),
+
     multiplicador_road_manager: Number(
       tipo.multiplicador_road_manager || 1
     ),
-    ensayo_extra: Number(
-      tipo.ensayo_extra || 0
-    ),
-    produccion_extra: Number(
-      tipo.produccion_extra || 0
-    ),
-    activo: Boolean(tipo.activo),
+
+    ensayo_extra: Number(tipo.ensayo_extra || 0),
+    produccion_extra: Number(tipo.produccion_extra || 0),
+    activo: tipo.activo ?? true,
+    updated_at: new Date().toISOString(),
   };
 
   if (!payload.nombre) {
@@ -78,12 +68,48 @@ export async function saveTipoEventoConfig(tipo) {
     );
   }
 
+  if (payload.multiplicador_honorarios <= 0) {
+    throw new Error(
+      'El multiplicador de honorarios debe ser mayor que cero.'
+    );
+  }
+
+  if (payload.multiplicador_musicos <= 0) {
+    throw new Error(
+      'El multiplicador de músicos debe ser mayor que cero.'
+    );
+  }
+
+  if (payload.multiplicador_sonido <= 0) {
+    throw new Error(
+      'El multiplicador de sonido debe ser mayor que cero.'
+    );
+  }
+
+  if (payload.multiplicador_road_manager <= 0) {
+    throw new Error(
+      'El multiplicador de Road Manager debe ser mayor que cero.'
+    );
+  }
+
+  if (payload.ensayo_extra < 0) {
+    throw new Error(
+      'El ensayo extra no puede ser negativo.'
+    );
+  }
+
+  if (payload.produccion_extra < 0) {
+    throw new Error(
+      'La producción extra no puede ser negativa.'
+    );
+  }
+
   if (tipo.id) {
     const { data, error } = await supabase
       .from('tipos_evento_config')
       .update(payload)
       .eq('id', tipo.id)
-      .eq('artista_id', artistaId)
+      .eq('workspace_id', currentWorkspaceId)
       .select()
       .single();
 
@@ -105,16 +131,17 @@ export async function saveTipoEventoConfig(tipo) {
 
 export async function deleteTipoEventoConfig(
   id,
-  artistaId
+  workspaceId
 ) {
-  const artistaIdValido =
-    validarArtistaId(artistaId);
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
 
   const { error } = await supabase
     .from('tipos_evento_config')
     .delete()
     .eq('id', id)
-    .eq('artista_id', artistaIdValido);
+    .eq('workspace_id', currentWorkspaceId);
 
   if (error) throw error;
+
+  return true;
 }

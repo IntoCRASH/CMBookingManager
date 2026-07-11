@@ -4,13 +4,20 @@ import {
   DEFAULT_BUSINESS_POLICIES_TEMPLATE,
   getMyBusinessProfile,
   getMyProfile,
+  getWorkspaceArtistProfile,
   saveMyBusinessProfile,
+  saveWorkspaceArtistProfile,
   uploadMyBusinessAsset,
 } from '../lib/profileService';
 
 const MAX_PNG_SIZE = 5 * 1024 * 1024;
 
 const formInicial = {
+  nombre_artistico: '',
+  email_artistico: '',
+  telefono_artistico: '',
+  spotify_url: '',
+
   nombre_completo: '',
   direccion: '',
   ciudad: '',
@@ -91,57 +98,42 @@ const VARIABLES_POLITICAS = [
 ];
 
 export default function Perfil({
+  workspaceId,
+  workspace,
+  esArtista,
   goBack,
+  goEquipo,
   onProfileUpdated,
 }) {
-  const [form, setForm] =
-    useState(formInicial);
-
-  const [profile, setProfile] =
-    useState(null);
-
-  const [logoFile, setLogoFile] =
-    useState(null);
-
-  const [firmaFile, setFirmaFile] =
-    useState(null);
-
-  const [logoPreview, setLogoPreview] =
-    useState('');
-
-  const [firmaPreview, setFirmaPreview] =
-    useState('');
-
-  const [cargando, setCargando] =
-    useState(true);
-
-  const [guardando, setGuardando] =
-    useState(false);
-
+  const [form, setForm] = useState(formInicial);
+  const [profile, setProfile] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [firmaFile, setFirmaFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState('');
+  const [firmaPreview, setFirmaPreview] = useState('');
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
 
   const logoInputRef = useRef(null);
   const firmaInputRef = useRef(null);
 
-  const rol = String(
-    profile?.rol || ''
-  )
-    .trim()
-    .toLowerCase();
-
-  const esAdmin =
-    rol === 'admin' ||
-    rol === 'administrador';
+  const puedeEditar = Boolean(
+    esArtista || workspace?.member_role === 'owner'
+  );
 
   useEffect(() => {
+    if (!workspaceId) {
+      setCargando(false);
+      return;
+    }
+
     cargar();
-  }, []);
+  }, [workspaceId]);
 
   useEffect(() => {
     return () => {
-      if (
-        logoPreview.startsWith('blob:')
-      ) {
+      if (logoPreview.startsWith('blob:')) {
         URL.revokeObjectURL(logoPreview);
       }
     };
@@ -149,9 +141,7 @@ export default function Perfil({
 
   useEffect(() => {
     return () => {
-      if (
-        firmaPreview.startsWith('blob:')
-      ) {
+      if (firmaPreview.startsWith('blob:')) {
         URL.revokeObjectURL(firmaPreview);
       }
     };
@@ -162,29 +152,35 @@ export default function Perfil({
       setCargando(true);
       setError('');
 
-      const perfilUsuario =
-        await getMyProfile();
+      const [
+        perfilUsuario,
+        perfilArtistico,
+        perfilNegocio,
+      ] = await Promise.all([
+        getMyProfile(),
+        getWorkspaceArtistProfile(workspaceId),
+        getMyBusinessProfile(workspaceId),
+      ]);
 
       setProfile(perfilUsuario);
-
-      const rolActual = String(
-        perfilUsuario?.rol || ''
-      )
-        .trim()
-        .toLowerCase();
-
-      const autorizado =
-        rolActual === 'admin' ||
-        rolActual === 'administrador';
-
-      if (!autorizado) return;
-
-      const perfilNegocio =
-        await getMyBusinessProfile();
 
       setForm({
         ...formInicial,
         ...perfilNegocio,
+
+        nombre_artistico:
+          perfilArtistico?.nombre_artistico ||
+          workspace?.workspace_name ||
+          '',
+
+        email_artistico:
+          perfilArtistico?.email_artistico || '',
+
+        telefono_artistico:
+          perfilArtistico?.telefono_artistico || '',
+
+        spotify_url:
+          perfilArtistico?.spotify_url || '',
 
         nombre_completo:
           perfilNegocio?.nombre_completo ||
@@ -192,14 +188,11 @@ export default function Perfil({
           '',
 
         porcentaje_adelanto: Number(
-          perfilNegocio
-            ?.porcentaje_adelanto ?? 50
+          perfilNegocio?.porcentaje_adelanto ?? 50
         ),
 
         condiciones_pago:
-          perfilNegocio
-            ?.condiciones_pago
-            ?.trim() ||
+          perfilNegocio?.condiciones_pago?.trim() ||
           DEFAULT_BUSINESS_POLICIES_TEMPLATE,
 
         logo_path:
@@ -221,7 +214,7 @@ export default function Perfil({
 
       const mensaje =
         err.message ||
-        'No se pudo cargar el perfil.';
+        'No se pudo cargar el perfil del Artista.';
 
       setError(mensaje);
       toast.error(mensaje);
@@ -250,7 +243,6 @@ export default function Perfil({
 
     setForm((actual) => ({
       ...actual,
-
       condiciones_pago:
         DEFAULT_BUSINESS_POLICIES_TEMPLATE,
     }));
@@ -283,8 +275,7 @@ export default function Perfil({
   }
 
   function seleccionarLogo(event) {
-    const file =
-      event.target.files?.[0];
+    const file = event.target.files?.[0];
 
     if (!file) return;
 
@@ -294,17 +285,12 @@ export default function Perfil({
     }
 
     setLogoFile(file);
-
-    setLogoPreview(
-      URL.createObjectURL(file)
-    );
-
+    setLogoPreview(URL.createObjectURL(file));
     setError('');
   }
 
   function seleccionarFirma(event) {
-    const file =
-      event.target.files?.[0];
+    const file = event.target.files?.[0];
 
     if (!file) return;
 
@@ -314,15 +300,19 @@ export default function Perfil({
     }
 
     setFirmaFile(file);
-
-    setFirmaPreview(
-      URL.createObjectURL(file)
-    );
-
+    setFirmaPreview(URL.createObjectURL(file));
     setError('');
   }
 
   function validar() {
+    if (!form.nombre_artistico.trim()) {
+      toast.error(
+        'El nombre artístico es obligatorio.'
+      );
+
+      return false;
+    }
+
     if (!form.nombre_completo.trim()) {
       toast.error(
         'El nombre completo es obligatorio.'
@@ -362,22 +352,42 @@ export default function Perfil({
     event.preventDefault();
     setError('');
 
+    if (!puedeEditar) {
+      toast.error(
+        'Solo el Artista puede modificar este perfil.'
+      );
+      return;
+    }
+
     if (!validar()) return;
 
     try {
       setGuardando(true);
 
-      let logoPath =
-        form.logo_path || '';
+      const perfilArtisticoGuardado =
+        await saveWorkspaceArtistProfile(
+          {
+            nombre_artistico:
+              form.nombre_artistico,
+            email_artistico:
+              form.email_artistico,
+            telefono_artistico:
+              form.telefono_artistico,
+            spotify_url:
+              form.spotify_url,
+          },
+          workspaceId
+        );
 
-      let firmaPath =
-        form.firma_path || '';
+      let logoPath = form.logo_path || '';
+      let firmaPath = form.firma_path || '';
 
       if (logoFile) {
         const logoSubido =
           await uploadMyBusinessAsset(
             logoFile,
-            'logo'
+            'logo',
+            workspaceId
           );
 
         logoPath = logoSubido.path;
@@ -387,53 +397,57 @@ export default function Perfil({
         const firmaSubida =
           await uploadMyBusinessAsset(
             firmaFile,
-            'firma'
+            'firma',
+            workspaceId
           );
 
         firmaPath = firmaSubida.path;
       }
 
-      const guardado =
-        await saveMyBusinessProfile({
-          ...form,
-          logo_path: logoPath,
-          firma_path: firmaPath,
-
-          porcentaje_adelanto: Number(
-            form.porcentaje_adelanto
-          ),
-        });
+      const perfilNegocioGuardado =
+        await saveMyBusinessProfile(
+          {
+            ...form,
+            logo_path: logoPath,
+            firma_path: firmaPath,
+            porcentaje_adelanto: Number(
+              form.porcentaje_adelanto
+            ),
+          },
+          workspaceId
+        );
 
       setForm((actual) => ({
         ...actual,
-        ...guardado,
+        ...perfilNegocioGuardado,
+        ...perfilArtisticoGuardado,
 
         porcentaje_adelanto: Number(
-          guardado
+          perfilNegocioGuardado
             ?.porcentaje_adelanto ??
             actual.porcentaje_adelanto
         ),
 
         condiciones_pago:
-          guardado?.condiciones_pago ||
+          perfilNegocioGuardado?.condiciones_pago ||
           actual.condiciones_pago,
 
         logo_path:
-          guardado?.logo_path ||
+          perfilNegocioGuardado?.logo_path ||
           logoPath,
 
         firma_path:
-          guardado?.firma_path ||
+          perfilNegocioGuardado?.firma_path ||
           firmaPath,
       }));
 
       setLogoPreview(
-        guardado?.logo_url ||
+        perfilNegocioGuardado?.logo_url ||
           logoPreview
       );
 
       setFirmaPreview(
-        guardado?.firma_url ||
+        perfilNegocioGuardado?.firma_url ||
           firmaPreview
       );
 
@@ -450,25 +464,29 @@ export default function Perfil({
 
       setProfile((actual) => ({
         ...actual,
-
         nombre:
-          guardado.nombre_completo ||
+          perfilNegocioGuardado.nombre_completo ||
           actual?.nombre,
       }));
 
       if (onProfileUpdated) {
-        onProfileUpdated(guardado);
+        onProfileUpdated({
+          ...perfilNegocioGuardado,
+          ...perfilArtisticoGuardado,
+          workspace_name:
+            perfilArtisticoGuardado.nombre_artistico,
+        });
       }
 
       toast.success(
-        'Perfil actualizado correctamente.'
+        'Perfil del Artista actualizado correctamente.'
       );
     } catch (err) {
       console.error(err);
 
       const mensaje =
         err.message ||
-        'No se pudo guardar el perfil.';
+        'No se pudo guardar el perfil del Artista.';
 
       setError(mensaje);
       toast.error(mensaje);
@@ -481,12 +499,11 @@ export default function Perfil({
     <div className="dashboard perfil-page">
       <div className="top-bar">
         <div>
-          <h1>Perfil</h1>
+          <h1>Perfil del Artista</h1>
 
           <p>
-            Datos personales, imagen,
-            banco y políticas de
-            contratación
+            Identidad artística, contratación, imagen,
+            banco y políticas
           </p>
         </div>
 
@@ -502,14 +519,13 @@ export default function Perfil({
         <div className="form-section">
           Cargando perfil...
         </div>
-      ) : !esAdmin ? (
+      ) : !puedeEditar ? (
         <div className="form-section">
           <h2>Acceso restringido</h2>
 
           <p>
-            Esta sección solamente está
-            disponible para
-            administradores.
+            Esta sección solamente está disponible para
+            el Artista propietario.
           </p>
         </div>
       ) : (
@@ -519,9 +535,98 @@ export default function Perfil({
         >
           <div className="form-grid">
             <section className="form-section">
-              <h2>
-                Identidad y contacto
-              </h2>
+              <h2>Identidad artística</h2>
+
+              <label htmlFor="perfil-artista-nombre">
+                Nombre artístico *
+              </label>
+
+              <input
+                id="perfil-artista-nombre"
+                type="text"
+                name="nombre_artistico"
+                value={form.nombre_artistico}
+                onChange={cambiar}
+                placeholder="Ej: Cruzmonty"
+                autoComplete="organization"
+              />
+
+              <label htmlFor="perfil-artista-email">
+                Correo de contratación
+              </label>
+
+              <input
+                id="perfil-artista-email"
+                type="email"
+                name="email_artistico"
+                value={form.email_artistico}
+                onChange={cambiar}
+                autoComplete="email"
+              />
+
+              <label htmlFor="perfil-artista-telefono">
+                Teléfono de contratación
+              </label>
+
+              <input
+                id="perfil-artista-telefono"
+                type="tel"
+                name="telefono_artistico"
+                value={form.telefono_artistico}
+                onChange={cambiar}
+                autoComplete="tel"
+              />
+
+              <label htmlFor="perfil-artista-spotify">
+                Perfil de Spotify
+              </label>
+
+              <input
+                id="perfil-artista-spotify"
+                type="url"
+                name="spotify_url"
+                value={form.spotify_url}
+                onChange={cambiar}
+                placeholder="https://open.spotify.com/artist/..."
+              />
+
+              {form.spotify_url && (
+                <a
+                  href={form.spotify_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Abrir perfil de Spotify ↗
+                </a>
+              )}
+            </section>
+
+            <section className="form-section">
+              <h2>Representación y autorizaciones</h2>
+
+              <p>
+                Cada Gestor puede tener un porcentaje
+                independiente con este Artista.
+              </p>
+
+              <p>
+                La invitación se envía al correo del Gestor
+                y el acceso solo se activa cuando la persona
+                invitada acepta la relación.
+              </p>
+
+              {typeof goEquipo === 'function' && (
+                <button
+                  type="button"
+                  onClick={goEquipo}
+                >
+                  Abrir Equipo e invitaciones
+                </button>
+              )}
+            </section>
+
+            <section className="form-section">
+              <h2>Identidad legal y contacto</h2>
 
               <label htmlFor="perfil-nombre">
                 Nombre completo *
@@ -531,9 +636,7 @@ export default function Perfil({
                 id="perfil-nombre"
                 type="text"
                 name="nombre_completo"
-                value={
-                  form.nombre_completo
-                }
+                value={form.nombre_completo}
                 onChange={cambiar}
                 autoComplete="name"
               />
@@ -585,15 +688,13 @@ export default function Perfil({
                 id="perfil-codigo-postal"
                 type="text"
                 name="codigo_postal"
-                value={
-                  form.codigo_postal
-                }
+                value={form.codigo_postal}
                 onChange={cambiar}
                 autoComplete="postal-code"
               />
 
               <label htmlFor="perfil-telefono">
-                Teléfono
+                Teléfono personal o legal
               </label>
 
               <input
@@ -613,18 +714,14 @@ export default function Perfil({
                 id="perfil-identificacion"
                 type="text"
                 name="identificacion"
-                value={
-                  form.identificacion
-                }
+                value={form.identificacion}
                 onChange={cambiar}
                 autoComplete="off"
               />
             </section>
 
             <section className="form-section">
-              <h2>
-                Información bancaria
-              </h2>
+              <h2>Información bancaria</h2>
 
               <label htmlFor="perfil-banco">
                 Nombre del banco
@@ -634,9 +731,7 @@ export default function Perfil({
                 id="perfil-banco"
                 type="text"
                 name="nombre_banco"
-                value={
-                  form.nombre_banco
-                }
+                value={form.nombre_banco}
                 onChange={cambiar}
                 autoComplete="off"
               />
@@ -649,22 +744,14 @@ export default function Perfil({
                 id="perfil-cuenta"
                 type="text"
                 name="cuenta_bancaria"
-                value={
-                  form.cuenta_bancaria
-                }
+                value={form.cuenta_bancaria}
                 onChange={cambiar}
                 autoComplete="off"
               />
 
-              <p
-                style={{
-                  marginTop: 18,
-                }}
-              >
-                Estos datos se insertan
-                automáticamente en las
-                políticas de cada
-                cotización nueva.
+              <p style={{ marginTop: 18 }}>
+                Estos datos se insertan automáticamente
+                en las políticas de cada cotización nueva.
               </p>
             </section>
 
@@ -672,22 +759,13 @@ export default function Perfil({
               <h2>Logo y firma</h2>
 
               <p>
-                Selecciona archivos PNG.
-                Se subirán cuando presiones
-                <strong>
-                  {' '}
-                  Guardar perfil
-                </strong>
-                . Tamaño máximo: 5 MB por
-                archivo.
+                Selecciona archivos PNG. Se subirán cuando
+                presiones <strong>Guardar perfil</strong>.
+                Tamaño máximo: 5 MB por archivo.
               </p>
 
-              <div
-                style={uploaderGridStyle}
-              >
-                <div
-                  style={uploaderCardStyle}
-                >
+              <div style={uploaderGridStyle}>
+                <div style={uploaderCardStyle}>
                   <label htmlFor="perfil-logo">
                     Logo en PNG
                   </label>
@@ -697,14 +775,10 @@ export default function Perfil({
                     id="perfil-logo"
                     type="file"
                     accept="image/png,.png"
-                    onChange={
-                      seleccionarLogo
-                    }
+                    onChange={seleccionarLogo}
                   />
 
-                  <div
-                    style={previewStyle}
-                  >
+                  <div style={previewStyle}>
                     {logoPreview ? (
                       <img
                         src={logoPreview}
@@ -713,28 +787,22 @@ export default function Perfil({
                           display: 'block',
                           maxWidth: '100%',
                           maxHeight: 145,
-                          objectFit:
-                            'contain',
+                          objectFit: 'contain',
                         }}
                       />
                     ) : (
-                      <span>
-                        No hay logo cargado
-                      </span>
+                      <span>No hay logo cargado</span>
                     )}
                   </div>
 
                   {logoFile && (
                     <small>
-                      Nuevo archivo:{' '}
-                      {logoFile.name}
+                      Nuevo archivo: {logoFile.name}
                     </small>
                   )}
                 </div>
 
-                <div
-                  style={uploaderCardStyle}
-                >
+                <div style={uploaderCardStyle}>
                   <label htmlFor="perfil-firma">
                     Firma en PNG
                   </label>
@@ -744,69 +812,48 @@ export default function Perfil({
                     id="perfil-firma"
                     type="file"
                     accept="image/png,.png"
-                    onChange={
-                      seleccionarFirma
-                    }
+                    onChange={seleccionarFirma}
                   />
 
-                  <div
-                    style={previewStyle}
-                  >
+                  <div style={previewStyle}>
                     {firmaPreview ? (
                       <img
-                        src={
-                          firmaPreview
-                        }
+                        src={firmaPreview}
                         alt="Vista previa de la firma"
                         style={{
-                          display:
-                            'block',
+                          display: 'block',
                           maxWidth: '100%',
                           maxHeight: 145,
-                          objectFit:
-                            'contain',
+                          objectFit: 'contain',
                         }}
                       />
                     ) : (
-                      <span>
-                        No hay firma cargada
-                      </span>
+                      <span>No hay firma cargada</span>
                     )}
                   </div>
 
                   {firmaFile && (
                     <small>
-                      Nuevo archivo:{' '}
-                      {firmaFile.name}
+                      Nuevo archivo: {firmaFile.name}
                     </small>
                   )}
                 </div>
               </div>
 
-              <p
-                style={{
-                  marginTop: 14,
-                }}
-              >
-                Cada firma nueva se guarda
-                como una versión diferente.
-                Las cotizaciones anteriores
-                conservarán la firma que
-                tenían al momento de ser
-                creadas.
+              <p style={{ marginTop: 14 }}>
+                Las cotizaciones anteriores conservarán la
+                firma y el perfil que tenían al momento de
+                ser creadas.
               </p>
             </section>
 
             <section className="form-section form-full">
-              <h2>
-                Políticas y condiciones
-              </h2>
+              <h2>Políticas y condiciones</h2>
 
               <div className="form-grid">
                 <div>
                   <label htmlFor="perfil-avance">
-                    Adelanto requerido para
-                    reservar (%)
+                    Adelanto requerido para reservar (%)
                   </label>
 
                   <input
@@ -816,9 +863,7 @@ export default function Perfil({
                     min="0"
                     max="100"
                     step="1"
-                    value={
-                      form.porcentaje_adelanto
-                    }
+                    value={form.porcentaje_adelanto}
                     onChange={cambiar}
                   />
                 </div>
@@ -829,35 +874,26 @@ export default function Perfil({
               </label>
 
               <p>
-                Puedes usar estas variables.
-                Al guardar una cotización, se
-                sustituyen por los datos
-                actuales del perfil y se
-                conserva una copia
-                permanente.
+                Puedes usar estas variables. Al guardar una
+                cotización, se sustituyen por los datos
+                actuales y se conserva una copia permanente.
               </p>
 
-              <div
-                style={variablesStyle}
-              >
-                {VARIABLES_POLITICAS.map(
-                  (variable) => (
-                    <code
-                      key={variable}
-                      style={variableStyle}
-                    >
-                      {variable}
-                    </code>
-                  )
-                )}
+              <div style={variablesStyle}>
+                {VARIABLES_POLITICAS.map((variable) => (
+                  <code
+                    key={variable}
+                    style={variableStyle}
+                  >
+                    {variable}
+                  </code>
+                ))}
               </div>
 
               <textarea
                 id="perfil-condiciones"
                 name="condiciones_pago"
-                value={
-                  form.condiciones_pago
-                }
+                value={form.condiciones_pago}
                 onChange={cambiar}
                 rows="18"
                 placeholder={
@@ -866,36 +902,21 @@ export default function Perfil({
               />
 
               <p>
-                Usa{' '}
-                <code>**texto**</code>{' '}
-                para mostrar una parte en
-                negrita dentro de la
-                cotización.
+                Usa <code>**texto**</code> para mostrar una
+                parte en negrita dentro de la cotización.
               </p>
 
               <button
                 type="button"
-                onClick={
-                  restaurarPoliticas
-                }
-                style={{
-                  marginTop: 8,
-                }}
+                onClick={restaurarPoliticas}
+                style={{ marginTop: 8 }}
               >
-                Restaurar plantilla
-                recomendada
+                Restaurar plantilla recomendada
               </button>
 
-              <p
-                style={{
-                  marginTop: 14,
-                }}
-              >
-                Los cambios realizados aquí
-                se aplicarán únicamente a
-                cotizaciones nuevas. Las
-                anteriores no se
-                modificarán.
+              <p style={{ marginTop: 14 }}>
+                Los cambios realizados aquí se aplicarán
+                únicamente a cotizaciones nuevas.
               </p>
             </section>
           </div>
@@ -913,7 +934,7 @@ export default function Perfil({
             >
               {guardando
                 ? 'Guardando...'
-                : 'Guardar perfil'}
+                : 'Guardar perfil del Artista'}
             </button>
           </div>
         </form>

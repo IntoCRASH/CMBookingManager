@@ -1,0 +1,117 @@
+/* =========================================================
+   MIBOOKING — COMISIONES ARTISTA / GESTOR
+========================================================= */
+
+.comisiones-page {
+  max-width: 1540px;
+}
+
+.comisiones-page .comisiones-table {
+  overflow-x: auto;
+}
+
+.comisiones-page .comisiones-table-header,
+.comisiones-page .comision-row {
+  min-width: 1240px;
+  grid-template-columns:
+    minmax(112px, .75fr)
+    minmax(220px, 1.55fr)
+    minmax(180px, 1.15fr)
+    minmax(112px, .75fr)
+    minmax(120px, .8fr)
+    minmax(125px, .85fr)
+    minmax(105px, .7fr)
+    minmax(150px, auto);
+  gap: 15px;
+}
+
+.comision-contraparte {
+  min-width: 0;
+}
+
+.comision-contraparte strong,
+.comision-contraparte small,
+.comision-contraparte span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comision-contraparte strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.comision-contraparte small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.comision-contraparte span {
+  margin-top: 4px;
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.comision-monto small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+@media (max-width: 1280px) {
+  .comisiones-page .comisiones-table-header,
+  .comisiones-page .comision-row {
+    min-width: 1160px;
+    grid-template-columns:
+      110px
+      minmax(200px, 1.5fr)
+      minmax(165px, 1fr)
+      105px
+      118px
+      120px
+      100px
+      145px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 900px) {
+  .comisiones-page .comisiones-table {
+    overflow: visible;
+  }
+
+  .comisiones-page .comision-row {
+    min-width: 0;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .comisiones-page .comision-cliente,
+  .comisiones-page .comision-contraparte {
+    grid-column: 1 / -1;
+  }
+
+  .comisiones-page .comision-contraparte strong,
+  .comisiones-page .comision-contraparte small,
+  .comisiones-page .comision-contraparte span {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 680px) {
+  .comisiones-page .comision-row {
+    grid-template-columns: 1fr;
+  }
+
+  .comisiones-page .comision-cliente,
+  .comisiones-page .comision-contraparte {
+    grid-column: auto;
+  }
+}

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
-import { getMisArtistas } from '../lib/artistasService';
 import {
   deleteProvincia,
   getProvincias,
@@ -18,9 +17,11 @@ const nuevoRegistro = {
   activa: true,
 };
 
-export default function Tarifas({ goBack }) {
-  const [artistas, setArtistas] = useState([]);
-  const [artistaId, setArtistaId] = useState('');
+export default function Tarifas({
+  workspaceId,
+  workspace,
+  goBack,
+}) {
   const [provincias, setProvincias] = useState([]);
   const [form, setForm] = useState(nuevoRegistro);
   const [modalOpen, setModalOpen] = useState(false);
@@ -28,75 +29,47 @@ export default function Tarifas({ goBack }) {
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(true);
 
-  const artistaSeleccionado = artistas.find(
-    (artista) =>
-      String(artista.id) === String(artistaId)
-  );
+  const nombreArtista =
+    workspace?.workspace_name || 'Artista activo';
 
   useEffect(() => {
-    cargarArtistas();
-  }, []);
+    setBusqueda('');
+    setModalOpen(false);
+    setForm(nuevoRegistro);
+    setError('');
 
-  useEffect(() => {
-    if (!artistaId) {
+    if (!workspaceId) {
       setProvincias([]);
       setCargando(false);
       return;
     }
 
     cargar();
-  }, [artistaId]);
-
-  async function cargarArtistas() {
-    try {
-      setCargando(true);
-
-      const data = await getMisArtistas();
-      const lista = Array.isArray(data) ? data : [];
-
-      setArtistas(lista);
-
-      if (lista.length > 0) {
-        setArtistaId((actual) => actual || String(lista[0].id));
-      } else {
-        setCargando(false);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(
-        err.message || 'No se pudieron cargar los artistas.'
-      );
-      setCargando(false);
-    }
-  }
+  }, [workspaceId]);
 
   async function cargar() {
     try {
       setCargando(true);
+      setError('');
 
-      const data = await getProvincias(artistaId);
+      const data = await getProvincias(workspaceId);
       setProvincias(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      toast.error(
-        err.message || 'No se pudieron cargar las tarifas.'
-      );
+
+      const mensaje =
+        err.message || 'No se pudieron cargar las tarifas.';
+
+      setError(mensaje);
+      toast.error(mensaje);
     } finally {
       setCargando(false);
     }
   }
 
-  function cambiarArtista(event) {
-    setArtistaId(event.target.value);
-    setBusqueda('');
-    setModalOpen(false);
-    setForm(nuevoRegistro);
-    setError('');
-  }
-
   function nuevaProvincia() {
-    if (!artistaId) {
-      toast.error('Primero selecciona un artista.');
+    if (!workspaceId) {
+      toast.error('No hay un Artista activo.');
       return;
     }
 
@@ -126,28 +99,36 @@ export default function Tarifas({ goBack }) {
   }
 
   async function duplicarProvincia(provincia) {
-    if (!artistaId) return;
+    if (!workspaceId) {
+      toast.error('No hay un Artista activo.');
+      return;
+    }
 
     try {
-      await saveProvincia({
-        artista_id: Number(artistaId),
-        nombre: `${provincia.nombre || 'Zona'} copia`,
-        honorarios: Number(provincia.honorarios || 0),
-        tarifa_musico: Number(
-          provincia.tarifa_musico || 0
-        ),
-        dieta_musico: Number(
-          provincia.dieta_musico || 0
-        ),
-        transporte: Number(provincia.transporte || 0),
-        sonido: Number(provincia.sonido || 0),
-        activa: Boolean(provincia.activa),
-      });
+      await saveProvincia(
+        {
+          nombre: `${provincia.nombre || 'Zona'} copia`,
+          honorarios: Number(provincia.honorarios || 0),
+          tarifa_musico: Number(
+            provincia.tarifa_musico || 0
+          ),
+          dieta_musico: Number(
+            provincia.dieta_musico || 0
+          ),
+          transporte: Number(
+            provincia.transporte || 0
+          ),
+          sonido: Number(provincia.sonido || 0),
+          activa: Boolean(provincia.activa),
+        },
+        workspaceId
+      );
 
       toast.success('Zona duplicada correctamente.');
       await cargar();
     } catch (err) {
       console.error(err);
+
       toast.error(
         err.message || 'No se pudo duplicar la zona.'
       );
@@ -167,8 +148,8 @@ export default function Tarifas({ goBack }) {
     event.preventDefault();
     setError('');
 
-    if (!artistaId) {
-      setError('Primero selecciona un artista.');
+    if (!workspaceId) {
+      setError('No hay un Artista activo.');
       return;
     }
 
@@ -178,21 +159,23 @@ export default function Tarifas({ goBack }) {
     }
 
     try {
-      await saveProvincia({
-        ...form,
-        artista_id: Number(artistaId),
-        nombre: form.nombre.trim(),
-        honorarios: Number(form.honorarios || 0),
-        tarifa_musico: Number(
-          form.tarifa_musico || 0
-        ),
-        dieta_musico: Number(
-          form.dieta_musico || 0
-        ),
-        transporte: Number(form.transporte || 0),
-        sonido: Number(form.sonido || 0),
-        activa: Boolean(form.activa),
-      });
+      await saveProvincia(
+        {
+          ...form,
+          nombre: form.nombre.trim(),
+          honorarios: Number(form.honorarios || 0),
+          tarifa_musico: Number(
+            form.tarifa_musico || 0
+          ),
+          dieta_musico: Number(
+            form.dieta_musico || 0
+          ),
+          transporte: Number(form.transporte || 0),
+          sonido: Number(form.sonido || 0),
+          activa: Boolean(form.activa),
+        },
+        workspaceId
+      );
 
       toast.success(
         form.id
@@ -215,18 +198,22 @@ export default function Tarifas({ goBack }) {
   }
 
   async function borrar(id, nombre) {
-    const ok = window.confirm(
-      `¿Deseas borrar definitivamente la zona "${nombre || 'Sin nombre'}"?`
+    const confirmado = window.confirm(
+      `¿Deseas borrar definitivamente la zona "${
+        nombre || 'Sin nombre'
+      }"?`
     );
 
-    if (!ok) return;
+    if (!confirmado) return;
 
     try {
-      await deleteProvincia(id, artistaId);
+      await deleteProvincia(id, workspaceId);
+
       toast.success('Zona eliminada correctamente.');
       await cargar();
     } catch (err) {
       console.error(err);
+
       toast.error(
         err.message || 'No se pudo borrar la zona.'
       );
@@ -250,7 +237,7 @@ export default function Tarifas({ goBack }) {
       <div className="top-bar">
         <div>
           <h1>Tarifas</h1>
-          <p>Zonas y costos base por artista</p>
+          <p>Zonas y costos base de {nombreArtista}</p>
         </div>
 
         <button type="button" onClick={goBack}>
@@ -261,41 +248,21 @@ export default function Tarifas({ goBack }) {
       <section className="config-artista-card">
         <div>
           <span className="config-artista-kicker">
-            Configuración independiente
+            Configuración del Artista
           </span>
 
-          <strong>
-            Tarifas de{' '}
-            {artistaSeleccionado?.nombre ||
-              'un artista'}
-          </strong>
+          <strong>Tarifas de {nombreArtista}</strong>
 
           <p>
-            Cada artista conserva sus propias zonas,
-            honorarios, músicos, transporte y sonido.
+            Estas zonas, honorarios, músicos, transporte y
+            sonido pertenecen exclusivamente al Artista
+            activo.
           </p>
         </div>
 
         <div className="config-artista-control">
-          <label htmlFor="tarifas-artista">
-            Artista
-          </label>
-
-          <select
-            id="tarifas-artista"
-            value={artistaId}
-            onChange={cambiarArtista}
-          >
-            <option value="">
-              Seleccionar artista
-            </option>
-
-            {artistas.map((artista) => (
-              <option key={artista.id} value={artista.id}>
-                {artista.nombre}
-              </option>
-            ))}
-          </select>
+          <label>Artista activo</label>
+          <strong>{nombreArtista}</strong>
         </div>
       </section>
 
@@ -307,13 +274,13 @@ export default function Tarifas({ goBack }) {
           onChange={(event) =>
             setBusqueda(event.target.value)
           }
-          disabled={!artistaId}
+          disabled={!workspaceId}
         />
 
         <button
           type="button"
           onClick={nuevaProvincia}
-          disabled={!artistaId}
+          disabled={!workspaceId}
         >
           + Nueva Zona
         </button>
@@ -328,12 +295,12 @@ export default function Tarifas({ goBack }) {
           <span>Acciones</span>
         </div>
 
-        {artistas.length === 0 ? (
+        {!workspaceId ? (
           <div className="config-artista-empty">
-            <strong>No tienes artistas activos.</strong>
+            <strong>No hay un Artista activo.</strong>
             <span>
-              Crea primero un artista desde la página
-              Artistas.
+              Selecciona un Artista para consultar sus
+              tarifas.
             </span>
           </div>
         ) : cargando ? (
@@ -342,8 +309,8 @@ export default function Tarifas({ goBack }) {
           </div>
         ) : provinciasFiltradas.length === 0 ? (
           <div className="tarifas-empty">
-            Este artista todavía no tiene zonas
-            configuradas.
+            {error ||
+              'Este Artista todavía no tiene zonas configuradas.'}
           </div>
         ) : (
           provinciasFiltradas.map((provincia) => (
@@ -360,8 +327,7 @@ export default function Tarifas({ goBack }) {
                   </strong>
 
                   <small>
-                    Honorarios:{' '}
-                    RD${' '}
+                    Honorarios: RD${' '}
                     {Number(
                       provincia.honorarios || 0
                     ).toLocaleString('es-DO')}
@@ -411,11 +377,7 @@ export default function Tarifas({ goBack }) {
       >
         <form onSubmit={guardar}>
           <p className="config-modal-context">
-            Artista:{' '}
-            <strong>
-              {artistaSeleccionado?.nombre ||
-                'No seleccionado'}
-            </strong>
+            Artista: <strong>{nombreArtista}</strong>
           </p>
 
           <label>Zona *</label>

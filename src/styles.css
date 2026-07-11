@@ -3341,3 +3341,462 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   }
 }
 
+/* ============================================================
+   MIBOOKING — FASE 3
+   CONTEXTO DEL ARTISTA ACTIVO
+   Agregar al final de src/styles.css
+============================================================ */
+
+.workspace-topbar-context {
+  min-width: 150px;
+  display: grid;
+  gap: 3px;
+  padding: 7px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.workspace-topbar-context > span,
+.mobile-workspace-context > span {
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.workspace-topbar-context strong {
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-topbar-context select,
+.mobile-workspace-context select {
+  width: 100%;
+  min-height: 30px;
+  margin: 0;
+  padding: 4px 28px 4px 8px;
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  border-radius: 9px;
+  background-color: #fff;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mobile-workspace-context {
+  display: grid;
+  gap: 5px;
+  margin: 4px 0 18px;
+  padding: 14px;
+  border: 1px solid rgba(99, 102, 241, 0.16);
+  border-radius: 16px;
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.mobile-workspace-context strong {
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.mobile-workspace-context small {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #4f46e5;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.workspace-state-card {
+  width: min(92vw, 520px);
+  margin: min(15vh, 120px) auto;
+  padding: 34px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+  text-align: center;
+}
+
+.workspace-state-card img {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+}
+
+.workspace-state-eyebrow {
+  display: block;
+  margin-top: 12px;
+  color: #6366f1;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.workspace-state-card h1 {
+  margin: 10px 0 12px;
+  color: #0f172a;
+  font-size: clamp(26px, 5vw, 38px);
+  line-height: 1.05;
+}
+
+.workspace-state-card p {
+  margin: 0 auto 22px;
+  color: #64748b;
+  line-height: 1.65;
+}
+
+@media (max-width: 1120px) {
+  .workspace-topbar-context {
+    min-width: 125px;
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace-topbar-context {
+    display: none;
+  }
+}
+/* ============================================================
+   MIBOOKING — FASE 5
+   EQUIPO E INVITACIONES
+   Pegar al final de src/styles.css
+============================================================ */
+
+.team-page {
+  display: grid;
+  gap: 24px;
+}
+
+.team-page-heading,
+.team-section-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.team-page-heading h1,
+.team-section-title h2,
+.team-invite-panel h2 {
+  margin: 5px 0 7px;
+  color: #0f172a;
+}
+
+.team-page-heading p,
+.team-invite-panel p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.team-eyebrow {
+  color: #6366f1;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.team-heading-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.team-invite-panel,
+.team-section,
+.team-incoming-section {
+  padding: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.07);
+}
+
+.team-invite-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(320px, 1.25fr);
+  gap: 28px;
+  align-items: end;
+}
+
+.team-invite-form {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) minmax(150px, 0.5fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.team-invite-form label {
+  display: grid;
+  gap: 7px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.team-invite-form input,
+.team-commission-control input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #dbe2ea;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+}
+
+.team-primary-button {
+  border-color: transparent !important;
+  background: #4f46e5 !important;
+  color: #fff !important;
+}
+
+.team-count {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-weight: 950;
+}
+
+.team-manager-list,
+.team-pending-list,
+.invitation-received-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.team-manager-card {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) auto minmax(150px, auto) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.team-avatar,
+.invitation-artist-avatar {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.team-manager-info h3,
+.invitation-received-info h2 {
+  margin: 0;
+  color: #0f172a;
+}
+
+.team-manager-info p,
+.invitation-received-info p {
+  margin: 3px 0;
+  color: #475569;
+}
+
+.team-manager-info small,
+.invitation-received-info small,
+.team-pending-card small {
+  color: #94a3b8;
+}
+
+.team-manager-status span {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.team-manager-status span.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.team-manager-status span.suspended {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.team-commission-control {
+  display: grid;
+  gap: 5px;
+}
+
+.team-commission-control > span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.team-commission-control > div {
+  display: flex;
+  gap: 6px;
+}
+
+.team-commission-control input {
+  width: 82px;
+  min-height: 36px;
+}
+
+.team-commission-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  border: 0 !important;
+  background: transparent !important;
+  color: #0f172a !important;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.team-commission-value small {
+  color: #6366f1;
+  font-size: 10px;
+}
+
+.team-danger-button {
+  border-color: #fecaca !important;
+  background: #fff1f2 !important;
+  color: #be123c !important;
+}
+
+.team-pending-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  padding: 16px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 18px;
+}
+
+.team-pending-card > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.team-pending-card > div:last-child {
+  display: flex;
+  gap: 8px;
+}
+
+.team-empty-state {
+  display: grid;
+  gap: 5px;
+  margin-top: 16px;
+  padding: 28px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 18px;
+  color: #64748b;
+  text-align: center;
+}
+
+.team-empty-state strong {
+  color: #0f172a;
+}
+
+.team-incoming-section {
+  margin-top: 0;
+}
+
+.team-incoming-section .team-page-heading h1 {
+  font-size: 24px;
+}
+
+.invitation-received-card {
+  display: grid;
+  grid-template-columns: auto minmax(200px, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(238, 242, 255, 0.9),
+    rgba(255, 255, 255, 0.95)
+  );
+}
+
+.invitation-received-info > span {
+  color: #6366f1;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.invitation-received-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 1050px) {
+  .team-invite-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .team-manager-card {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .team-manager-status,
+  .team-commission-control,
+  .team-manager-card > .team-danger-button {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .team-page-heading,
+  .team-section-title,
+  .team-pending-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .team-invite-form {
+    grid-template-columns: 1fr;
+  }
+
+  .team-manager-card,
+  .invitation-received-card {
+    grid-template-columns: auto 1fr;
+  }
+
+  .team-manager-status,
+  .team-commission-control,
+  .team-manager-card > .team-danger-button,
+  .invitation-received-actions {
+    grid-column: 1 / -1;
+  }
+
+  .team-pending-card > div:last-child,
+  .invitation-received-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}

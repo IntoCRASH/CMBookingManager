@@ -1,7 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { supabase } from './lib/supabaseClient';
 import { getMyProfile } from './lib/profileService';
+import {
+  canEditWorkspaceConfiguration,
+  clearCurrentActiveWorkspace,
+  getWorkspaceRoleLabel,
+  loadMyWorkspaceContext,
+  selectWorkspace,
+} from './lib/workspaceService';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Tarifas from './pages/Tarifas';
@@ -12,36 +19,41 @@ import Cotizaciones from './pages/Cotizaciones';
 import Calendario from './pages/Calendario';
 import PagosCotizacion from './pages/PagosCotizacion';
 import Comisiones from './pages/Comisiones';
-import Usuarios from './pages/Usuarios';
 import Formatos from './pages/Formatos';
 import TiposEvento from './pages/TiposEvento';
 import Perfil from './pages/Perfil';
-import Artistas from './pages/Artistas';
-import AutorizarArtista from './pages/AutorizarArtista';
+import Equipo from './pages/Equipo';
+import InvitacionesPendientes from './pages/InvitacionesPendientes';
+import AceptarInvitacionGestor from './pages/AceptarInvitacionGestor';
 
 export default function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [activeWorkspace, setActiveWorkspace] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [accountLoading, setAccountLoading] = useState(false);
+  const [accountError, setAccountError] = useState('');
+  const [workspaceVersion, setWorkspaceVersion] = useState(0);
   const [page, setPage] = useState('dashboard');
   const [cotizacionId, setCotizacionId] = useState(null);
   const [moreOpen, setMoreOpen] = useState(false);
 
   const navigationHistory = useRef([]);
 
-  const tokenAutorizacionArtista = useMemo(
-    () =>
-      new URLSearchParams(
-        window.location.search
-      ).get('autorizar_artista'),
-    []
-  );
-
   useEffect(() => {
-    async function loadSession() {
-      const { data } = await supabase.auth.getSession();
+    let mounted = true;
 
-      setSession(data.session);
+    async function loadSession() {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (!mounted) return;
+
+      if (error) {
+        console.error(error);
+      }
+
+      setSession(data?.session || null);
       setLoading(false);
     }
 
@@ -49,37 +61,71 @@ export default function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, sessionActual) => {
-        setSession(sessionActual);
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
 
-        if (!sessionActual) {
-          setProfile(null);
-          setPage('dashboard');
-          setCotizacionId(null);
-          setMoreOpen(false);
-          navigationHistory.current = [];
-        }
+      if (!currentSession) {
+        setProfile(null);
+        setWorkspaces([]);
+        setActiveWorkspace(null);
+        setAccountError('');
+        setPage('dashboard');
+        setCotizacionId(null);
+        setMoreOpen(false);
+        clearCurrentActiveWorkspace();
+        navigationHistory.current = [];
       }
-    );
+    });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
-    async function cargarPerfil() {
-      if (!session) return;
+    let cancelled = false;
+
+    async function loadAccount() {
+      if (!session?.user?.id) return;
 
       try {
-        const perfil = await getMyProfile();
-        setProfile(perfil);
-      } catch (err) {
-        console.error(err);
+        setAccountLoading(true);
+        setAccountError('');
+
+        const [currentProfile, workspaceContext] = await Promise.all([
+          getMyProfile(),
+          loadMyWorkspaceContext(session.user.id),
+        ]);
+
+        if (cancelled) return;
+
+        setProfile(currentProfile);
+        setWorkspaces(workspaceContext.workspaces);
+        setActiveWorkspace(workspaceContext.activeWorkspace);
+      } catch (error) {
+        if (cancelled) return;
+
+        console.error(error);
+        setAccountError(
+          error.message || 'No se pudo cargar la cuenta de MiBooking.'
+        );
+      } finally {
+        if (!cancelled) {
+          setAccountLoading(false);
+        }
       }
     }
 
-    cargarPerfil();
-  }, [session]);
+    loadAccount();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id]);
+
+  const esArtista = canEditWorkspaceConfiguration(activeWorkspace);
+  const roleLabel = getWorkspaceRoleLabel(activeWorkspace);
 
   function normalizarCotizacionId(nombrePagina, id) {
     const paginasConCotizacion = [
@@ -94,16 +140,23 @@ export default function App() {
   }
 
   function navegarA(nombrePagina, id = null) {
-    const destinoCotizacionId = normalizarCotizacionId(
-      nombrePagina,
-      id
-    );
+    const paginasSoloArtista = [
+      'perfil',
+      'tarifas',
+      'formatos',
+      'tipos-evento',
+      'equipo',
+    ];
 
+    if (paginasSoloArtista.includes(nombrePagina) && !esArtista) {
+      setMoreOpen(false);
+      return;
+    }
+
+    const destinoCotizacionId = normalizarCotizacionId(nombrePagina, id);
     const mismaPagina = page === nombrePagina;
-
     const mismaCotizacion =
-      String(cotizacionId ?? '') ===
-      String(destinoCotizacionId ?? '');
+      String(cotizacionId ?? '') === String(destinoCotizacionId ?? '');
 
     if (mismaPagina && mismaCotizacion) {
       setMoreOpen(false);
@@ -158,34 +211,119 @@ export default function App() {
     navegarA(nombrePagina);
   }
 
-  function actualizarPerfilLocal(perfilNegocio) {
+  function actualizarPerfilLocal(perfilActualizado) {
+    const nuevoNombreUsuario =
+      perfilActualizado?.nombre_completo || '';
+
+    const nuevoNombreWorkspace =
+      perfilActualizado?.workspace_name ||
+      perfilActualizado?.nombre_artistico ||
+      '';
+
     setProfile((actual) => ({
       ...actual,
       nombre:
-        perfilNegocio?.nombre_completo ||
+        nuevoNombreUsuario ||
         actual?.nombre ||
         '',
     }));
+
+    if (nuevoNombreWorkspace && activeWorkspace?.workspace_id) {
+      setActiveWorkspace((actual) =>
+        actual
+          ? {
+              ...actual,
+              workspace_name: nuevoNombreWorkspace,
+            }
+          : actual
+      );
+
+      setWorkspaces((actuales) =>
+        actuales.map((item) =>
+          String(item.workspace_id) ===
+          String(activeWorkspace.workspace_id)
+            ? {
+                ...item,
+                workspace_name: nuevoNombreWorkspace,
+              }
+            : item
+        )
+      );
+    }
+  }
+
+  function cambiarWorkspace(event) {
+    try {
+      const selected = selectWorkspace(
+        workspaces,
+        event.target.value,
+        session?.user?.id
+      );
+
+      setActiveWorkspace(selected);
+      setPage('dashboard');
+      setCotizacionId(null);
+      setMoreOpen(false);
+      navigationHistory.current = [];
+
+      // Fuerza a que las páginas vuelvan a solicitar sus datos.
+      setWorkspaceVersion((current) => current + 1);
+    } catch (error) {
+      console.error(error);
+      setAccountError(error.message || 'No se pudo cambiar de Artista.');
+    }
+  }
+
+  async function refreshWorkspaceAccess(preferredWorkspaceId = null) {
+    if (!session?.user?.id) return;
+
+    try {
+      setAccountLoading(true);
+      setAccountError('');
+
+      const workspaceContext = await loadMyWorkspaceContext(
+        session.user.id
+      );
+
+      let selectedWorkspace = workspaceContext.activeWorkspace;
+
+      if (preferredWorkspaceId) {
+        selectedWorkspace = selectWorkspace(
+          workspaceContext.workspaces,
+          preferredWorkspaceId,
+          session.user.id
+        );
+      }
+
+      setWorkspaces(workspaceContext.workspaces);
+      setActiveWorkspace(selectedWorkspace);
+      setPage('dashboard');
+      setCotizacionId(null);
+      setMoreOpen(false);
+      navigationHistory.current = [];
+      setWorkspaceVersion((current) => current + 1);
+    } catch (error) {
+      console.error(error);
+      setAccountError(
+        error.message || 'No se pudo actualizar el acceso.'
+      );
+    } finally {
+      setAccountLoading(false);
+    }
   }
 
   async function logout() {
     navigationHistory.current = [];
+    clearCurrentActiveWorkspace();
     await supabase.auth.signOut();
   }
 
-  const esAdmin = profile?.rol === 'admin';
-
-  const navDesktop = useMemo(() => {
+  const navDesktop = (() => {
     const base = [
       {
         id: 'dashboard',
         label: 'Inicio',
         action: volverDashboard,
-      },
-      {
-        id: 'artistas',
-        label: 'Artistas',
-        action: () => irA('artistas'),
       },
       {
         id: 'cotizaciones',
@@ -209,19 +347,28 @@ export default function App() {
       },
     ];
 
-    if (!esAdmin) return base;
+    if (!esArtista) {
+      return [
+        ...base,
+        {
+          id: 'invitaciones',
+          label: 'Invitaciones',
+          action: () => irA('invitaciones'),
+        },
+      ];
+    }
 
     return [
       ...base,
       {
+        id: 'equipo',
+        label: 'Equipo',
+        action: () => irA('equipo'),
+      },
+      {
         id: 'perfil',
         label: 'Perfil',
         action: () => irA('perfil'),
-      },
-      {
-        id: 'usuarios',
-        label: 'Usuarios',
-        action: () => irA('usuarios'),
       },
       {
         id: 'formatos',
@@ -239,7 +386,7 @@ export default function App() {
         action: () => irA('tarifas'),
       },
     ];
-  }, [esAdmin, page, cotizacionId]);
+  })();
 
   const mobileNav = [
     {
@@ -255,12 +402,6 @@ export default function App() {
       action: () => irA('cotizaciones'),
     },
     {
-      id: 'artistas',
-      label: 'Artistas',
-      icon: '♫',
-      action: () => irA('artistas'),
-    },
-    {
       id: 'calendario',
       label: 'Agenda',
       icon: '◷',
@@ -274,18 +415,22 @@ export default function App() {
     },
   ];
 
-  if (tokenAutorizacionArtista) {
+  const invitationToken =
+    new URLSearchParams(
+      window.location.search
+    ).get('invitacion_gestor');
+
+  if (invitationToken) {
     return (
       <>
-        <AutorizarArtista
-          token={tokenAutorizacionArtista}
+        <AceptarInvitacionGestor
+          token={invitationToken}
+          session={session}
+          authLoading={loading}
         />
 
         <Toaster
           position="bottom-right"
-          toastOptions={{
-            duration: 3000,
-          }}
         />
       </>
     );
@@ -293,33 +438,55 @@ export default function App() {
 
   let contenido;
 
-  if (loading) {
-    contenido = <div className="app-loading">Cargando...</div>;
+  if (loading || accountLoading) {
+    contenido = <div className="app-loading">Cargando MiBooking...</div>;
   } else if (!session) {
     contenido = <Login />;
+  } else if (accountError) {
+    contenido = (
+      <div className="workspace-state-card">
+        <h1>No pudimos abrir tu cuenta</h1>
+        <p>{accountError}</p>
+        <button type="button" onClick={logout}>
+          Cerrar sesión
+        </button>
+      </div>
+    );
+  } else if (!activeWorkspace) {
+    contenido = (
+      <InvitacionesPendientes
+        onInvitationAccepted={refreshWorkspaceAccess}
+        onLogout={logout}
+      />
+    );
   } else {
+    const sharedProps = {
+      workspaceId: activeWorkspace.workspace_id,
+      workspace: activeWorkspace,
+      esArtista,
+      readOnly: !esArtista,
+    };
+
     switch (page) {
-      case 'artistas':
+      case 'tarifas':
         contenido = (
-          <Artistas goBack={volverAtras} />
+          <Tarifas {...sharedProps} goBack={volverAtras} />
         );
         break;
 
-      case 'tarifas':
-        contenido = <Tarifas goBack={volverAtras} />;
-        break;
-
       case 'clientes':
-        contenido = <Clientes goBack={volverAtras} />;
+        contenido = (
+          <Clientes {...sharedProps} goBack={volverAtras} />
+        );
         break;
 
       case 'nueva-cotizacion':
         contenido = (
           <NuevaCotizacion
+            {...sharedProps}
             session={session}
             cotizacionId={cotizacionId}
             goBack={volverAtras}
-            goArtistas={() => irA('artistas')}
             onCotizacionGuardada={abrirCotizacion}
           />
         );
@@ -328,6 +495,7 @@ export default function App() {
       case 'cotizaciones':
         contenido = (
           <Cotizaciones
+            {...sharedProps}
             goBack={volverAtras}
             nuevaCotizacion={nuevaCotizacion}
             abrirCotizacion={abrirCotizacion}
@@ -340,6 +508,7 @@ export default function App() {
       case 'calendario':
         contenido = (
           <Calendario
+            {...sharedProps}
             goBack={volverAtras}
             abrirCotizacion={abrirCotizacion}
             editarCotizacion={editarCotizacion}
@@ -350,6 +519,7 @@ export default function App() {
       case 'ver-cotizacion':
         contenido = (
           <VerCotizacion
+            {...sharedProps}
             cotizacionId={cotizacionId}
             goBack={volverAtras}
           />
@@ -359,6 +529,7 @@ export default function App() {
       case 'pagos-cotizacion':
         contenido = (
           <PagosCotizacion
+            {...sharedProps}
             cotizacionId={cotizacionId}
             goBack={volverAtras}
           />
@@ -366,41 +537,78 @@ export default function App() {
         break;
 
       case 'comisiones':
-        contenido = <Comisiones goBack={volverAtras} />;
+        contenido = (
+          <Comisiones {...sharedProps} goBack={volverAtras} />
+        );
         break;
 
-      case 'perfil':
-        contenido = (
-          <Perfil
+      case 'equipo':
+        contenido = esArtista ? (
+          <Equipo
+            {...sharedProps}
             goBack={volverAtras}
-            onProfileUpdated={actualizarPerfilLocal}
+            onInvitationAccepted={refreshWorkspaceAccess}
+          />
+        ) : (
+          <InvitacionesPendientes
+            goBack={volverAtras}
+            onInvitationAccepted={refreshWorkspaceAccess}
           />
         );
         break;
 
-      case 'usuarios':
-        contenido = <Usuarios goBack={volverAtras} />;
+      case 'invitaciones':
+        contenido = (
+          <InvitacionesPendientes
+            goBack={volverAtras}
+            onInvitationAccepted={refreshWorkspaceAccess}
+          />
+        );
+        break;
+
+      case 'perfil':
+        contenido = esArtista ? (
+          <Perfil
+            {...sharedProps}
+            goBack={volverAtras}
+            goEquipo={() => irA('equipo')}
+            onProfileUpdated={actualizarPerfilLocal}
+          />
+        ) : (
+          <Dashboard
+            {...sharedProps}
+            session={session}
+            goCotizaciones={() => irA('cotizaciones')}
+            goCalendario={() => irA('calendario')}
+            goComisiones={() => irA('comisiones')}
+          />
+        );
         break;
 
       case 'formatos':
-        contenido = <Formatos goBack={volverAtras} />;
+        contenido = (
+          <Formatos {...sharedProps} goBack={volverAtras} />
+        );
         break;
 
       case 'tipos-evento':
-        contenido = <TiposEvento goBack={volverAtras} />;
+        contenido = (
+          <TiposEvento {...sharedProps} goBack={volverAtras} />
+        );
         break;
 
       default:
         contenido = (
           <Dashboard
+            {...sharedProps}
             session={session}
             goPerfil={() => irA('perfil')}
-            goArtistas={() => irA('artistas')}
+            goEquipo={() => irA('equipo')}
+            goInvitaciones={() => irA('invitaciones')}
             goTarifas={() => irA('tarifas')}
             goCotizaciones={() => irA('cotizaciones')}
             goCalendario={() => irA('calendario')}
             goComisiones={() => irA('comisiones')}
-            goUsuarios={() => irA('usuarios')}
             goFormatos={() => irA('formatos')}
             goTiposEvento={() => irA('tipos-evento')}
           />
@@ -409,7 +617,7 @@ export default function App() {
     }
   }
 
-  if (!session) {
+  if (!session || !activeWorkspace) {
     return (
       <>
         {contenido}
@@ -419,7 +627,10 @@ export default function App() {
   }
 
   return (
-    <div className={`app-shell page-${page}`}>
+    <div
+      className={`app-shell page-${page}`}
+      data-workspace-id={activeWorkspace.workspace_id}
+    >
       {page !== 'ver-cotizacion' && (
         <nav className="desktop-topbar">
           <button
@@ -460,16 +671,39 @@ export default function App() {
             ))}
           </div>
 
+          <div className="workspace-topbar-context">
+            <span>Trabajando con</span>
+
+            {workspaces.length > 1 ? (
+              <select
+                value={activeWorkspace.workspace_id}
+                onChange={cambiarWorkspace}
+                aria-label="Seleccionar Artista"
+              >
+                {workspaces.map((workspace) => (
+                  <option
+                    key={workspace.workspace_id}
+                    value={workspace.workspace_id}
+                  >
+                    {workspace.workspace_name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <strong>{activeWorkspace.workspace_name}</strong>
+            )}
+          </div>
+
           <div className="topbar-user">
             <div className="avatar">
-              {(profile?.nombre || session.user.email || 'C')
+              {(profile?.nombre || session.user.email || 'M')
                 .slice(0, 1)
                 .toUpperCase()}
             </div>
 
             <div className="user-meta">
               <strong>{profile?.nombre || 'Usuario'}</strong>
-              <small>{profile?.rol || 'usuario'}</small>
+              <small>{roleLabel}</small>
             </div>
 
             <button
@@ -483,7 +717,12 @@ export default function App() {
         </nav>
       )}
 
-      <main className="app-content">{contenido}</main>
+      <main
+        className="app-content"
+        key={`${activeWorkspace.workspace_id}-${workspaceVersion}`}
+      >
+        {contenido}
+      </main>
 
       {page !== 'ver-cotizacion' && (
         <nav className="mobile-bottom-nav">
@@ -513,76 +752,77 @@ export default function App() {
         >
           <div
             className="mobile-more-sheet"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="sheet-handle" />
+
+            <div className="mobile-workspace-context">
+              <span>Trabajando con</span>
+
+              {workspaces.length > 1 ? (
+                <select
+                  value={activeWorkspace.workspace_id}
+                  onChange={cambiarWorkspace}
+                  aria-label="Seleccionar Artista"
+                >
+                  {workspaces.map((workspace) => (
+                    <option
+                      key={workspace.workspace_id}
+                      value={workspace.workspace_id}
+                    >
+                      {workspace.workspace_name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <strong>{activeWorkspace.workspace_name}</strong>
+              )}
+
+              <small>{roleLabel}</small>
+            </div>
 
             <h3>Más opciones</h3>
 
             <div className="sheet-actions">
-              <button
-                type="button"
-                onClick={() => irA('artistas')}
-              >
-                ♫ Artistas
-              </button>
-
-              <button
-                type="button"
-                onClick={() => irA('clientes')}
-              >
+              <button type="button" onClick={() => irA('clientes')}>
                 ◉ Clientes
               </button>
 
-              <button
-                type="button"
-                onClick={() => irA('comisiones')}
-              >
+              <button type="button" onClick={() => irA('comisiones')}>
                 ◇ Comisiones
               </button>
 
-              {esAdmin && (
-                <button
-                  type="button"
-                  onClick={() => irA('perfil')}
-                >
-                  ◉ Perfil
-                </button>
-              )}
+              {esArtista ? (
+                <>
+                  <button type="button" onClick={() => irA('equipo')}>
+                    ◉ Equipo y Gestores
+                  </button>
 
-              {esAdmin && (
-                <button
-                  type="button"
-                  onClick={() => irA('usuarios')}
-                >
-                  ◌ Usuarios
-                </button>
-              )}
+                  <button type="button" onClick={() => irA('perfil')}>
+                    ◉ Perfil del Artista
+                  </button>
 
-              {esAdmin && (
-                <button
-                  type="button"
-                  onClick={() => irA('formatos')}
-                >
-                  ♪ Formatos
-                </button>
-              )}
+                  <button type="button" onClick={() => irA('formatos')}>
+                    ♪ Formatos
+                  </button>
 
-              {esAdmin && (
-                <button
-                  type="button"
-                  onClick={() => irA('tipos-evento')}
-                >
-                  ◆ Tipos de evento
-                </button>
-              )}
+                  <button
+                    type="button"
+                    onClick={() => irA('tipos-evento')}
+                  >
+                    ◆ Tipos de evento
+                  </button>
 
-              {esAdmin && (
+                  <button type="button" onClick={() => irA('tarifas')}>
+                    ◎ Tarifas por zona
+                  </button>
+                </>
+              ) : (
                 <button
                   type="button"
-                  onClick={() => irA('tarifas')}
+                  onClick={() => irA('invitaciones')}
                 >
-                  ◎ Tarifas
+                  ◉ Invitaciones
                 </button>
               )}
 

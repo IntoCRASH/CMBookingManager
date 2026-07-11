@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
-import { getMisArtistas } from '../lib/artistasService';
 import {
   deleteTipoEventoConfig,
   getTodosTiposEventoConfig,
@@ -19,9 +18,11 @@ const nuevoRegistro = {
   activo: true,
 };
 
-export default function TiposEvento({ goBack }) {
-  const [artistas, setArtistas] = useState([]);
-  const [artistaId, setArtistaId] = useState('');
+export default function TiposEvento({
+  workspaceId,
+  workspace,
+  goBack,
+}) {
   const [tiposEvento, setTiposEvento] = useState([]);
   const [form, setForm] = useState(nuevoRegistro);
   const [modalOpen, setModalOpen] = useState(false);
@@ -29,78 +30,51 @@ export default function TiposEvento({ goBack }) {
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(true);
 
-  const artistaSeleccionado = artistas.find(
-    (artista) =>
-      String(artista.id) === String(artistaId)
-  );
+  const nombreArtista =
+    workspace?.workspace_name || 'Artista activo';
 
   useEffect(() => {
-    cargarArtistas();
-  }, []);
+    setBusqueda('');
+    setModalOpen(false);
+    setForm(nuevoRegistro);
+    setError('');
 
-  useEffect(() => {
-    if (!artistaId) {
+    if (!workspaceId) {
       setTiposEvento([]);
       setCargando(false);
       return;
     }
 
     cargar();
-  }, [artistaId]);
-
-  async function cargarArtistas() {
-    try {
-      setCargando(true);
-
-      const data = await getMisArtistas();
-      const lista = Array.isArray(data) ? data : [];
-
-      setArtistas(lista);
-
-      if (lista.length > 0) {
-        setArtistaId((actual) => actual || String(lista[0].id));
-      } else {
-        setCargando(false);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(
-        err.message || 'No se pudieron cargar los artistas.'
-      );
-      setCargando(false);
-    }
-  }
+  }, [workspaceId]);
 
   async function cargar() {
     try {
       setCargando(true);
+      setError('');
 
-      const data =
-        await getTodosTiposEventoConfig(artistaId);
+      const data = await getTodosTiposEventoConfig(
+        workspaceId
+      );
 
       setTiposEvento(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      toast.error(
+
+      const mensaje =
         err.message ||
-          'No se pudieron cargar los tipos de evento.'
-      );
+        'No se pudieron cargar los tipos de evento.';
+
+      setError(mensaje);
+      toast.error(mensaje);
     } finally {
       setCargando(false);
     }
   }
 
-  function cambiarArtista(event) {
-    setArtistaId(event.target.value);
-    setBusqueda('');
-    setModalOpen(false);
-    setForm(nuevoRegistro);
-    setError('');
-  }
-
   function nuevo() {
-    if (!artistaId) {
-      toast.error('Primero selecciona un artista.');
+    if (!workspaceId) {
+      toast.error('No hay un Artista activo.');
       return;
     }
 
@@ -137,30 +111,37 @@ export default function TiposEvento({ goBack }) {
   }
 
   async function duplicar(tipo) {
-    if (!artistaId) return;
+    if (!workspaceId) {
+      toast.error('No hay un Artista activo.');
+      return;
+    }
 
     try {
-      await saveTipoEventoConfig({
-        artista_id: Number(artistaId),
-        nombre: `${tipo.nombre || 'Tipo de evento'} copia`,
-        multiplicador_honorarios: Number(
-          tipo.multiplicador_honorarios || 1
-        ),
-        multiplicador_musicos: Number(
-          tipo.multiplicador_musicos || 1
-        ),
-        multiplicador_sonido: Number(
-          tipo.multiplicador_sonido || 1
-        ),
-        multiplicador_road_manager: Number(
-          tipo.multiplicador_road_manager || 1
-        ),
-        ensayo_extra: Number(tipo.ensayo_extra || 0),
-        produccion_extra: Number(
-          tipo.produccion_extra || 0
-        ),
-        activo: Boolean(tipo.activo),
-      });
+      await saveTipoEventoConfig(
+        {
+          nombre: `${tipo.nombre || 'Tipo de evento'} copia`,
+          multiplicador_honorarios: Number(
+            tipo.multiplicador_honorarios || 1
+          ),
+          multiplicador_musicos: Number(
+            tipo.multiplicador_musicos || 1
+          ),
+          multiplicador_sonido: Number(
+            tipo.multiplicador_sonido || 1
+          ),
+          multiplicador_road_manager: Number(
+            tipo.multiplicador_road_manager || 1
+          ),
+          ensayo_extra: Number(
+            tipo.ensayo_extra || 0
+          ),
+          produccion_extra: Number(
+            tipo.produccion_extra || 0
+          ),
+          activo: Boolean(tipo.activo),
+        },
+        workspaceId
+      );
 
       toast.success(
         'Tipo de evento duplicado correctamente.'
@@ -169,6 +150,7 @@ export default function TiposEvento({ goBack }) {
       await cargar();
     } catch (err) {
       console.error(err);
+
       toast.error(
         err.message ||
           'No se pudo duplicar el tipo de evento.'
@@ -189,8 +171,8 @@ export default function TiposEvento({ goBack }) {
     event.preventDefault();
     setError('');
 
-    if (!artistaId) {
-      setError('Primero selecciona un artista.');
+    if (!workspaceId) {
+      setError('No hay un Artista activo.');
       return;
     }
 
@@ -244,28 +226,32 @@ export default function TiposEvento({ goBack }) {
     }
 
     try {
-      await saveTipoEventoConfig({
-        ...form,
-        artista_id: Number(artistaId),
-        nombre: form.nombre.trim(),
-        multiplicador_honorarios: Number(
-          form.multiplicador_honorarios || 1
-        ),
-        multiplicador_musicos: Number(
-          form.multiplicador_musicos || 1
-        ),
-        multiplicador_sonido: Number(
-          form.multiplicador_sonido || 1
-        ),
-        multiplicador_road_manager: Number(
-          form.multiplicador_road_manager || 1
-        ),
-        ensayo_extra: Number(form.ensayo_extra || 0),
-        produccion_extra: Number(
-          form.produccion_extra || 0
-        ),
-        activo: Boolean(form.activo),
-      });
+      await saveTipoEventoConfig(
+        {
+          ...form,
+          nombre: form.nombre.trim(),
+          multiplicador_honorarios: Number(
+            form.multiplicador_honorarios || 1
+          ),
+          multiplicador_musicos: Number(
+            form.multiplicador_musicos || 1
+          ),
+          multiplicador_sonido: Number(
+            form.multiplicador_sonido || 1
+          ),
+          multiplicador_road_manager: Number(
+            form.multiplicador_road_manager || 1
+          ),
+          ensayo_extra: Number(
+            form.ensayo_extra || 0
+          ),
+          produccion_extra: Number(
+            form.produccion_extra || 0
+          ),
+          activo: Boolean(form.activo),
+        },
+        workspaceId
+      );
 
       toast.success(
         form.id
@@ -289,14 +275,16 @@ export default function TiposEvento({ goBack }) {
   }
 
   async function borrar(id, nombre) {
-    const ok = window.confirm(
-      `¿Deseas borrar definitivamente el tipo de evento "${nombre || 'Sin nombre'}"?`
+    const confirmado = window.confirm(
+      `¿Deseas borrar definitivamente el tipo de evento "${
+        nombre || 'Sin nombre'
+      }"?`
     );
 
-    if (!ok) return;
+    if (!confirmado) return;
 
     try {
-      await deleteTipoEventoConfig(id, artistaId);
+      await deleteTipoEventoConfig(id, workspaceId);
 
       toast.success(
         'Tipo de evento eliminado correctamente.'
@@ -305,6 +293,7 @@ export default function TiposEvento({ goBack }) {
       await cargar();
     } catch (err) {
       console.error(err);
+
       toast.error(
         err.message ||
           'No se pudo borrar el tipo de evento.'
@@ -331,8 +320,8 @@ export default function TiposEvento({ goBack }) {
           <h1>Tipos de Evento</h1>
 
           <p>
-            Multiplicadores, ensayos y producción por
-            artista
+            Multiplicadores, ensayos y producción de{' '}
+            {nombreArtista}
           </p>
         </div>
 
@@ -344,41 +333,22 @@ export default function TiposEvento({ goBack }) {
       <section className="config-artista-card">
         <div>
           <span className="config-artista-kicker">
-            Configuración independiente
+            Configuración del Artista
           </span>
 
           <strong>
-            Tipos de evento de{' '}
-            {artistaSeleccionado?.nombre ||
-              'un artista'}
+            Tipos de evento de {nombreArtista}
           </strong>
 
           <p>
-            Los multiplicadores y costos extra se
-            aplican únicamente al artista seleccionado.
+            Estos multiplicadores y costos extra pertenecen
+            exclusivamente al Artista activo.
           </p>
         </div>
 
         <div className="config-artista-control">
-          <label htmlFor="tipos-artista">
-            Artista
-          </label>
-
-          <select
-            id="tipos-artista"
-            value={artistaId}
-            onChange={cambiarArtista}
-          >
-            <option value="">
-              Seleccionar artista
-            </option>
-
-            {artistas.map((artista) => (
-              <option key={artista.id} value={artista.id}>
-                {artista.nombre}
-              </option>
-            ))}
-          </select>
+          <label>Artista activo</label>
+          <strong>{nombreArtista}</strong>
         </div>
       </section>
 
@@ -390,13 +360,13 @@ export default function TiposEvento({ goBack }) {
           onChange={(event) =>
             setBusqueda(event.target.value)
           }
-          disabled={!artistaId}
+          disabled={!workspaceId}
         />
 
         <button
           type="button"
           onClick={nuevo}
-          disabled={!artistaId}
+          disabled={!workspaceId}
         >
           + Nuevo Tipo
         </button>
@@ -411,12 +381,12 @@ export default function TiposEvento({ goBack }) {
           <span>Acciones</span>
         </div>
 
-        {artistas.length === 0 ? (
+        {!workspaceId ? (
           <div className="config-artista-empty">
-            <strong>No tienes artistas activos.</strong>
+            <strong>No hay un Artista activo.</strong>
             <span>
-              Crea primero un artista desde la página
-              Artistas.
+              Selecciona un Artista para consultar sus tipos
+              de evento.
             </span>
           </div>
         ) : cargando ? (
@@ -425,8 +395,8 @@ export default function TiposEvento({ goBack }) {
           </div>
         ) : tiposFiltrados.length === 0 ? (
           <div className="tipos-evento-empty">
-            Este artista todavía no tiene tipos de
-            evento configurados.
+            {error ||
+              'Este Artista todavía no tiene tipos de evento configurados.'}
           </div>
         ) : (
           tiposFiltrados.map((tipo) => (
@@ -494,11 +464,7 @@ export default function TiposEvento({ goBack }) {
       >
         <form onSubmit={guardar}>
           <p className="config-modal-context">
-            Artista:{' '}
-            <strong>
-              {artistaSeleccionado?.nombre ||
-                'No seleccionado'}
-            </strong>
+            Artista: <strong>{nombreArtista}</strong>
           </p>
 
           <label>Nombre del tipo de evento *</label>

@@ -4,15 +4,18 @@ import { getCotizaciones } from '../lib/cotizacionesService';
 
 export default function Dashboard({
   session,
+  workspaceId,
+  workspace,
+  esArtista,
   goTarifas,
-  goArtistas,
   goCotizaciones,
   goCalendario,
   goComisiones,
-  goUsuarios,
   goFormatos,
   goTiposEvento,
   goPerfil,
+  goEquipo,
+  goInvitaciones,
 }) {
   const [profile, setProfile] = useState(null);
   const [eventosHoy, setEventosHoy] = useState(0);
@@ -25,51 +28,55 @@ export default function Dashboard({
   useEffect(() => {
     cargarPerfil();
     cargarResumen();
-  }, []);
+  }, [workspaceId]);
 
   async function cargarPerfil() {
     try {
-      const p = await getMyProfile();
-      setProfile(p);
+      const currentProfile = await getMyProfile();
+      setProfile(currentProfile);
     } catch (err) {
       console.error(err);
     }
   }
 
-  function obtenerPagado(c) {
+  function obtenerPagado(cotizacion) {
     return Number(
-      c.monto_pagado ||
-        c.total_pagado ||
-        c.pagado ||
+      cotizacion.monto_pagado ||
+        cotizacion.total_pagado ||
+        cotizacion.pagado ||
         0
     );
   }
 
-  function obtenerSaldoPendiente(c) {
+  function obtenerSaldoPendiente(cotizacion) {
     if (
-      c.saldo_pendiente !== undefined &&
-      c.saldo_pendiente !== null
+      cotizacion.saldo_pendiente !== undefined &&
+      cotizacion.saldo_pendiente !== null
     ) {
-      return Number(c.saldo_pendiente || 0);
+      return Number(cotizacion.saldo_pendiente || 0);
     }
 
     return Math.max(
-      Number(c.total || 0) - obtenerPagado(c),
+      Number(cotizacion.total || 0) -
+        obtenerPagado(cotizacion),
       0
     );
   }
 
   async function cargarResumen() {
     try {
-      const cotizaciones = await getCotizaciones();
+      const cotizaciones = await getCotizaciones({
+        workspaceId,
+      });
+
       const hoy = new Date().toISOString().slice(0, 10);
       const mesActual = hoy.slice(0, 7);
 
       const eventosConfirmados = cotizaciones
         .filter(
-          (c) =>
-            c.fecha_evento &&
-            c.estado === 'Confirmada'
+          (cotizacion) =>
+            cotizacion.fecha_evento &&
+            cotizacion.estado === 'Confirmada'
         )
         .sort(
           (a, b) =>
@@ -78,41 +85,44 @@ export default function Dashboard({
         );
 
       const eventosDeHoy = eventosConfirmados.filter(
-        (c) => c.fecha_evento === hoy
+        (cotizacion) => cotizacion.fecha_evento === hoy
       );
 
       const proximo = eventosConfirmados.find(
-        (c) => c.fecha_evento >= hoy
+        (cotizacion) => cotizacion.fecha_evento >= hoy
       );
 
-      const pendientes = cotizaciones.filter((c) =>
+      const pendientes = cotizaciones.filter((cotizacion) =>
         [
           'Pendiente',
           'Pendiente de aprobación',
           'Pendiente de cobro',
-        ].includes(c.estado)
+        ].includes(cotizacion.estado)
       );
 
       const cotizacionesConSaldo = cotizaciones.filter(
-        (c) =>
-          ['Confirmada', 'Realizada'].includes(c.estado) &&
-          obtenerSaldoPendiente(c) > 0
+        (cotizacion) =>
+          ['Confirmada', 'Realizada'].includes(
+            cotizacion.estado
+          ) && obtenerSaldoPendiente(cotizacion) > 0
       );
 
       const totalPendiente = cotizacionesConSaldo.reduce(
-        (sum, c) => sum + obtenerSaldoPendiente(c),
+        (sum, cotizacion) =>
+          sum + obtenerSaldoPendiente(cotizacion),
         0
       );
 
       const totalCobradoMes = cotizaciones
         .filter(
-          (c) =>
-            c.fecha_evento &&
-            String(c.fecha_evento).slice(0, 7) ===
+          (cotizacion) =>
+            cotizacion.fecha_evento &&
+            String(cotizacion.fecha_evento).slice(0, 7) ===
               mesActual
         )
         .reduce(
-          (sum, c) => sum + obtenerPagado(c),
+          (sum, cotizacion) =>
+            sum + obtenerPagado(cotizacion),
           0
         );
 
@@ -140,14 +150,14 @@ export default function Dashboard({
       };
     }
 
-    const d = new Date(`${fecha}T00:00:00`);
+    const date = new Date(`${fecha}T00:00:00`);
 
     return {
-      dia: d.toLocaleDateString('es-DO', {
+      dia: date.toLocaleDateString('es-DO', {
         day: '2-digit',
       }),
 
-      mes: d
+      mes: date
         .toLocaleDateString('es-DO', {
           month: 'short',
         })
@@ -160,11 +170,12 @@ export default function Dashboard({
     proximoEvento?.fecha_evento
   );
 
-  const esAdmin = profile?.rol === 'admin';
-
   const nombreSaludo = String(profile?.nombre || '')
     .trim()
     .split(/\s+/)[0];
+
+  const nombreArtista =
+    workspace?.workspace_name || 'Artista';
 
   return (
     <div className="dashboard dashboard-mobile-first">
@@ -177,9 +188,9 @@ export default function Dashboard({
           </h1>
 
           <p>
-            Hoy tienes <strong>{eventosHoy}</strong>{' '}
-            evento
-            {eventosHoy !== 1 ? 's' : ''} confirmado
+            Hoy, <strong>{nombreArtista}</strong> tiene{' '}
+            <strong>{eventosHoy}</strong>{' '}
+            evento{eventosHoy !== 1 ? 's' : ''} confirmado
             {eventosHoy !== 1 ? 's' : ''}.
           </p>
         </div>
@@ -188,7 +199,7 @@ export default function Dashboard({
           <span>
             {(profile?.nombre ||
               session?.user?.email ||
-              'C')
+              'M')
               .slice(0, 1)
               .toUpperCase()}
           </span>
@@ -199,7 +210,7 @@ export default function Dashboard({
             </strong>
 
             <small>
-              {profile?.rol || 'usuario'}
+              {esArtista ? 'Artista' : 'Gestor'}
             </small>
           </div>
         </div>
@@ -261,10 +272,7 @@ export default function Dashboard({
         <div className="section-heading">
           <span>Próximo evento confirmado</span>
 
-          <button
-            type="button"
-            onClick={goCalendario}
-          >
+          <button type="button" onClick={goCalendario}>
             Agenda
           </button>
         </div>
@@ -284,12 +292,6 @@ export default function Dashboard({
               </h2>
 
               <p>
-                <strong>
-                  {proximoEvento.artista_nombre_snapshot ||
-                    proximoEvento.artista_snapshot?.nombre ||
-                    'Artista'}
-                </strong>
-                {' · '}
                 {proximoEvento.clientes?.nombre ||
                   'Cliente sin nombre'}
               </p>
@@ -312,8 +314,8 @@ export default function Dashboard({
             </strong>
 
             <span>
-              Cuando confirmes una cotización con
-              fecha, aparecerá aquí.
+              Cuando confirmes una cotización con fecha,
+              aparecerá aquí.
             </span>
           </div>
         )}
@@ -325,83 +327,56 @@ export default function Dashboard({
         </div>
 
         <div className="quick-actions-grid">
-          <button
-            type="button"
-            onClick={goCotizaciones}
-          >
+          <button type="button" onClick={goCotizaciones}>
             📄
             <span>Cotizaciones</span>
           </button>
 
-          <button
-            type="button"
-            onClick={goArtistas}
-          >
-            🎙️
-            <span>Artistas</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={goCalendario}
-          >
+          <button type="button" onClick={goCalendario}>
             📅
             <span>Calendario</span>
           </button>
 
-          <button
-            type="button"
-            onClick={goComisiones}
-          >
+          <button type="button" onClick={goComisiones}>
             💰
             <span>Comisiones</span>
           </button>
 
-          {esAdmin && (
-            <button
-              type="button"
-              onClick={goPerfil}
-            >
+          {esArtista ? (
+            <button type="button" onClick={goEquipo}>
+              👥
+              <span>Equipo</span>
+            </button>
+          ) : (
+            <button type="button" onClick={goInvitaciones}>
+              ✉
+              <span>Invitaciones</span>
+            </button>
+          )}
+
+          {esArtista && (
+            <button type="button" onClick={goPerfil}>
               👤
               <span>Perfil</span>
             </button>
           )}
 
-          {esAdmin && (
-            <button
-              type="button"
-              onClick={goUsuarios}
-            >
-              👥
-              <span>Usuarios</span>
-            </button>
-          )}
-
-          {esAdmin && (
-            <button
-              type="button"
-              onClick={goFormatos}
-            >
+          {esArtista && (
+            <button type="button" onClick={goFormatos}>
               🎵
               <span>Formatos</span>
             </button>
           )}
 
-          {esAdmin && (
-            <button
-              type="button"
-              onClick={goTiposEvento}
-            >
+          {esArtista && (
+            <button type="button" onClick={goTiposEvento}>
               🎤
               <span>Tipos de evento</span>
             </button>
           )}
 
-          {esAdmin && (
-            <button
-              type="button"
-              onClick={goTarifas}
-            >
+          {esArtista && (
+            <button type="button" onClick={goTarifas}>
               ⚙️
               <span>Tarifas</span>
             </button>

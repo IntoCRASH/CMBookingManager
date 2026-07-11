@@ -1,129 +1,59 @@
-import { Fragment, useEffect, useState } from 'react';
-import { APP_CONFIG } from '../lib/config';
+import { useEffect, useState } from 'react';
 import { getCotizacionById } from '../lib/cotizacionesService';
-import {
-  DEFAULT_BUSINESS_POLICIES_TEMPLATE,
-  getBusinessAssetUrl,
-  renderBusinessPolicies,
-} from '../lib/profileService';
 import './VerCotizacion.css';
 
-function normalizeSnapshot(value) {
-  if (!value) return {};
-
-  if (typeof value === 'object') return value;
-
-  try {
-    return JSON.parse(value);
-  } catch {
-    return {};
-  }
-}
-
-function renderInlineText(text) {
-  return String(text || '')
-    .split(/(\*\*[^*]+\*\*)/g)
-    .filter(Boolean)
-    .map((part, index) => {
-      const isStrong = part.startsWith('**') && part.endsWith('**');
-
-      if (isStrong) {
-        return (
-          <strong key={`${part}-${index}`}>
-            {part.slice(2, -2)}
-          </strong>
-        );
-      }
-
-      return <Fragment key={`${part}-${index}`}>{part}</Fragment>;
-    });
-}
-
-function renderPolicyParagraph(paragraph, paragraphIndex) {
-  const lines = String(paragraph || '').split('\n');
-
-  return (
-    <p
-      className="disclaimer-paragraph"
-      key={`policy-${paragraphIndex}`}
-    >
-      {lines.map((line, lineIndex) => (
-        <Fragment key={`policy-${paragraphIndex}-${lineIndex}`}>
-          {renderInlineText(line)}
-          {lineIndex < lines.length - 1 && <br />}
-        </Fragment>
-      ))}
-    </p>
-  );
-}
-
-export default function VerCotizacion({ cotizacionId, goBack }) {
+export default function VerCotizacion({
+  workspaceId,
+  cotizacionId,
+  goBack,
+}) {
   const [cotizacion, setCotizacion] = useState(null);
-  const [firmaUrl, setFirmaUrl] = useState('');
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    let active = true;
-
     async function cargarCotizacion() {
       try {
         setCargando(true);
         setError('');
-        setFirmaUrl('');
 
-        const data = await getCotizacionById(cotizacionId);
-        const snapshot = normalizeSnapshot(
-          data?.perfil_negocio_snapshot
+        const data = await getCotizacionById(
+          cotizacionId,
+          workspaceId
         );
 
-        const signedFirmaUrl = snapshot.firma_path
-          ? await getBusinessAssetUrl(snapshot.firma_path)
-          : '';
-
-        if (!active) return;
-
         setCotizacion(data);
-        setFirmaUrl(signedFirmaUrl);
       } catch (err) {
         console.error(err);
-
-        if (active) {
-          setError(
-            err.message || 'No se pudo cargar la cotización.'
-          );
-        }
+        setError(
+          err.message || 'No se pudo cargar la cotización.'
+        );
       } finally {
-        if (active) {
-          setCargando(false);
-        }
+        setCargando(false);
       }
     }
 
     if (cotizacionId) {
       cargarCotizacion();
     }
-
-    return () => {
-      active = false;
-    };
-  }, [cotizacionId]);
+  }, [cotizacionId, workspaceId]);
 
   function money(valor) {
-    return `RD$ ${Number(valor || 0).toLocaleString('es-DO')}`;
+    return `RD$ ${Number(valor || 0).toLocaleString(
+      'es-DO'
+    )}`;
   }
 
   function fechaLarga(fecha) {
     if (!fecha) return 'N/A';
 
-    return new Date(`${fecha}T00:00:00`).toLocaleDateString(
-      'es-DO',
-      {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }
-    );
+    return new Date(
+      `${fecha}T00:00:00`
+    ).toLocaleDateString('es-DO', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
   }
 
   function imprimir() {
@@ -131,84 +61,75 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
   }
 
   if (cargando) {
-    return <div className="vc-page">Cargando cotización...</div>;
+    return (
+      <div className="vc-page">
+        Cargando cotización...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="vc-page error">{error}</div>;
+    return (
+      <div className="vc-page error">
+        {error}
+      </div>
+    );
   }
 
   if (!cotizacion) {
-    return <div className="vc-page">Cotización no encontrada.</div>;
+    return (
+      <div className="vc-page">
+        Cotización no encontrada.
+      </div>
+    );
   }
 
   const cliente = cotizacion.clientes || {};
-  const provincia = cotizacion.provincias || {};
-  const venue = cotizacion.venue || 'lugar del evento';
+  const zona = cotizacion.provincias || {};
+  const negocio =
+    cotizacion.perfil_negocio_snapshot || {};
 
-  const zonaSnapshot = normalizeSnapshot(
-    cotizacion.zona_snapshot
-  );
+  const nombreArtista =
+    cotizacion.artista_nombre_snapshot ||
+    cotizacion.artista_snapshot?.nombre ||
+    negocio.nombre_artistico ||
+    negocio.nombre_completo ||
+    'Artista';
 
-  const formatoSnapshot = normalizeSnapshot(
-    cotizacion.formato_snapshot
-  );
+  const nombreLegal =
+    negocio.nombre_completo || nombreArtista;
 
-  const tipoEventoSnapshot = normalizeSnapshot(
-    cotizacion.tipo_evento_snapshot
-  );
-
-  const zonaNombre =
-    cotizacion.zona_nombre_snapshot ||
-    zonaSnapshot.nombre ||
-    provincia.nombre ||
-    'N/A';
-
-  const formatoNombre =
-    cotizacion.formato_nombre_snapshot ||
-    formatoSnapshot.nombre ||
-    '';
-
-  const tipoEventoNombre =
-    cotizacion.tipo_evento_nombre_snapshot ||
-    tipoEventoSnapshot.nombre ||
-    cotizacion.tipo_evento ||
-    '';
-
-  const snapshot = normalizeSnapshot(
-    cotizacion.perfil_negocio_snapshot
-  );
+  const venue =
+    cotizacion.venue || 'lugar del evento';
 
   const sonido = Number(cotizacion.sonido || 0);
-  const descuentoPorcentaje = Number(cotizacion.descuento || 0);
-  const montoDescuento = Number(cotizacion.monto_descuento || 0);
+  const descuentoPorcentaje = Number(
+    cotizacion.descuento || 0
+  );
+  const montoDescuento = Number(
+    cotizacion.monto_descuento || 0
+  );
 
   const subtotalCliente =
     Number(cotizacion.subtotal || 0) +
     Number(cotizacion.comision || 0);
 
-  const presentacionMusical = subtotalCliente - sonido;
+  const presentacionMusical =
+    subtotalCliente - sonido;
 
-  const politicas =
+  const politicas = String(
     cotizacion.politicas_condiciones ||
-    renderBusinessPolicies(
-      snapshot.condiciones_pago ||
-        DEFAULT_BUSINESS_POLICIES_TEMPLATE,
-      snapshot
-    );
+      negocio.condiciones_pago ||
+      ''
+  ).trim();
 
-  const nombreFirmante =
-    snapshot.nombre_completo || 'Representante autorizado';
+  const firmaUrl =
+    negocio.firma_url ||
+    (nombreArtista.toLowerCase() === 'cruzmonty'
+      ? '/firma-cruzmonty.png'
+      : '');
 
-  const artistaSnapshot = normalizeSnapshot(
-    cotizacion.artista_snapshot
-  );
-
-  const artista =
-    cotizacion.artista_nombre_snapshot ||
-    artistaSnapshot.nombre ||
-    APP_CONFIG.artista ||
-    'Artista';
+  const logoUrl = negocio.logo_url || '';
 
   return (
     <div className="vc-page">
@@ -225,13 +146,37 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
       <div className="vc-document">
         <header className="vc-header">
           <div>
-            <h1>{String(artista).toUpperCase()} BOOKING</h1>
-            <p>Departamento de contratación artística</p>
+            {logoUrl && (
+              <img
+                src={logoUrl}
+                alt={`Logo de ${nombreArtista}`}
+                className="vc-logo-negocio"
+                style={{
+                  display: 'block',
+                  maxWidth: 220,
+                  maxHeight: 82,
+                  marginBottom: 12,
+                  objectFit: 'contain',
+                  objectPosition: 'left center',
+                }}
+              />
+            )}
+
+            <h1>
+              {nombreArtista.toUpperCase()} BOOKING
+            </h1>
+
+            <p>
+              Departamento de contratación artística
+            </p>
           </div>
 
           <div className="vc-box">
             <strong>COTIZACIÓN</strong>
-            <span>{cotizacion.numero || `#${cotizacion.id}`}</span>
+            <span>
+              {cotizacion.numero ||
+                `#${cotizacion.id}`}
+            </span>
           </div>
         </header>
 
@@ -239,16 +184,20 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
           <div>
             <h3>DATOS DEL CLIENTE</h3>
             <p>
-              <strong>Nombre:</strong> {cliente.nombre || 'N/A'}
+              <strong>Nombre:</strong>{' '}
+              {cliente.nombre || 'N/A'}
             </p>
             <p>
-              <strong>Empresa:</strong> {cliente.empresa || 'N/A'}
+              <strong>Empresa:</strong>{' '}
+              {cliente.empresa || 'N/A'}
             </p>
             <p>
-              <strong>Teléfono:</strong> {cliente.telefono || 'N/A'}
+              <strong>Teléfono:</strong>{' '}
+              {cliente.telefono || 'N/A'}
             </p>
             <p>
-              <strong>Email:</strong> {cliente.email || 'N/A'}
+              <strong>Email:</strong>{' '}
+              {cliente.email || 'N/A'}
             </p>
           </div>
 
@@ -261,19 +210,8 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
 
             {cotizacion.nombre_evento && (
               <p>
-                <strong>Evento:</strong> {cotizacion.nombre_evento}
-              </p>
-            )}
-
-            {tipoEventoNombre && (
-              <p>
-                <strong>Tipo:</strong> {tipoEventoNombre}
-              </p>
-            )}
-
-            {formatoNombre && (
-              <p>
-                <strong>Formato:</strong> {formatoNombre}
+                <strong>Evento:</strong>{' '}
+                {cotizacion.nombre_evento}
               </p>
             )}
 
@@ -281,7 +219,10 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
               <strong>Venue:</strong> {venue}
             </p>
             <p>
-              <strong>Zona:</strong> {zonaNombre}
+              <strong>Zona:</strong>{' '}
+              {zona.nombre ||
+                cotizacion.zona_nombre_snapshot ||
+                'N/A'}
             </p>
             <p>
               <strong>Sonido:</strong>{' '}
@@ -303,39 +244,39 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
           <tbody>
             <tr>
               <td>
-                Presentación musical de <strong>{artista}</strong>
-
-                {formatoNombre && (
-                  <>
-                    <br />
-                    Formato: <strong>{formatoNombre}</strong>
-                  </>
-                )}
-
-                {tipoEventoNombre && (
-                  <>
-                    <br />
-                    Tipo de evento:{' '}
-                    <strong>{tipoEventoNombre}</strong>
-                  </>
-                )}
+                Presentación musical de{' '}
+                <strong>{nombreArtista}</strong>
 
                 {cotizacion.nombre_evento && (
                   <>
                     <br />
                     Evento:{' '}
-                    <strong>{cotizacion.nombre_evento}</strong>
+                    <strong>
+                      {cotizacion.nombre_evento}
+                    </strong>
                   </>
                 )}
 
                 <br />
+
                 Lugar: <strong>{venue}</strong>
+
                 <br />
-                Zona: <strong>{zonaNombre}</strong>
+
+                Zona:{' '}
+                <strong>
+                  {zona.nombre ||
+                    cotizacion.zona_nombre_snapshot ||
+                    'N/A'}
+                </strong>
+
                 <br />
+
                 Fecha:{' '}
                 <strong>
-                  {fechaLarga(cotizacion.fecha_evento)}
+                  {fechaLarga(
+                    cotizacion.fecha_evento
+                  )}
                 </strong>
               </td>
 
@@ -344,31 +285,45 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
               </td>
             </tr>
 
-            {cotizacion.incluye_sonido && sonido > 0 && (
-              <tr>
-                <td>Equipos de Sonido y personal técnico.</td>
-                <td className="right">{money(sonido)}</td>
-              </tr>
-            )}
+            {cotizacion.incluye_sonido &&
+              sonido > 0 && (
+                <tr>
+                  <td>
+                    Equipos de sonido y personal
+                    técnico.
+                  </td>
+                  <td className="right">
+                    {money(sonido)}
+                  </td>
+                </tr>
+              )}
           </tbody>
         </table>
 
         <section className="vc-totales cliente">
           <div>
             <span>Subtotal</span>
-            <strong>{money(subtotalCliente)}</strong>
+            <strong>
+              {money(subtotalCliente)}
+            </strong>
           </div>
 
           {descuentoPorcentaje > 0 && (
             <div>
-              <span>Descuento {descuentoPorcentaje}%</span>
-              <strong>- {money(montoDescuento)}</strong>
+              <span>
+                Descuento {descuentoPorcentaje}%
+              </span>
+              <strong>
+                - {money(montoDescuento)}
+              </strong>
             </div>
           )}
 
           <div className="vc-total-final">
             <span>Total</span>
-            <strong>{money(cotizacion.total)}</strong>
+            <strong>
+              {money(cotizacion.total)}
+            </strong>
           </div>
         </section>
 
@@ -377,32 +332,44 @@ export default function VerCotizacion({ cotizacionId, goBack }) {
             {firmaUrl && (
               <img
                 src={firmaUrl}
-                alt={`Firma de ${nombreFirmante}`}
+                alt={`Firma de ${nombreLegal}`}
                 className="vc-firma-imagen"
               />
             )}
 
             <div className="vc-firma-linea" />
 
-            <strong>{nombreFirmante}</strong>
-            <span>{artista}</span>
-            <small>Artista / Representante autorizado</small>
+            <strong>{nombreLegal}</strong>
+            <span>{nombreArtista}</span>
+            <small>
+              Artista / Representante autorizado
+            </small>
           </div>
         </section>
 
         <section className="vc-notas">
           <h3>POLÍTICAS Y CONDICIONES</h3>
 
-          <div className="disclaimer">
-            {String(politicas)
-              .split(/\n\s*\n/)
-              .filter((paragraph) => paragraph.trim())
-              .map(renderPolicyParagraph)}
-          </div>
+          {politicas ? (
+            <p
+              className="disclaimer"
+              style={{ whiteSpace: 'pre-line' }}
+            >
+              {politicas}
+            </p>
+          ) : (
+            <p className="disclaimer">
+              Las condiciones de pago, reserva,
+              presentación y cancelación serán las
+              acordadas entre el Artista y el cliente.
+            </p>
+          )}
         </section>
 
         <footer className="vc-footer">
-          <p>{artista} Booking Department</p>
+          <p>
+            {nombreArtista} Booking Department
+          </p>
         </footer>
       </div>
     </div>

@@ -15,7 +15,11 @@ const pagoInicial = {
   observaciones: '',
 };
 
-export default function PagosCotizacion({ cotizacionId, goBack }) {
+export default function PagosCotizacion({
+  workspaceId,
+  cotizacionId,
+  goBack,
+}) {
   const [cotizacion, setCotizacion] = useState(null);
   const [pagos, setPagos] = useState([]);
   const [form, setForm] = useState(pagoInicial);
@@ -23,29 +27,36 @@ export default function PagosCotizacion({ cotizacionId, goBack }) {
 
   useEffect(() => {
     cargar();
-  }, [cotizacionId]);
+  }, [cotizacionId, workspaceId]);
 
   async function cargar() {
-    const cot = await getCotizacionById(cotizacionId);
-    const pagosData = await getPagosByCotizacion(cotizacionId);
+    const cotizacionData = await getCotizacionById(
+      cotizacionId,
+      workspaceId
+    );
 
-    setCotizacion(cot);
+    const pagosData = await getPagosByCotizacion(
+      cotizacionId,
+      workspaceId
+    );
+
+    setCotizacion(cotizacionData);
     setPagos(pagosData);
   }
 
-  function cambiar(e) {
-    const { name, value } = e.target;
+  function cambiar(event) {
+    const { name, value } = event.target;
 
-    setForm({
-      ...form,
+    setForm((actual) => ({
+      ...actual,
       [name]: value,
-    });
+    }));
 
     setError('');
   }
 
-  async function guardarPago(e) {
-    e.preventDefault();
+  async function guardarPago(event) {
+    event.preventDefault();
     setError('');
 
     if (!form.monto || Number(form.monto) <= 0) {
@@ -53,47 +64,81 @@ export default function PagosCotizacion({ cotizacionId, goBack }) {
       return;
     }
 
-    await savePago({
-      ...form,
-      cotizacion_id: cotizacionId,
-    });
+    try {
+      await savePago(
+        {
+          ...form,
+          cotizacion_id: cotizacionId,
+        },
+        workspaceId
+      );
 
-    setForm(pagoInicial);
-    await cargar();
+      setForm(pagoInicial);
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.message || 'No se pudo guardar el pago.'
+      );
+    }
   }
 
   async function borrarPago(id) {
     if (!window.confirm('¿Eliminar este pago?')) return;
 
-    await deletePago(id);
-    await cargar();
+    try {
+      await deletePago(id, workspaceId);
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.message || 'No se pudo eliminar el pago.'
+      );
+    }
   }
 
   function money(valor) {
-    return `RD$ ${Number(valor || 0).toLocaleString('es-DO')}`;
+    return `RD$ ${Number(valor || 0).toLocaleString(
+      'es-DO'
+    )}`;
   }
 
   function fecha(fechaValor) {
     if (!fechaValor) return '--';
 
-    return new Date(`${fechaValor}T00:00:00`).toLocaleDateString('es-DO');
+    return new Date(
+      `${fechaValor}T00:00:00`
+    ).toLocaleDateString('es-DO');
   }
 
   if (!cotizacion) {
-    return <div className="dashboard">Cargando pagos...</div>;
+    return (
+      <div className="dashboard">
+        Cargando pagos...
+      </div>
+    );
   }
 
-  const resumen = calcularResumenPagos(cotizacion.total, pagos);
+  const resumen = calcularResumenPagos(
+    cotizacion.total,
+    pagos
+  );
 
   return (
     <div className="dashboard">
       <div className="top-bar">
         <div>
           <h1>Pagos</h1>
-          <p>{cotizacion.numero} · {cotizacion.clientes?.nombre}</p>
+          <p>
+            {cotizacion.numero}
+            {' · '}
+            {cotizacion.clientes?.nombre}
+          </p>
         </div>
 
-        <button type="button" onClick={goBack}>← Atrás</button>
+        <button type="button" onClick={goBack}>
+          ← Atrás
+        </button>
       </div>
 
       <div className="pagos-resumen">
@@ -114,11 +159,16 @@ export default function PagosCotizacion({ cotizacionId, goBack }) {
 
         <div>
           <span>Estado</span>
-          <strong>{resumen.saldado ? 'Saldado' : 'Pendiente'}</strong>
+          <strong>
+            {resumen.saldado ? 'Saldado' : 'Pendiente'}
+          </strong>
         </div>
       </div>
 
-      <form className="form-section" onSubmit={guardarPago}>
+      <form
+        className="form-section"
+        onSubmit={guardarPago}
+      >
         <h2>Registrar pago</h2>
 
         <div className="form-grid">
@@ -145,7 +195,11 @@ export default function PagosCotizacion({ cotizacionId, goBack }) {
 
           <div>
             <label>Método</label>
-            <select name="metodo" value={form.metodo} onChange={cambiar}>
+            <select
+              name="metodo"
+              value={form.metodo}
+              onChange={cambiar}
+            >
               <option>Efectivo</option>
               <option>Transferencia</option>
               <option>Depósito</option>
@@ -181,23 +235,34 @@ export default function PagosCotizacion({ cotizacionId, goBack }) {
       </form>
 
       <div className="pagos-list">
-        {pagos.map((p) => (
-          <div key={p.id} className="pago-item">
+        {pagos.map((pago) => (
+          <div key={pago.id} className="pago-item">
             <div>
-              <strong>{money(p.monto)}</strong>
-              <p>{fecha(p.fecha)} · {p.metodo}</p>
-              {p.referencia && <p>Ref: {p.referencia}</p>}
-              {p.observaciones && <p>{p.observaciones}</p>}
+              <strong>{money(pago.monto)}</strong>
+              <p>
+                {fecha(pago.fecha)} · {pago.metodo}
+              </p>
+              {pago.referencia && (
+                <p>Ref: {pago.referencia}</p>
+              )}
+              {pago.observaciones && (
+                <p>{pago.observaciones}</p>
+              )}
             </div>
 
-            <button onClick={() => borrarPago(p.id)}>
+            <button
+              type="button"
+              onClick={() => borrarPago(pago.id)}
+            >
               Eliminar
             </button>
           </div>
         ))}
 
         {pagos.length === 0 && (
-          <p>No hay pagos registrados para esta cotización.</p>
+          <p>
+            No hay pagos registrados para esta cotización.
+          </p>
         )}
       </div>
     </div>

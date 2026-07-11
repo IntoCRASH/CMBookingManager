@@ -1,32 +1,40 @@
 import { supabase } from './supabaseClient';
+import { requireWorkspaceId } from './workspaceService';
 
-export async function getPagosByCotizacion(cotizacionId) {
+export async function getPagosByCotizacion(cotizacionId, workspaceId) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
+
   const { data, error } = await supabase
     .from('pagos')
     .select('*')
+    .eq('workspace_id', currentWorkspaceId)
     .eq('cotizacion_id', cotizacionId)
-    .order('fecha', { ascending: false });
+    .order('fecha', { ascending: false })
+    .order('created_at', { ascending: false });
 
   if (error) throw error;
-
   return data || [];
 }
 
-export async function savePago(pago) {
-  const { data: userData } = await supabase.auth.getUser();
+export async function savePago(pago, workspaceId) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
 
   const payload = {
+    workspace_id: currentWorkspaceId,
     cotizacion_id: pago.cotizacion_id,
-    fecha: pago.fecha || new Date().toISOString().slice(0, 10),
+    fecha: pago.fecha || null,
     monto: Number(pago.monto || 0),
-    metodo: pago.metodo || 'Efectivo',
-    referencia: pago.referencia || null,
-    observaciones: pago.observaciones || null,
-    updated_at: new Date().toISOString(),
+    metodo: String(pago.metodo || 'Efectivo').trim(),
+    referencia: String(pago.referencia || '').trim() || null,
+    observaciones: String(pago.observaciones || '').trim() || null,
   };
 
-  if (!pago.id) {
-    payload.created_by = userData.user.id;
+  if (!payload.cotizacion_id) {
+    throw new Error('La cotización del pago es obligatoria.');
+  }
+
+  if (payload.monto <= 0) {
+    throw new Error('El monto del pago debe ser mayor que cero.');
   }
 
   if (pago.id) {
@@ -34,6 +42,7 @@ export async function savePago(pago) {
       .from('pagos')
       .update(payload)
       .eq('id', pago.id)
+      .eq('workspace_id', currentWorkspaceId)
       .select()
       .single();
 
@@ -43,36 +52,39 @@ export async function savePago(pago) {
 
   const { data, error } = await supabase
     .from('pagos')
-    .insert([payload])
+    .insert(payload)
     .select()
     .single();
 
   if (error) throw error;
-
   return data;
 }
 
-export async function deletePago(id) {
+export async function deletePago(id, workspaceId) {
+  const currentWorkspaceId = requireWorkspaceId(workspaceId);
+
   const { error } = await supabase
     .from('pagos')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('workspace_id', currentWorkspaceId);
 
   if (error) throw error;
+  return true;
 }
 
-export function calcularResumenPagos(total, pagos) {
-  const totalPagado = pagos.reduce(
-    (sum, p) => sum + Number(p.monto || 0),
+export function calcularResumenPagos(totalCotizacion, pagos) {
+  const total = Number(totalCotizacion || 0);
+  const totalPagado = (Array.isArray(pagos) ? pagos : []).reduce(
+    (sum, pago) => sum + Number(pago.monto || 0),
     0
   );
-
-  const balance = Number(total || 0) - totalPagado;
+  const balance = Math.max(total - totalPagado, 0);
 
   return {
-    total: Number(total || 0),
+    total,
     totalPagado,
-    balance: balance < 0 ? 0 : balance,
+    balance,
     saldado: balance <= 0,
   };
 }

@@ -3,24 +3,91 @@ import {
   buildBusinessProfileSnapshot,
   getBusinessProfileForQuotes,
   renderBusinessPolicies,
+  getBusinessAssetSignedUrl,
 } from './profileService';
-import { getArtistaById } from './artistasService';
+import { requireWorkspaceId } from './workspaceService';
 
 const COTIZACION_SELECT = `
   *,
   clientes (*),
-  provincias (*),
-  artistas (*)
+  provincias (*)
 `;
 
-async function createBusinessSnapshotFields() {
+const CAMPOS_SOLO_INTERFAZ = [
+  'id',
+  'clientes',
+  'provincias',
+  'vendedor',
+  'gestor',
+  'workspace',
+  'created_at',
+  'updated_at',
+
+  // Estos campos describen la membresía, no la cotización.
+  // El trigger SQL guarda el valor correcto en
+  // comision_porcentaje_snapshot.
+  'comision_porcentaje',
+  'commission_percentage',
+  'member_role',
+  'workspace_name',
+];
+
+function cleanCotizacionPayload(cotizacion) {
+  const payload = {
+    ...(cotizacion || {}),
+  };
+
+  CAMPOS_SOLO_INTERFAZ.forEach((field) => {
+    delete payload[field];
+  });
+
+  return payload;
+}
+
+async function includeQuoteBusinessAssetUrls(
+  cotizacion
+) {
+  if (!cotizacion?.perfil_negocio_snapshot) {
+    return cotizacion;
+  }
+
+  const snapshot =
+    cotizacion.perfil_negocio_snapshot;
+
+  const [logoUrl, firmaUrl] =
+    await Promise.all([
+      getBusinessAssetSignedUrl(
+        snapshot.logo_path
+      ),
+
+      getBusinessAssetSignedUrl(
+        snapshot.firma_path
+      ),
+    ]);
+
+  return {
+    ...cotizacion,
+
+    perfil_negocio_snapshot: {
+      ...snapshot,
+      logo_url: logoUrl,
+      firma_url: firmaUrl,
+    },
+  };
+}
+
+async function createBusinessSnapshotFields(
+  workspaceId
+) {
   const businessProfile =
-    await getBusinessProfileForQuotes();
+    await getBusinessProfileForQuotes(
+      workspaceId
+    );
 
   if (!businessProfile) {
     throw new Error(
-      'No existe un perfil de negocio configurado. ' +
-        'Completa el Perfil antes de crear cotizaciones.'
+      'El Artista no ha configurado su Perfil. ' +
+        'Debe completar sus datos comerciales antes de crear cotizaciones.'
     );
   }
 
@@ -40,216 +107,31 @@ async function createBusinessSnapshotFields() {
   };
 }
 
-async function createArtistSnapshotFields(
-  artistaId
-) {
-  if (!artistaId) {
-    throw new Error(
-      'Selecciona un artista para la cotización.'
-    );
-  }
-
-  const artista = await getArtistaById(
-    artistaId
-  );
-
-  if (!artista?.activo) {
-    throw new Error(
-      'El artista seleccionado está inactivo.'
-    );
-  }
-
-  if (
-    artista.estado_autorizacion !==
-    'autorizado'
-  ) {
-    throw new Error(
-      'El artista todavía no ha autorizado la comisión.'
-    );
-  }
-
-  const comisionPorcentaje = Number(
-    artista.comision_porcentaje || 0
-  );
-
-  const snapshot = {
-    id: artista.id,
-    nombre: artista.nombre || '',
-    email: artista.email || '',
-    spotify_url: artista.spotify_url || '',
-    comision_porcentaje: comisionPorcentaje,
-    estado_autorizacion:
-      artista.estado_autorizacion,
-    autorizado_at:
-      artista.autorizado_at || null,
-    capturado_en: new Date().toISOString(),
-  };
-
-  return {
-    artista_nombre_snapshot:
-      snapshot.nombre,
-
-    artista_email_snapshot:
-      snapshot.email,
-
-    artista_spotify_url_snapshot:
-      snapshot.spotify_url,
-
-    comision_porcentaje_snapshot:
-      comisionPorcentaje,
-
-    comision_autorizada_snapshot: true,
-    artista_snapshot: snapshot,
-  };
-}
-
-async function getOwnedConfiguration(
-  table,
-  id,
-  artistaId,
-  label
-) {
-  if (!id) {
-    throw new Error(
-      `Selecciona ${label} para la cotización.`
-    );
-  }
-
-  const { data, error } = await supabase
-    .from(table)
-    .select('*')
-    .eq('id', id)
-    .eq('artista_id', artistaId)
-    .single();
-
-  if (error) {
-    throw new Error(
-      `${label} no pertenece al artista seleccionado.`
-    );
-  }
-
-  return data;
-}
-
-async function createConfigurationSnapshotFields(
-  cotizacion
-) {
-  const artistaId = Number(
-    cotizacion.artista_id
-  );
-
-  if (
-    !Number.isInteger(artistaId) ||
-    artistaId <= 0
-  ) {
-    throw new Error(
-      'Selecciona un artista válido.'
-    );
-  }
-
-  const [
-    zona,
-    formato,
-    tipoEvento,
-  ] = await Promise.all([
-    getOwnedConfiguration(
-      'provincias',
-      cotizacion.provincia_id,
-      artistaId,
-      'una zona'
-    ),
-
-    getOwnedConfiguration(
-      'formatos',
-      cotizacion.formato_id,
-      artistaId,
-      'un formato'
-    ),
-
-    getOwnedConfiguration(
-      'tipos_evento_config',
-      cotizacion.tipo_evento_config_id,
-      artistaId,
-      'un tipo de evento'
-    ),
-  ]);
-
-  const capturadoEn =
-    new Date().toISOString();
-
-  return {
-    zona_nombre_snapshot:
-      zona.nombre || '',
-
-    formato_nombre_snapshot:
-      formato.nombre || '',
-
-    tipo_evento_nombre_snapshot:
-      tipoEvento.nombre || '',
-
-    zona_snapshot: {
-      ...zona,
-      capturado_en: capturadoEn,
-    },
-
-    formato_snapshot: {
-      ...formato,
-      capturado_en: capturadoEn,
-    },
-
-    tipo_evento_snapshot: {
-      ...tipoEvento,
-      capturado_en: capturadoEn,
-    },
-
-    configuracion_artista_snapshot: {
-      artista_id: artistaId,
-      zona: {
-        ...zona,
-      },
-      formato: {
-        ...formato,
-      },
-      tipo_evento: {
-        ...tipoEvento,
-      },
-      capturado_en: capturadoEn,
-    },
-  };
-}
-
 async function prepareNewCotizacionPayload(
-  payloadBase
+  payloadBase,
+  workspaceId
 ) {
-  const [
-    businessSnapshotFields,
-    artistSnapshotFields,
-    configurationSnapshotFields,
-  ] = await Promise.all([
+  if (
     payloadBase.perfil_negocio_snapshot &&
     payloadBase.politicas_condiciones
-      ? Promise.resolve({})
-      : createBusinessSnapshotFields(),
+  ) {
+    return payloadBase;
+  }
 
-    createArtistSnapshotFields(
-      payloadBase.artista_id
-    ),
-
-    createConfigurationSnapshotFields(
-      payloadBase
-    ),
-  ]);
+  const snapshotFields =
+    await createBusinessSnapshotFields(
+      workspaceId
+    );
 
   return {
     ...payloadBase,
-    ...businessSnapshotFields,
-    ...artistSnapshotFields,
-    ...configurationSnapshotFields,
+    ...snapshotFields,
   };
 }
 
 async function freezeLegacyCotizacion(
-  cotizacion
+  cotizacion,
+  workspaceId
 ) {
   if (
     cotizacion?.perfil_negocio_snapshot &&
@@ -258,8 +140,13 @@ async function freezeLegacyCotizacion(
     return cotizacion;
   }
 
+  const currentWorkspaceId =
+    requireWorkspaceId(workspaceId);
+
   const snapshotFields =
-    await createBusinessSnapshotFields();
+    await createBusinessSnapshotFields(
+      currentWorkspaceId
+    );
 
   const { data, error } = await supabase
     .from('cotizaciones')
@@ -268,123 +155,83 @@ async function freezeLegacyCotizacion(
       updated_at: new Date().toISOString(),
     })
     .eq('id', cotizacion.id)
+    .eq(
+      'workspace_id',
+      currentWorkspaceId
+    )
     .select(COTIZACION_SELECT)
     .single();
 
   if (error) throw error;
 
   return data;
-}
-
-async function getCotizacionRawById(id) {
-  const { data, error } = await supabase
-    .from('cotizaciones')
-    .select(COTIZACION_SELECT)
-    .eq('id', id)
-    .single();
-
-  if (error) throw error;
-
-  return data;
-}
-
-function removeJoinedAndSystemFields(
-  payload
-) {
-  delete payload.id;
-  delete payload.clientes;
-  delete payload.provincias;
-  delete payload.artistas;
-  delete payload.vendedor;
-  delete payload.created_at;
-}
-
-function removeConfigurationSnapshots(
-  payload
-) {
-  delete payload.zona_nombre_snapshot;
-  delete payload.formato_nombre_snapshot;
-  delete payload.tipo_evento_nombre_snapshot;
-  delete payload.zona_snapshot;
-  delete payload.formato_snapshot;
-  delete payload.tipo_evento_snapshot;
-  delete payload.configuracion_artista_snapshot;
 }
 
 export async function saveCotizacion(
-  cotizacion
+  cotizacion,
+  workspaceId
 ) {
-  if (cotizacion.id) {
-    const id = cotizacion.id;
-    const payload = { ...cotizacion };
-    const actual =
-      await getCotizacionRawById(id);
-
-    removeJoinedAndSystemFields(payload);
-    removeConfigurationSnapshots(payload);
-
-    const artistaCambio =
-      String(actual?.artista_id ?? '') !==
-      String(payload.artista_id ?? '');
-
-    if (artistaCambio) {
-      const artistSnapshotFields =
-        await createArtistSnapshotFields(
-          payload.artista_id
-        );
-
-      Object.assign(
-        payload,
-        artistSnapshotFields
-      );
-    } else {
-      delete payload.artista_nombre_snapshot;
-      delete payload.artista_email_snapshot;
-      delete payload.artista_spotify_url_snapshot;
-      delete payload.comision_porcentaje_snapshot;
-      delete payload.comision_autorizada_snapshot;
-      delete payload.artista_snapshot;
-    }
-
-    const configurationSnapshotFields =
-      await createConfigurationSnapshotFields(
-        payload
-      );
-
-    Object.assign(
-      payload,
-      configurationSnapshotFields
+  const currentWorkspaceId =
+    requireWorkspaceId(
+      workspaceId ||
+        cotizacion?.workspace_id
     );
+
+  if (cotizacion?.id) {
+    const payload =
+      cleanCotizacionPayload(
+        cotizacion
+      );
+
+    payload.workspace_id =
+      currentWorkspaceId;
 
     payload.updated_at =
       new Date().toISOString();
 
-    const { data, error } = await supabase
-      .from('cotizaciones')
-      .update(payload)
-      .eq('id', id)
-      .select(COTIZACION_SELECT)
-      .single();
+    const { data, error } =
+      await supabase
+        .from('cotizaciones')
+        .update(payload)
+        .eq('id', cotizacion.id)
+        .eq(
+          'workspace_id',
+          currentWorkspaceId
+        )
+        .select(COTIZACION_SELECT)
+        .single();
 
     if (error) throw error;
 
     return data;
   }
 
-  const payloadBase = { ...cotizacion };
+  const payloadBase =
+    cleanCotizacionPayload(
+      cotizacion
+    );
 
-  removeJoinedAndSystemFields(
-    payloadBase
-  );
+  payloadBase.workspace_id =
+    currentWorkspaceId;
 
-  delete payloadBase.updated_at;
-  removeConfigurationSnapshots(
-    payloadBase
-  );
+  /*
+   * No enviamos comision_porcentaje.
+   *
+   * La función/trigger cotizaciones_workspace_context
+   * consulta workspace_members y guarda:
+   *
+   *   comision_porcentaje_snapshot
+   *
+   * según el Gestor que crea la cotización.
+   * Para el Artista propietario guarda 0.
+   */
+  delete payloadBase.comision_porcentaje;
+  delete payloadBase.commission_percentage;
 
-  const payloadConSnapshots =
+  const payloadConSnapshot =
     await prepareNewCotizacionPayload(
-      payloadBase
+      payloadBase,
+      currentWorkspaceId
     );
 
   const {
@@ -394,21 +241,39 @@ export async function saveCotizacion(
     'generar_numero_cotizacion'
   );
 
-  if (errorNumero) throw errorNumero;
+  if (errorNumero) {
+    throw errorNumero;
+  }
 
-  const { data: userData } =
-    await supabase.auth.getUser();
+  const {
+    data: userData,
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    throw userError;
+  }
+
+  const userId =
+    userData?.user?.id || null;
+
+  if (!userId) {
+    throw new Error(
+      'No hay una sesión activa.'
+    );
+  }
 
   const payload = {
-    ...payloadConSnapshots,
+    ...payloadConSnapshot,
+    workspace_id:
+      currentWorkspaceId,
     numero,
-    created_by:
-      userData?.user?.id || null,
+    created_by: userId,
   };
 
   const { data, error } = await supabase
     .from('cotizaciones')
-    .insert([payload])
+    .insert(payload)
     .select(COTIZACION_SELECT)
     .single();
 
@@ -420,9 +285,18 @@ export async function saveCotizacion(
 export async function getCotizaciones(
   filtro = {}
 ) {
+  const currentWorkspaceId =
+    requireWorkspaceId(
+      filtro.workspaceId
+    );
+
   let query = supabase
     .from('cotizaciones')
-    .select(COTIZACION_SELECT);
+    .select(COTIZACION_SELECT)
+    .eq(
+      'workspace_id',
+      currentWorkspaceId
+    );
 
   if (filtro.estado) {
     query = query.eq(
@@ -431,67 +305,145 @@ export async function getCotizaciones(
     );
   }
 
-  if (filtro.artista_id) {
-    query = query.eq(
-      'artista_id',
-      filtro.artista_id
-    );
-  }
+  query = query.order(
+    'created_at',
+    {
+      ascending: false,
+    }
+  );
 
-  query = query.order('created_at', {
-    ascending: false,
-  });
-
-  const { data, error } = await query;
+  const { data, error } =
+    await query;
 
   if (error) throw error;
 
-  return data;
+  return data || [];
 }
 
-export async function getCotizacionById(id) {
-  const data =
-    await getCotizacionRawById(id);
+export async function getCotizacionById(
+  id,
+  workspaceId
+) {
+  const currentWorkspaceId =
+    requireWorkspaceId(workspaceId);
 
-  return freezeLegacyCotizacion(data);
+  const { data, error } = await supabase
+    .from('cotizaciones')
+    .select(COTIZACION_SELECT)
+    .eq('id', id)
+    .eq(
+      'workspace_id',
+      currentWorkspaceId
+    )
+    .single();
+
+  if (error) throw error;
+
+  const frozen =
+    await freezeLegacyCotizacion(
+      data,
+      currentWorkspaceId
+    );
+
+  return includeQuoteBusinessAssetUrls(
+    frozen
+  );
 }
 
-export async function duplicarCotizacion(id) {
+export async function duplicarCotizacion(
+  id,
+  workspaceId
+) {
+  const currentWorkspaceId =
+    requireWorkspaceId(workspaceId);
+
   const original =
-    await getCotizacionById(id);
+    await getCotizacionById(
+      id,
+      currentWorkspaceId
+    );
 
-  const copia = { ...original };
+  const copia =
+    cleanCotizacionPayload(
+      original
+    );
 
-  removeJoinedAndSystemFields(copia);
   delete copia.numero;
-  delete copia.updated_at;
 
-  // La cotización duplicada obtiene
-  // las políticas, firma, artista y
-  // configuraciones vigentes.
+  // La copia recibe la identidad,
+  // firma y políticas vigentes.
   delete copia.perfil_negocio_snapshot;
   delete copia.politicas_condiciones;
 
-  delete copia.artista_nombre_snapshot;
-  delete copia.artista_email_snapshot;
-  delete copia.artista_spotify_url_snapshot;
+  // La copia recibe también el porcentaje
+  // vigente del Gestor desde workspace_members.
   delete copia.comision_porcentaje_snapshot;
   delete copia.comision_autorizada_snapshot;
-  delete copia.artista_snapshot;
 
-  removeConfigurationSnapshots(copia);
+  // Una comisión duplicada comienza pendiente.
+  delete copia.comision_liquidada_at;
+  delete copia.comision_liquidada_by;
+  delete copia.comision_liquidada_por_rol;
 
-  return saveCotizacion(copia);
+  if (
+    Number(copia.comision || 0) > 0
+  ) {
+    copia.comision_estado =
+      'Pendiente';
+  }
+
+  return saveCotizacion(
+    {
+      ...copia,
+      workspace_id:
+        currentWorkspaceId,
+    },
+    currentWorkspaceId
+  );
 }
 
-export async function cancelarCotizacion(id) {
+export async function cancelarCotizacion(
+  id,
+  workspaceId
+) {
+  const currentWorkspaceId =
+    requireWorkspaceId(workspaceId);
+
   const { error } = await supabase
     .from('cotizaciones')
     .update({
       estado: 'Cancelada',
-      updated_at: new Date().toISOString(),
+      updated_at:
+        new Date().toISOString(),
     })
-    .eq('id', id);
+    .eq('id', id)
+    .eq(
+      'workspace_id',
+      currentWorkspaceId
+    );
 
   if (error) throw error;
+
+  return true;
+}
+
+export async function eliminarCotizacion(
+  id,
+  workspaceId
+) {
+  const currentWorkspaceId =
+    requireWorkspaceId(workspaceId);
+
+  const { error } = await supabase
+    .from('cotizaciones')
+    .delete()
+    .eq('id', id)
+    .eq(
+      'workspace_id',
+      currentWorkspaceId
+    );
+
+  if (error) throw error;
+
+  return true;
 }
