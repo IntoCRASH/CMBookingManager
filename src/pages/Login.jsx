@@ -64,6 +64,42 @@ export default function Login() {
         </button>
 
         {error && <p className="error">{error}</p>}
+
+        <div
+          style={{
+            marginTop: '24px',
+            paddingTop: '20px',
+            borderTop: '1px solid rgba(16, 24, 40, 0.08)',
+            textAlign: 'center',
+          }}
+        >
+          <span
+            style={{
+              display: 'inline-block',
+              marginBottom: '8px',
+              color: '#7357ff',
+              fontSize: '10px',
+              fontWeight: '900',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Tu negocio en un solo lugar
+          </span>
+
+          <p
+            style={{
+              maxWidth: '340px',
+              margin: '0 auto',
+              color: '#667085',
+              fontSize: '13px',
+              lineHeight: '1.6',
+            }}
+          >
+            MiBooking centraliza artistas, cotizaciones, tarifas,
+            agenda, comisiones y gestión de eventos en un solo lugar.
+          </p>
+        </div>
       </form>
     </div>
   );
