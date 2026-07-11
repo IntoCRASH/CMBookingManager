@@ -10,6 +10,7 @@ export default function Dashboard({
   goCalendario,
   goComisiones,
   goDocumentos,
+  goTutorial,
   goFormatos,
   goTiposEvento,
   goPerfil,
@@ -305,6 +306,11 @@ export default function Dashboard({
         </div>
 
         <div className="quick-actions-grid">
+          <button type="button" onClick={goTutorial}>
+            🧭
+            <span>Tutorial</span>
+          </button>
+
           <button type="button" onClick={goCotizaciones}>
             📄
             <span>Cotizaciones</span>

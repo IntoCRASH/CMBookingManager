@@ -21,6 +21,7 @@ import Calendario from './pages/Calendario';
 import PagosCotizacion from './pages/PagosCotizacion';
 import Comisiones from './pages/Comisiones';
 import Documentos from './pages/Documentos';
+import Tutorial from './pages/Tutorial';
 import Formatos from './pages/Formatos';
 import TiposEvento from './pages/TiposEvento';
 import Perfil from './pages/Perfil';
@@ -365,6 +366,11 @@ export default function App() {
         action: volverDashboard,
       },
       {
+        id: 'tutorial',
+        label: 'Tutorial',
+        action: () => irA('tutorial'),
+      },
+      {
         id: 'cotizaciones',
         label: 'Cotizaciones',
         action: () => irA('cotizaciones'),
@@ -581,6 +587,27 @@ export default function App() {
         );
         break;
 
+      case 'tutorial':
+        contenido = (
+          <Tutorial
+            {...sharedProps}
+            goBack={volverAtras}
+            goPerfil={() => irA('perfil')}
+            goEquipo={() => irA('equipo')}
+            goFormatos={() => irA('formatos')}
+            goTiposEvento={() => irA('tipos-evento')}
+            goTarifas={() => irA('tarifas')}
+            goClientes={() => irA('clientes')}
+            goNuevaCotizacion={() => irA('nueva-cotizacion')}
+            goCotizaciones={() => irA('cotizaciones')}
+            goDocumentos={() => irA('documentos')}
+            goCalendario={() => irA('calendario')}
+            goComisiones={() => irA('comisiones')}
+            goInvitaciones={() => irA('invitaciones')}
+          />
+        );
+        break;
+
       case 'documentos':
         contenido = (
           <Documentos
@@ -635,6 +662,7 @@ export default function App() {
             goCotizaciones={() => irA('cotizaciones')}
             goCalendario={() => irA('calendario')}
             goDocumentos={() => irA('documentos')}
+            goTutorial={() => irA('tutorial')}
             goComisiones={() => irA('comisiones')}
           />
         );
@@ -664,6 +692,7 @@ export default function App() {
             goCotizaciones={() => irA('cotizaciones')}
             goCalendario={() => irA('calendario')}
             goDocumentos={() => irA('documentos')}
+            goTutorial={() => irA('tutorial')}
             goComisiones={() => irA('comisiones')}
             goFormatos={() => irA('formatos')}
             goTiposEvento={() => irA('tipos-evento')}
@@ -839,6 +868,10 @@ export default function App() {
             <h3>Más opciones</h3>
 
             <div className="sheet-actions">
+              <button type="button" onClick={() => irA('tutorial')}>
+                ◈ Tutorial
+              </button>
+
               <button type="button" onClick={() => irA('clientes')}>
                 ◉ Clientes
               </button>
