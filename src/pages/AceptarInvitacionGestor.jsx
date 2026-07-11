@@ -1,11 +1,25 @@
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
+import Login from './Login';
 import {
   acceptWorkspaceInvitationByToken,
   getWorkspaceInvitationByToken,
+  rejectWorkspaceInvitationByToken,
 } from '../lib/teamService';
 import './AceptarInvitacionGestor.css';
+
+function getDecisionFromUrl() {
+  return (
+    new URLSearchParams(
+      window.location.search
+    ).get('decision') || ''
+  );
+}
 
 export default function AceptarInvitacionGestor({
   token,
@@ -21,14 +35,19 @@ export default function AceptarInvitacionGestor({
   const [processing, setProcessing] =
     useState(false);
 
+  const [decision, setDecisionState] =
+    useState(getDecisionFromUrl());
+
   const [accepted, setAccepted] =
     useState(null);
+
+  const [rejected, setRejected] =
+    useState(false);
 
   const [error, setError] =
     useState('');
 
-  const [password, setPassword] =
-    useState('');
+  const acceptingRef = useRef(false);
 
   const currentEmail =
     String(
@@ -52,6 +71,50 @@ export default function AceptarInvitacionGestor({
   useEffect(() => {
     loadInvitation();
   }, [token]);
+
+  useEffect(() => {
+    if (
+      decision === 'accept' &&
+      session &&
+      emailMatches &&
+      invitation?.actionable &&
+      !accepted &&
+      !acceptingRef.current
+    ) {
+      completeAcceptance();
+    }
+  }, [
+    decision,
+    session?.user?.id,
+    emailMatches,
+    invitation?.actionable,
+    accepted,
+  ]);
+
+  function setDecision(nextDecision) {
+    const url =
+      new URL(window.location.href);
+
+    if (nextDecision) {
+      url.searchParams.set(
+        'decision',
+        nextDecision
+      );
+    } else {
+      url.searchParams.delete(
+        'decision'
+      );
+    }
+
+    window.history.replaceState(
+      {},
+      '',
+      `${url.pathname}${url.search}${url.hash}`
+    );
+
+    setDecisionState(nextDecision);
+    setError('');
+  }
 
   async function loadInvitation() {
     try {
@@ -83,45 +146,56 @@ export default function AceptarInvitacionGestor({
     }
   }
 
-  async function login(event) {
-    event.preventDefault();
+  function chooseAccept() {
+    setDecision('accept');
+  }
 
-    if (!invitedEmail) return;
+  async function rejectInvitation() {
+    const confirmed =
+      window.confirm(
+        '¿Deseas rechazar esta invitación? Esta acción no se puede deshacer.'
+      );
+
+    if (!confirmed) return;
 
     try {
       setProcessing(true);
       setError('');
 
-      const { error: loginError } =
-        await supabase.auth
-          .signInWithPassword({
-            email: invitedEmail,
-            password,
-          });
+      const result =
+        await rejectWorkspaceInvitationByToken(
+          token
+        );
 
-      if (loginError) {
-        throw loginError;
+      if (!result?.ok) {
+        throw new Error(
+          result?.message ||
+            'La invitación ya no está pendiente.'
+        );
       }
 
-      setPassword('');
+      setRejected(true);
 
       toast.success(
-        'Sesión iniciada. Ya puedes aceptar la invitación.'
+        'Invitación rechazada.'
       );
-    } catch (loginError) {
-      console.error(loginError);
+    } catch (rejectError) {
+      console.error(rejectError);
 
       setError(
-        loginError.message ||
-          'No se pudo iniciar sesión.'
+        rejectError.message ||
+          'No se pudo rechazar la invitación.'
       );
     } finally {
       setProcessing(false);
     }
   }
 
-  async function acceptInvitation() {
+  async function completeAcceptance() {
+    if (acceptingRef.current) return;
+
     try {
+      acceptingRef.current = true;
       setProcessing(true);
       setError('');
 
@@ -143,6 +217,7 @@ export default function AceptarInvitacionGestor({
           'No se pudo aceptar la invitación.'
       );
     } finally {
+      acceptingRef.current = false;
       setProcessing(false);
     }
   }
@@ -171,6 +246,10 @@ export default function AceptarInvitacionGestor({
       'invitacion_gestor'
     );
 
+    url.searchParams.delete(
+      'decision'
+    );
+
     window.history.replaceState(
       {},
       '',
@@ -181,7 +260,9 @@ export default function AceptarInvitacionGestor({
   }
 
   function formatDate(value) {
-    if (!value) return 'Sin fecha límite';
+    if (!value) {
+      return 'Sin fecha límite';
+    }
 
     return new Date(value)
       .toLocaleDateString('es-DO', {
@@ -229,11 +310,12 @@ export default function AceptarInvitacionGestor({
             </h1>
 
             <p>
-              Tu acceso como Gestor está activo con una
-              comisión de{' '}
+              Tu acceso como Gestor está activo
+              con una comisión de{' '}
               <strong>
                 {Number(
-                  accepted.commission_percentage || 0
+                  accepted.commission_percentage ||
+                    0
                 )}
                 %
               </strong>
@@ -247,6 +329,28 @@ export default function AceptarInvitacionGestor({
             >
               Entrar a MiBooking
             </button>
+          </div>
+        ) : rejected ? (
+          <div className="manager-invite-state">
+            <span className="manager-invite-error-icon">
+              ×
+            </span>
+
+            <span className="manager-invite-eyebrow">
+              Invitación rechazada
+            </span>
+
+            <h1>
+              Has rechazado la invitación
+            </h1>
+
+            <p>
+              No se creó ninguna relación con{' '}
+              <strong>
+                {invitation?.workspace_name}
+              </strong>
+              .
+            </p>
           </div>
         ) : !invitation?.found ? (
           <div className="manager-invite-state error">
@@ -276,11 +380,10 @@ export default function AceptarInvitacionGestor({
               <strong>
                 {invitation.status}
               </strong>
-              . Solicita al Artista una nueva invitación
-              cuando corresponda.
+              .
             </p>
           </div>
-        ) : (
+        ) : decision !== 'accept' ? (
           <>
             <div className="manager-invite-hero">
               <span className="manager-invite-eyebrow">
@@ -295,7 +398,8 @@ export default function AceptarInvitacionGestor({
                 <strong>
                   {invitation.workspace_name}
                 </strong>{' '}
-                quiere trabajar contigo mediante MiBooking.
+                quiere trabajar contigo mediante
+                MiBooking.
               </p>
             </div>
 
@@ -305,6 +409,7 @@ export default function AceptarInvitacionGestor({
                 <strong>
                   {invitation.workspace_name}
                 </strong>
+
                 <small>
                   Invitación enviada por{' '}
                   {invitation.artist_name}
@@ -312,7 +417,7 @@ export default function AceptarInvitacionGestor({
               </div>
 
               <div>
-                <span>Comisión acordada</span>
+                <span>Comisión propuesta</span>
                 <strong className="commission">
                   {Number(
                     invitation.commission_percentage ||
@@ -320,6 +425,7 @@ export default function AceptarInvitacionGestor({
                   )}
                   %
                 </strong>
+
                 <small>
                   Aplicada a tus cotizaciones
                 </small>
@@ -330,11 +436,11 @@ export default function AceptarInvitacionGestor({
               <span>🔒</span>
 
               <p>
-                Este acceso está reservado para{' '}
+                Esta invitación pertenece a{' '}
                 <strong>
                   {invitation.email}
                 </strong>
-                . El enlace vence el{' '}
+                {' '}y vence el{' '}
                 {formatDate(
                   invitation.expires_at
                 )}
@@ -342,107 +448,27 @@ export default function AceptarInvitacionGestor({
               </p>
             </div>
 
-            {!session ? (
-              <form
-                className="manager-invite-login"
-                onSubmit={login}
+            <div className="manager-invite-decision">
+              <button
+                type="button"
+                className="manager-invite-primary"
+                onClick={chooseAccept}
+                disabled={processing}
               >
-                <h2>
-                  Inicia sesión para aceptar
-                </h2>
+                Aceptar invitación
+              </button>
 
-                <p>
-                  Usa la cuenta MiBooking asociada al
-                  correo invitado.
-                </p>
-
-                <label>
-                  Correo
-                  <input
-                    type="email"
-                    value={invitation.email}
-                    readOnly
-                  />
-                </label>
-
-                <label>
-                  Contraseña
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(event) =>
-                      setPassword(
-                        event.target.value
-                      )
-                    }
-                    autoComplete="current-password"
-                    required
-                  />
-                </label>
-
-                <button
-                  type="submit"
-                  className="manager-invite-primary"
-                  disabled={processing}
-                >
-                  {processing
-                    ? 'Iniciando sesión...'
-                    : 'Iniciar sesión'}
-                </button>
-              </form>
-            ) : !emailMatches ? (
-              <div className="manager-invite-account-warning">
-                <h2>
-                  Esta sesión usa otro correo
-                </h2>
-
-                <p>
-                  Estás conectado como{' '}
-                  <strong>
-                    {session.user.email}
-                  </strong>
-                  , pero la invitación pertenece a{' '}
-                  <strong>
-                    {invitation.email}
-                  </strong>
-                  .
-                </p>
-
-                <button
-                  type="button"
-                  onClick={changeAccount}
-                  disabled={processing}
-                >
-                  Cerrar sesión y cambiar de cuenta
-                </button>
-              </div>
-            ) : (
-              <div className="manager-invite-accept">
-                <h2>
-                  Todo está listo
-                </h2>
-
-                <p>
-                  Al aceptar podrás trabajar con{' '}
-                  <strong>
-                    {invitation.workspace_name}
-                  </strong>
-                  , sin acceso para modificar sus tarifas,
-                  formatos o tipos de evento.
-                </p>
-
-                <button
-                  type="button"
-                  className="manager-invite-primary"
-                  onClick={acceptInvitation}
-                  disabled={processing}
-                >
-                  {processing
-                    ? 'Aceptando invitación...'
-                    : 'Aceptar invitación'}
-                </button>
-              </div>
-            )}
+              <button
+                type="button"
+                className="manager-invite-reject"
+                onClick={rejectInvitation}
+                disabled={processing}
+              >
+                {processing
+                  ? 'Procesando...'
+                  : 'Rechazar invitación'}
+              </button>
+            </div>
 
             {error && (
               <p className="manager-invite-inline-error">
@@ -451,8 +477,121 @@ export default function AceptarInvitacionGestor({
             )}
 
             <footer className="manager-invite-footer">
-              El enlace es personal y no debe reenviarse.
+              Aceptar no crea acceso hasta que
+              confirmes tus credenciales.
             </footer>
+          </>
+        ) : session && !emailMatches ? (
+          <>
+            <div className="manager-invite-hero compact">
+              <span className="manager-invite-eyebrow">
+                Confirmar identidad
+              </span>
+
+              <h1>
+                Usa el correo invitado
+              </h1>
+            </div>
+
+            <div className="manager-invite-account-warning">
+              <h2>
+                Esta sesión usa otro correo
+              </h2>
+
+              <p>
+                Estás conectado como{' '}
+                <strong>
+                  {session.user.email}
+                </strong>
+                , pero la invitación pertenece a{' '}
+                <strong>
+                  {invitation.email}
+                </strong>
+                .
+              </p>
+
+              <button
+                type="button"
+                onClick={changeAccount}
+                disabled={processing}
+              >
+                Cerrar sesión y cambiar de cuenta
+              </button>
+            </div>
+          </>
+        ) : session && emailMatches ? (
+          <div className="manager-invite-state">
+            <span className="manager-invite-spinner" />
+
+            <h1>
+              Activando tu acceso
+            </h1>
+
+            <p>
+              Estamos agregando a{' '}
+              {invitation.workspace_name}
+              {' '}a tu cuenta.
+            </p>
+
+            {error && (
+              <>
+                <p className="manager-invite-inline-error">
+                  {error}
+                </p>
+
+                <button
+                  type="button"
+                  className="manager-invite-primary"
+                  onClick={completeAcceptance}
+                  disabled={processing}
+                >
+                  Intentar nuevamente
+                </button>
+              </>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="manager-invite-hero compact">
+              <span className="manager-invite-eyebrow">
+                Invitación aceptada
+              </span>
+
+              <h1>
+                Confirma tus credenciales
+              </h1>
+
+              <p>
+                Inicia sesión o crea una cuenta
+                para activar tu acceso como
+                Gestor de{' '}
+                <strong>
+                  {invitation.workspace_name}
+                </strong>
+                .
+              </p>
+            </div>
+
+            <div className="manager-invite-auth">
+              <Login
+                initialMode="login"
+                lockedEmail={
+                  invitation.email
+                }
+                forcedAccountType="gestor"
+                invitationToken={token}
+                embedded
+                onBack={() =>
+                  setDecision('')
+                }
+              />
+            </div>
+
+            {error && (
+              <p className="manager-invite-inline-error">
+                {error}
+              </p>
+            )}
           </>
         )}
       </section>

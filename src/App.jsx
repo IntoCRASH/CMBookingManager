@@ -9,7 +9,8 @@ import {
   loadMyWorkspaceContext,
   selectWorkspace,
 } from './lib/workspaceService';
-import Login from './pages/Login';
+import Landing from './pages/Landing';
+import { ensureMyAccountReady } from './lib/authService';
 import Dashboard from './pages/Dashboard';
 import Tarifas from './pages/Tarifas';
 import Clientes from './pages/Clientes';
@@ -93,10 +94,15 @@ export default function App() {
         setAccountLoading(true);
         setAccountError('');
 
-        const [currentProfile, workspaceContext] = await Promise.all([
-          getMyProfile(),
-          loadMyWorkspaceContext(session.user.id),
-        ]);
+        await ensureMyAccountReady();
+
+        const [currentProfile, workspaceContext] =
+          await Promise.all([
+            getMyProfile(),
+            loadMyWorkspaceContext(
+              session.user.id
+            ),
+          ]);
 
         if (cancelled) return;
 
@@ -441,7 +447,7 @@ export default function App() {
   if (loading || accountLoading) {
     contenido = <div className="app-loading">Cargando MiBooking...</div>;
   } else if (!session) {
-    contenido = <Login />;
+    contenido = <Landing />;
   } else if (accountError) {
     contenido = (
       <div className="workspace-state-card">

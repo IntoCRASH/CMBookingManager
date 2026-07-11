@@ -380,6 +380,25 @@ export async function getWorkspaceInvitationByToken(
   };
 }
 
+export async function rejectWorkspaceInvitationByToken(
+  token
+) {
+  const cleanToken =
+    String(token || '').trim();
+
+  const { data, error } =
+    await supabase.rpc(
+      'reject_workspace_invitation_by_token',
+      {
+        p_token: cleanToken,
+      }
+    );
+
+  if (error) throw error;
+
+  return data;
+}
+
 export async function acceptWorkspaceInvitationByToken(
   token
 ) {
