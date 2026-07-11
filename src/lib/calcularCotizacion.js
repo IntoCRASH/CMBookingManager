@@ -1,4 +1,4 @@
-const COMISION_PORCENTAJE_DEFAULT = 0.10;
+const COMISION_PORCENTAJE_DEFAULT = 0;
 const ROAD_MANAGER_MENOS_4 = 3500;
 const MINIMO_CUARTETO = 4;
 const REDONDEO_A = 100;
@@ -121,6 +121,7 @@ export function calcularCotizacion({
     monto_descuento: redondearMonto(montoDescuento),
     subtotal: redondearMonto(subtotal),
     subtotal_con_descuento: redondearMonto(subtotalConDescuento),
+    comision_porcentaje: porcentajeComision * 100,
     comision: redondearMonto(comision),
     total_sin_redondear: totalSinRedondear,
     total,

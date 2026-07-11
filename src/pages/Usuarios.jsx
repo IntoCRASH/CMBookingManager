@@ -14,7 +14,6 @@ const usuarioInicial = {
   email: '',
   password: '',
   rol: 'vendedor',
-  comision_porcentaje: 10,
   activo: true,
 };
 
@@ -76,7 +75,6 @@ export default function Usuarios({ goBack }) {
       email: '',
       password: '',
       rol: usuario.rol || 'vendedor',
-      comision_porcentaje: Number(usuario.comision_porcentaje ?? 10),
       activo: Boolean(usuario.activo ?? true),
     });
 
@@ -95,7 +93,6 @@ export default function Usuarios({ goBack }) {
       email: '',
       password: '',
       rol: usuario.rol || 'vendedor',
-      comision_porcentaje: Number(usuario.comision_porcentaje ?? 10),
       activo: Boolean(usuario.activo ?? true),
     });
 
@@ -127,7 +124,6 @@ export default function Usuarios({ goBack }) {
           ? {
               nombre: form.nombre.trim(),
               rol: form.rol,
-              comision_porcentaje: Number(form.comision_porcentaje || 0),
               activo: Boolean(form.activo),
             }
           : {
@@ -157,7 +153,7 @@ export default function Usuarios({ goBack }) {
           email: form.email.trim(),
           password: form.password,
           rol: form.rol,
-          comision_porcentaje: Number(form.comision_porcentaje || 0),
+          comision_porcentaje: 0,
           activo: Boolean(form.activo),
         });
 
@@ -373,15 +369,10 @@ export default function Usuarios({ goBack }) {
                 <option value="vendedor">Vendedor</option>
               </select>
 
-              <label>Comisión %</label>
-              <input
-                type="number"
-                name="comision_porcentaje"
-                value={form.comision_porcentaje}
-                onChange={cambiar}
-                min="0"
-                max="100"
-              />
+              <p className="usuario-comision-note">
+                La comisión ya no pertenece al usuario. Se configura
+                y autoriza individualmente en la página Artistas.
+              </p>
 
               <label className="check-row">
                 <input

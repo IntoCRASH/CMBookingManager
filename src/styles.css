@@ -1,5 +1,5 @@
 /* =========================================================
-   CRUZMONTY BOOKING — MOBILE-FIRST APP UI
+   MIBOOKING — MOBILE-FIRST APP UI
    Reemplazo directo para: src/styles.css
 ========================================================= */
 
@@ -2334,5 +2334,534 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .logout-button {
     padding-left: 10px;
     padding-right: 10px;
+  }
+}
+
+/* =========================================================
+   ARTISTAS Y AUTORIZACIÓN DE COMISIÓN
+========================================================= */
+
+.artistas-page {
+  overflow: visible;
+}
+
+.artistas-plan-card,
+.artistas-auth-card {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-xs);
+}
+
+.artistas-plan-card {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.artistas-plan-card strong,
+.artistas-plan-card span,
+.artistas-plan-card p {
+  display: block;
+}
+
+.artistas-plan-card strong {
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 22px;
+  letter-spacing: -0.04em;
+}
+
+.artistas-plan-card p {
+  margin: 6px 0 0;
+}
+
+.artistas-plan-kicker {
+  color: var(--accent-2);
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.artistas-limit-badge {
+  width: fit-content;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 153, 0, 0.22);
+  border-radius: 999px;
+  color: #9a5200;
+  background: var(--warning-soft);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.artistas-auth-card {
+  border-color: rgba(115, 87, 255, 0.18);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(33, 167, 255, 0.09),
+      rgba(115, 87, 255, 0.10)
+    ),
+    rgba(255, 255, 255, 0.88);
+}
+
+.artistas-auth-card > div:first-child span,
+.artistas-auth-card > div:first-child strong {
+  display: block;
+}
+
+.artistas-auth-card > div:first-child span {
+  color: var(--accent-2);
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.artistas-auth-card > div:first-child strong {
+  margin-top: 5px;
+  font-size: 20px;
+}
+
+.artistas-auth-card p {
+  margin: 6px 0 0;
+}
+
+.artistas-auth-card input {
+  font-size: 12px;
+}
+
+.artistas-auth-actions,
+.artista-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.artistas-auth-actions button,
+.artista-acciones button {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.artistas-actions {
+  align-items: center;
+}
+
+.artistas-lista {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  overflow: visible;
+}
+
+.artistas-header,
+.artista-row {
+  display: grid;
+  grid-template-columns:
+    minmax(260px, 2fr)
+    minmax(120px, 0.7fr)
+    minmax(140px, 0.8fr)
+    minmax(260px, 1.25fr);
+  gap: 16px;
+  align-items: center;
+}
+
+.artistas-header {
+  padding: 0 18px 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.artista-row {
+  padding: 17px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-xs);
+}
+
+.artista-identidad {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.artista-identidad > div {
+  min-width: 0;
+}
+
+.artista-avatar {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  color: white;
+  font-size: 17px;
+  font-weight: 1000;
+  background:
+    linear-gradient(
+      135deg,
+      var(--accent),
+      var(--accent-2) 58%,
+      #ec4899
+    );
+  box-shadow:
+    0 12px 26px
+    rgba(115, 87, 255, 0.20);
+}
+
+.artista-identidad strong,
+.artista-identidad small,
+.artista-identidad a {
+  display: block;
+}
+
+.artista-identidad strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.artista-identidad small {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.artista-identidad a {
+  width: fit-content;
+  margin-top: 5px;
+  color: #4f35ff;
+  font-size: 12px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.artista-identidad a:hover {
+  text-decoration: underline;
+}
+
+.artista-comision strong,
+.artista-comision small {
+  display: block;
+}
+
+.artista-comision strong {
+  font-size: 20px;
+  letter-spacing: -0.04em;
+}
+
+.artista-comision small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.artista-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 30px;
+  padding: 6px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.status-autorizado {
+  color: #087443;
+  background: var(--success-soft);
+}
+
+.status-pendiente {
+  color: #8a4b00;
+  background: var(--warning-soft);
+}
+
+.status-rechazado,
+.status-revocado {
+  color: #b42318;
+  background: var(--danger-soft);
+}
+
+.artistas-empty {
+  display: grid;
+  gap: 5px;
+  padding: 32px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.artistas-empty strong {
+  color: var(--text);
+  font-size: 18px;
+}
+
+.artista-modal-note,
+.usuario-comision-note {
+  margin: 16px 0 0;
+  padding: 12px;
+  border: 1px solid rgba(115, 87, 255, 0.12);
+  border-radius: 12px;
+  color: var(--muted);
+  background: rgba(115, 87, 255, 0.07);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cotizacion-artista-alerta {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 153, 0, 0.20);
+  border-radius: 14px;
+  background: var(--warning-soft);
+}
+
+.cotizacion-artista-alerta p {
+  margin: 0 0 10px;
+  color: #7a4300;
+  font-size: 13px;
+}
+
+.cotizacion-artista-alerta button {
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+/* Página pública para autorizar la comisión */
+
+.artist-auth-public-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background:
+    radial-gradient(
+      circle at 12% 12%,
+      rgba(33, 167, 255, 0.22),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 88% 6%,
+      rgba(236, 72, 153, 0.18),
+      transparent 32%
+    ),
+    linear-gradient(
+      135deg,
+      #050915,
+      #0b1024 55%,
+      #111936
+    );
+}
+
+.artist-auth-public-card {
+  width: min(100%, 540px);
+  padding: 34px;
+  border: 1px solid
+    rgba(255, 255, 255, 0.14);
+  border-radius: 30px;
+  color: white;
+  text-align: center;
+  background:
+    rgba(10, 15, 35, 0.86);
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 34px 100px
+    rgba(0, 0, 0, 0.40);
+}
+
+.artist-auth-public-card > img {
+  display: block;
+  width: min(100%, 320px);
+  height: auto;
+  margin: 0 auto 26px;
+  object-fit: contain;
+}
+
+.artist-auth-public-card h1 {
+  margin: 10px 0 14px;
+  color: white;
+  font-size:
+    clamp(32px, 8vw, 48px);
+  line-height: 0.98;
+}
+
+.artist-auth-public-card p {
+  color:
+    rgba(255, 255, 255, 0.72);
+  line-height: 1.55;
+}
+
+.artist-auth-public-card p strong {
+  color: white;
+}
+
+.artist-auth-kicker {
+  color: #b794ff;
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.artist-auth-commission {
+  margin: 24px 0;
+  padding: 20px;
+  border: 1px solid
+    rgba(255, 255, 255, 0.11);
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(33, 167, 255, 0.14),
+      rgba(236, 72, 153, 0.14)
+    );
+}
+
+.artist-auth-commission small,
+.artist-auth-commission strong {
+  display: block;
+}
+
+.artist-auth-commission small {
+  color:
+    rgba(255, 255, 255, 0.64);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+.artist-auth-commission strong {
+  margin-top: 8px;
+  font-size: 54px;
+  letter-spacing: -0.07em;
+}
+
+.artist-auth-email,
+.artist-auth-expiry {
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+.artist-auth-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.artist-auth-result {
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 16px;
+  font-weight: 900;
+}
+
+.artist-auth-result.approved {
+  color: #b8ffd5;
+  background:
+    rgba(32, 177, 90, 0.17);
+  border: 1px solid
+    rgba(32, 177, 90, 0.28);
+}
+
+.artist-auth-result.rejected {
+  color: #ffc2d0;
+  background:
+    rgba(239, 63, 107, 0.16);
+  border: 1px solid
+    rgba(239, 63, 107, 0.26);
+}
+
+.artist-auth-legal {
+  display: block;
+  margin-top: 22px;
+  color:
+    rgba(255, 255, 255, 0.48);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+@media (max-width: 880px) {
+  .artistas-header {
+    display: none;
+  }
+
+  .artista-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .artista-identidad {
+    grid-column: 1 / -1;
+  }
+
+  .artista-acciones {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .artistas-plan-card {
+    grid-template-columns: 1fr;
+  }
+
+  .artista-row {
+    grid-template-columns: 1fr;
+  }
+
+  .artista-row > [data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 1000;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .artista-acciones,
+  .artistas-auth-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .artista-acciones button,
+  .artistas-auth-actions button {
+    width: 100%;
+  }
+
+  .artist-auth-public-card {
+    padding: 26px 20px;
+  }
+
+  .artist-auth-buttons {
+    grid-template-columns: 1fr;
   }
 }

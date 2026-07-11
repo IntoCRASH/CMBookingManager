@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { getMyProfile } from '../lib/profileService';
-import { APP_CONFIG } from '../lib/config';
 import { getCotizaciones } from '../lib/cotizacionesService';
 
 export default function Dashboard({
   session,
   goTarifas,
+  goArtistas,
   goCotizaciones,
   goCalendario,
   goComisiones,
@@ -162,6 +162,10 @@ export default function Dashboard({
 
   const esAdmin = profile?.rol === 'admin';
 
+  const nombreSaludo = String(profile?.nombre || '')
+    .trim()
+    .split(/\s+/)[0];
+
   return (
     <div className="dashboard dashboard-mobile-first">
       <section className="mobile-welcome-card">
@@ -169,15 +173,11 @@ export default function Dashboard({
           <span className="eyebrow">MiBooking</span>
 
           <h1>
-            Hola
-            {profile?.nombre
-              ? `, ${profile.nombre}`
-              : ''}
+            Hola{nombreSaludo ? `, ${nombreSaludo}!` : '!'}
           </h1>
 
           <p>
-            Hoy, <strong>{APP_CONFIG.artista}</strong>{' '}
-            tiene <strong>{eventosHoy}</strong>{' '}
+            Hoy tienes <strong>{eventosHoy}</strong>{' '}
             evento
             {eventosHoy !== 1 ? 's' : ''} confirmado
             {eventosHoy !== 1 ? 's' : ''}.
@@ -284,6 +284,12 @@ export default function Dashboard({
               </h2>
 
               <p>
+                <strong>
+                  {proximoEvento.artista_nombre_snapshot ||
+                    proximoEvento.artista_snapshot?.nombre ||
+                    'Artista'}
+                </strong>
+                {' · '}
                 {proximoEvento.clientes?.nombre ||
                   'Cliente sin nombre'}
               </p>
@@ -325,6 +331,14 @@ export default function Dashboard({
           >
             📄
             <span>Cotizaciones</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={goArtistas}
+          >
+            🎙️
+            <span>Artistas</span>
           </button>
 
           <button

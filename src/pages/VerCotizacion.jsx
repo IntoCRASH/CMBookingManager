@@ -1,8 +1,4 @@
-import {
-  Fragment,
-  useEffect,
-  useState,
-} from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { APP_CONFIG } from '../lib/config';
 import { getCotizacionById } from '../lib/cotizacionesService';
 import {
@@ -15,9 +11,7 @@ import './VerCotizacion.css';
 function normalizeSnapshot(value) {
   if (!value) return {};
 
-  if (typeof value === 'object') {
-    return value;
-  }
+  if (typeof value === 'object') return value;
 
   try {
     return JSON.parse(value);
@@ -31,79 +25,43 @@ function renderInlineText(text) {
     .split(/(\*\*[^*]+\*\*)/g)
     .filter(Boolean)
     .map((part, index) => {
-      const isStrong =
-        part.startsWith('**') &&
-        part.endsWith('**');
+      const isStrong = part.startsWith('**') && part.endsWith('**');
 
       if (isStrong) {
         return (
-          <strong
-            key={`${part}-${index}`}
-          >
+          <strong key={`${part}-${index}`}>
             {part.slice(2, -2)}
           </strong>
         );
       }
 
-      return (
-        <Fragment
-          key={`${part}-${index}`}
-        >
-          {part}
-        </Fragment>
-      );
+      return <Fragment key={`${part}-${index}`}>{part}</Fragment>;
     });
 }
 
-function renderPolicyParagraph(
-  paragraph,
-  paragraphIndex
-) {
-  const lines = String(
-    paragraph || ''
-  ).split('\n');
+function renderPolicyParagraph(paragraph, paragraphIndex) {
+  const lines = String(paragraph || '').split('\n');
 
   return (
     <p
       className="disclaimer-paragraph"
       key={`policy-${paragraphIndex}`}
     >
-      {lines.map(
-        (line, lineIndex) => (
-          <Fragment
-            key={
-              `policy-${paragraphIndex}-` +
-              `${lineIndex}`
-            }
-          >
-            {renderInlineText(line)}
-
-            {lineIndex <
-              lines.length - 1 && (
-              <br />
-            )}
-          </Fragment>
-        )
-      )}
+      {lines.map((line, lineIndex) => (
+        <Fragment key={`policy-${paragraphIndex}-${lineIndex}`}>
+          {renderInlineText(line)}
+          {lineIndex < lines.length - 1 && <br />}
+        </Fragment>
+      ))}
     </p>
   );
 }
 
-export default function VerCotizacion({
-  cotizacionId,
-  goBack,
-}) {
-  const [cotizacion, setCotizacion] =
-    useState(null);
-
-  const [firmaUrl, setFirmaUrl] =
-    useState('');
-
-  const [cargando, setCargando] =
-    useState(true);
-
-  const [error, setError] =
-    useState('');
+export default function VerCotizacion({ cotizacionId, goBack }) {
+  const [cotizacion, setCotizacion] = useState(null);
+  const [firmaUrl, setFirmaUrl] = useState('');
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -114,38 +72,25 @@ export default function VerCotizacion({
         setError('');
         setFirmaUrl('');
 
-        const data =
-          await getCotizacionById(
-            cotizacionId
-          );
+        const data = await getCotizacionById(cotizacionId);
+        const snapshot = normalizeSnapshot(
+          data?.perfil_negocio_snapshot
+        );
 
-        const snapshot =
-          normalizeSnapshot(
-            data
-              ?.perfil_negocio_snapshot
-          );
-
-        const signedFirmaUrl =
-          snapshot.firma_path
-            ? await getBusinessAssetUrl(
-                snapshot.firma_path
-              )
-            : '';
+        const signedFirmaUrl = snapshot.firma_path
+          ? await getBusinessAssetUrl(snapshot.firma_path)
+          : '';
 
         if (!active) return;
 
         setCotizacion(data);
-
-        setFirmaUrl(
-          signedFirmaUrl
-        );
+        setFirmaUrl(signedFirmaUrl);
       } catch (err) {
         console.error(err);
 
         if (active) {
           setError(
-            err.message ||
-              'No se pudo cargar la cotización.'
+            err.message || 'No se pudo cargar la cotización.'
           );
         }
       } finally {
@@ -165,20 +110,13 @@ export default function VerCotizacion({
   }, [cotizacionId]);
 
   function money(valor) {
-    return (
-      `RD$ ` +
-      Number(
-        valor || 0
-      ).toLocaleString('es-DO')
-    );
+    return `RD$ ${Number(valor || 0).toLocaleString('es-DO')}`;
   }
 
   function fechaLarga(fecha) {
     if (!fecha) return 'N/A';
 
-    return new Date(
-      `${fecha}T00:00:00`
-    ).toLocaleDateString(
+    return new Date(`${fecha}T00:00:00`).toLocaleDateString(
       'es-DO',
       {
         day: 'numeric',
@@ -193,72 +131,36 @@ export default function VerCotizacion({
   }
 
   if (cargando) {
-    return (
-      <div className="vc-page">
-        Cargando cotización...
-      </div>
-    );
+    return <div className="vc-page">Cargando cotización...</div>;
   }
 
   if (error) {
-    return (
-      <div className="vc-page error">
-        {error}
-      </div>
-    );
+    return <div className="vc-page error">{error}</div>;
   }
 
   if (!cotizacion) {
-    return (
-      <div className="vc-page">
-        Cotización no encontrada.
-      </div>
-    );
+    return <div className="vc-page">Cotización no encontrada.</div>;
   }
 
-  const cliente =
-    cotizacion.clientes || {};
-
-  const provincia =
-    cotizacion.provincias || {};
-
-  const venue =
-    cotizacion.venue ||
-    'lugar del evento';
-
-  const snapshot =
-    normalizeSnapshot(
-      cotizacion
-        .perfil_negocio_snapshot
-    );
-
-  const sonido = Number(
-    cotizacion.sonido || 0
+  const cliente = cotizacion.clientes || {};
+  const provincia = cotizacion.provincias || {};
+  const venue = cotizacion.venue || 'lugar del evento';
+  const snapshot = normalizeSnapshot(
+    cotizacion.perfil_negocio_snapshot
   );
 
-  const descuentoPorcentaje =
-    Number(
-      cotizacion.descuento || 0
-    );
-
-  const montoDescuento = Number(
-    cotizacion.monto_descuento || 0
-  );
+  const sonido = Number(cotizacion.sonido || 0);
+  const descuentoPorcentaje = Number(cotizacion.descuento || 0);
+  const montoDescuento = Number(cotizacion.monto_descuento || 0);
 
   const subtotalCliente =
-    Number(
-      cotizacion.subtotal || 0
-    ) +
-    Number(
-      cotizacion.comision || 0
-    );
+    Number(cotizacion.subtotal || 0) +
+    Number(cotizacion.comision || 0);
 
-  const presentacionMusical =
-    subtotalCliente - sonido;
+  const presentacionMusical = subtotalCliente - sonido;
 
   const politicas =
-    cotizacion
-      .politicas_condiciones ||
+    cotizacion.politicas_condiciones ||
     renderBusinessPolicies(
       snapshot.condiciones_pago ||
         DEFAULT_BUSINESS_POLICIES_TEMPLATE,
@@ -266,27 +168,26 @@ export default function VerCotizacion({
     );
 
   const nombreFirmante =
-    snapshot.nombre_completo ||
-    'Representante autorizado';
+    snapshot.nombre_completo || 'Representante autorizado';
+
+  const artistaSnapshot = normalizeSnapshot(
+    cotizacion.artista_snapshot
+  );
 
   const artista =
+    cotizacion.artista_nombre_snapshot ||
+    artistaSnapshot.nombre ||
     APP_CONFIG.artista ||
-    'Cruzmonty';
+    'Artista';
 
   return (
     <div className="vc-page">
       <div className="vc-actions no-print">
-        <button
-          type="button"
-          onClick={goBack}
-        >
+        <button type="button" onClick={goBack}>
           ← Atrás
         </button>
 
-        <button
-          type="button"
-          onClick={imprimir}
-        >
+        <button type="button" onClick={imprimir}>
           Imprimir / Guardar PDF
         </button>
       </div>
@@ -294,114 +195,54 @@ export default function VerCotizacion({
       <div className="vc-document">
         <header className="vc-header">
           <div>
-            <h1>
-              {String(
-                artista
-              ).toUpperCase()}{' '}
-              BOOKING
-            </h1>
-
-            <p>
-              Departamento de
-              contratación artística
-            </p>
+            <h1>{String(artista).toUpperCase()} BOOKING</h1>
+            <p>Departamento de contratación artística</p>
           </div>
 
           <div className="vc-box">
-            <strong>
-              COTIZACIÓN
-            </strong>
-
-            <span>
-              {cotizacion.numero ||
-                `#${cotizacion.id}`}
-            </span>
+            <strong>COTIZACIÓN</strong>
+            <span>{cotizacion.numero || `#${cotizacion.id}`}</span>
           </div>
         </header>
 
         <section className="vc-info-grid">
           <div>
-            <h3>
-              DATOS DEL CLIENTE
-            </h3>
-
+            <h3>DATOS DEL CLIENTE</h3>
             <p>
-              <strong>
-                Nombre:
-              </strong>{' '}
-              {cliente.nombre ||
-                'N/A'}
+              <strong>Nombre:</strong> {cliente.nombre || 'N/A'}
             </p>
-
             <p>
-              <strong>
-                Empresa:
-              </strong>{' '}
-              {cliente.empresa ||
-                'N/A'}
+              <strong>Empresa:</strong> {cliente.empresa || 'N/A'}
             </p>
-
             <p>
-              <strong>
-                Teléfono:
-              </strong>{' '}
-              {cliente.telefono ||
-                'N/A'}
+              <strong>Teléfono:</strong> {cliente.telefono || 'N/A'}
             </p>
-
             <p>
-              <strong>
-                Email:
-              </strong>{' '}
-              {cliente.email ||
-                'N/A'}
+              <strong>Email:</strong> {cliente.email || 'N/A'}
             </p>
           </div>
 
           <div>
-            <h3>
-              DATOS DEL EVENTO
-            </h3>
-
+            <h3>DATOS DEL EVENTO</h3>
             <p>
-              <strong>
-                Fecha:
-              </strong>{' '}
-              {fechaLarga(
-                cotizacion.fecha_evento
-              )}
+              <strong>Fecha:</strong>{' '}
+              {fechaLarga(cotizacion.fecha_evento)}
             </p>
 
             {cotizacion.nombre_evento && (
               <p>
-                <strong>
-                  Evento:
-                </strong>{' '}
-                {
-                  cotizacion.nombre_evento
-                }
+                <strong>Evento:</strong> {cotizacion.nombre_evento}
               </p>
             )}
 
             <p>
-              <strong>
-                Venue:
-              </strong>{' '}
-              {venue}
+              <strong>Venue:</strong> {venue}
             </p>
-
             <p>
-              <strong>
-                Zona:
-              </strong>{' '}
-              {provincia.nombre ||
-                'N/A'}
+              <strong>Zona:</strong> {provincia.nombre || 'N/A'}
             </p>
-
             <p>
-              <strong>
-                Sonido:
-              </strong>{' '}
+              <strong>Sonido:</strong>{' '}
               {cotizacion.incluye_sonido
                 ? 'Incluido'
                 : 'No incluido'}
@@ -412,131 +253,65 @@ export default function VerCotizacion({
         <table className="vc-table">
           <thead>
             <tr>
-              <th>
-                Descripción
-              </th>
-
-              <th className="right">
-                Monto
-              </th>
+              <th>Descripción</th>
+              <th className="right">Monto</th>
             </tr>
           </thead>
 
           <tbody>
             <tr>
               <td>
-                Presentación musical
-                de{' '}
-                <strong>
-                  {artista}
-                </strong>
+                Presentación musical de <strong>{artista}</strong>
 
                 {cotizacion.nombre_evento && (
                   <>
                     <br />
-
                     Evento:{' '}
-
-                    <strong>
-                      {
-                        cotizacion.nombre_evento
-                      }
-                    </strong>
+                    <strong>{cotizacion.nombre_evento}</strong>
                   </>
                 )}
 
                 <br />
-
-                Lugar:{' '}
-
-                <strong>
-                  {venue}
-                </strong>
-
+                Lugar: <strong>{venue}</strong>
                 <br />
-
-                Zona:{' '}
-
-                <strong>
-                  {provincia.nombre ||
-                    'N/A'}
-                </strong>
-
+                Zona: <strong>{provincia.nombre || 'N/A'}</strong>
                 <br />
-
                 Fecha:{' '}
-
                 <strong>
-                  {fechaLarga(
-                    cotizacion.fecha_evento
-                  )}
+                  {fechaLarga(cotizacion.fecha_evento)}
                 </strong>
               </td>
 
               <td className="right">
-                {money(
-                  presentacionMusical
-                )}
+                {money(presentacionMusical)}
               </td>
             </tr>
 
-            {cotizacion.incluye_sonido &&
-              sonido > 0 && (
-                <tr>
-                  <td>
-                    Equipos de Sonido
-                    y personal técnico.
-                  </td>
-
-                  <td className="right">
-                    {money(sonido)}
-                  </td>
-                </tr>
-              )}
+            {cotizacion.incluye_sonido && sonido > 0 && (
+              <tr>
+                <td>Equipos de Sonido y personal técnico.</td>
+                <td className="right">{money(sonido)}</td>
+              </tr>
+            )}
           </tbody>
         </table>
 
         <section className="vc-totales cliente">
           <div>
-            <span>
-              Subtotal
-            </span>
-
-            <strong>
-              {money(
-                subtotalCliente
-              )}
-            </strong>
+            <span>Subtotal</span>
+            <strong>{money(subtotalCliente)}</strong>
           </div>
 
-          {descuentoPorcentaje >
-            0 && (
+          {descuentoPorcentaje > 0 && (
             <div>
-              <span>
-                Descuento{' '}
-                {
-                  descuentoPorcentaje
-                }
-                %
-              </span>
-
-              <strong>
-                -{' '}
-                {money(
-                  montoDescuento
-                )}
-              </strong>
+              <span>Descuento {descuentoPorcentaje}%</span>
+              <strong>- {money(montoDescuento)}</strong>
             </div>
           )}
 
           <div className="vc-total-final">
             <span>Total</span>
-
-            <strong>
-              {money(
-                cotizacion.total
-              )}
-            </strong>
+            <strong>{money(cotizacion.total)}</strong>
           </div>
         </section>
 
@@ -545,55 +320,32 @@ export default function VerCotizacion({
             {firmaUrl && (
               <img
                 src={firmaUrl}
-                alt={
-                  `Firma de ` +
-                  nombreFirmante
-                }
+                alt={`Firma de ${nombreFirmante}`}
                 className="vc-firma-imagen"
               />
             )}
 
             <div className="vc-firma-linea" />
 
-            <strong>
-              {nombreFirmante}
-            </strong>
-
-            <span>
-              {artista}
-            </span>
-
-            <small>
-              Artista /
-              Representante
-              autorizado
-            </small>
+            <strong>{nombreFirmante}</strong>
+            <span>{artista}</span>
+            <small>Artista / Representante autorizado</small>
           </div>
         </section>
 
         <section className="vc-notas">
-          <h3>
-            POLÍTICAS Y CONDICIONES
-          </h3>
+          <h3>POLÍTICAS Y CONDICIONES</h3>
 
           <div className="disclaimer">
             {String(politicas)
               .split(/\n\s*\n/)
-              .filter(
-                (paragraph) =>
-                  paragraph.trim()
-              )
-              .map(
-                renderPolicyParagraph
-              )}
+              .filter((paragraph) => paragraph.trim())
+              .map(renderPolicyParagraph)}
           </div>
         </section>
 
         <footer className="vc-footer">
-          <p>
-            {artista} Booking
-            Department
-          </p>
+          <p>{artista} Booking Department</p>
         </footer>
       </div>
     </div>

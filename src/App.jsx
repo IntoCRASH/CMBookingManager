@@ -16,6 +16,8 @@ import Usuarios from './pages/Usuarios';
 import Formatos from './pages/Formatos';
 import TiposEvento from './pages/TiposEvento';
 import Perfil from './pages/Perfil';
+import Artistas from './pages/Artistas';
+import AutorizarArtista from './pages/AutorizarArtista';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -26,6 +28,14 @@ export default function App() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   const navigationHistory = useRef([]);
+
+  const tokenAutorizacionArtista = useMemo(
+    () =>
+      new URLSearchParams(
+        window.location.search
+      ).get('autorizar_artista'),
+    []
+  );
 
   useEffect(() => {
     async function loadSession() {
@@ -173,6 +183,11 @@ export default function App() {
         action: volverDashboard,
       },
       {
+        id: 'artistas',
+        label: 'Artistas',
+        action: () => irA('artistas'),
+      },
+      {
         id: 'cotizaciones',
         label: 'Cotizaciones',
         action: () => irA('cotizaciones'),
@@ -240,6 +255,12 @@ export default function App() {
       action: () => irA('cotizaciones'),
     },
     {
+      id: 'artistas',
+      label: 'Artistas',
+      icon: '♫',
+      action: () => irA('artistas'),
+    },
+    {
       id: 'calendario',
       label: 'Agenda',
       icon: '◷',
@@ -253,6 +274,23 @@ export default function App() {
     },
   ];
 
+  if (tokenAutorizacionArtista) {
+    return (
+      <>
+        <AutorizarArtista
+          token={tokenAutorizacionArtista}
+        />
+
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            duration: 3000,
+          }}
+        />
+      </>
+    );
+  }
+
   let contenido;
 
   if (loading) {
@@ -261,6 +299,12 @@ export default function App() {
     contenido = <Login />;
   } else {
     switch (page) {
+      case 'artistas':
+        contenido = (
+          <Artistas goBack={volverAtras} />
+        );
+        break;
+
       case 'tarifas':
         contenido = <Tarifas goBack={volverAtras} />;
         break;
@@ -275,6 +319,7 @@ export default function App() {
             session={session}
             cotizacionId={cotizacionId}
             goBack={volverAtras}
+            goArtistas={() => irA('artistas')}
             onCotizacionGuardada={abrirCotizacion}
           />
         );
@@ -350,6 +395,7 @@ export default function App() {
           <Dashboard
             session={session}
             goPerfil={() => irA('perfil')}
+            goArtistas={() => irA('artistas')}
             goTarifas={() => irA('tarifas')}
             goCotizaciones={() => irA('cotizaciones')}
             goCalendario={() => irA('calendario')}
@@ -474,6 +520,13 @@ export default function App() {
             <h3>Más opciones</h3>
 
             <div className="sheet-actions">
+              <button
+                type="button"
+                onClick={() => irA('artistas')}
+              >
+                ♫ Artistas
+              </button>
+
               <button
                 type="button"
                 onClick={() => irA('clientes')}

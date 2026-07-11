@@ -5,8 +5,8 @@ import { getClientes, crearCliente } from '../lib/clientesService';
 import { getProvincias } from '../lib/provinciasService';
 import { getFormatosActivos } from '../lib/formatosService';
 import { calcularCotizacion } from '../lib/calcularCotizacion';
-import { getMyProfile } from '../lib/profileService';
 import { getTiposEventoConfig } from '../lib/tiposEventoConfigService';
+import { getMisArtistas } from '../lib/artistasService';
 import {
   saveCotizacion,
   getCotizacionById,
@@ -19,6 +19,7 @@ const formInicial = {
   cliente_empresa: '',
   cliente_email: '',
 
+  artista_id: '',
   provincia_id: '',
   formato_id: '',
 
@@ -44,14 +45,14 @@ const formInicial = {
 export default function NuevaCotizacion({
   cotizacionId,
   goBack,
+  goArtistas,
   onCotizacionGuardada,
 }) {
   const [clientes, setClientes] = useState([]);
   const [provincias, setProvincias] = useState([]);
   const [formatos, setFormatos] = useState([]);
   const [tiposEvento, setTiposEvento] = useState([]);
-  const [usuarioEmail, setUsuarioEmail] = useState('');
-  const [profile, setProfile] = useState(null);
+  const [artistas, setArtistas] = useState([]);
   const [form, setForm] = useState(formInicial);
   const [resultado, setResultado] = useState(null);
   const [error, setError] = useState('');
@@ -83,6 +84,7 @@ export default function NuevaCotizacion({
       cliente_empresa: c.clientes?.empresa || '',
       cliente_email: c.clientes?.email || '',
 
+      artista_id: c.artista_id || '',
       provincia_id: c.provincia_id,
       formato_id: c.formato_id || '',
 
@@ -121,21 +123,36 @@ export default function NuevaCotizacion({
   }
 
   async function cargarDatos() {
-    const { data: userData } = await supabase.auth.getUser();
-    setUsuarioEmail(userData?.user?.email || '');
+    try {
+      const [
+        clientesData,
+        provinciasData,
+        formatosData,
+        tiposEventoData,
+        artistasData,
+      ] = await Promise.all([
+        getClientes(),
+        getProvincias(),
+        getFormatosActivos(),
+        getTiposEventoConfig(),
+        getMisArtistas(),
+      ]);
 
-    const perfil = await getMyProfile();
-    setProfile(perfil);
+      setClientes(clientesData);
+      setProvincias(
+        provinciasData.filter((p) => p.activa)
+      );
+      setFormatos(formatosData);
+      setTiposEvento(tiposEventoData);
+      setArtistas(artistasData);
+    } catch (err) {
+      console.error(err);
 
-    const clientesData = await getClientes();
-    const provinciasData = await getProvincias();
-    const formatosData = await getFormatosActivos();
-    const tiposEventoData = await getTiposEventoConfig();
-
-    setClientes(clientesData);
-    setProvincias(provinciasData.filter((p) => p.activa));
-    setFormatos(formatosData);
-    setTiposEvento(tiposEventoData);
+      toast.error(
+        err.message ||
+          'No se pudieron cargar los datos de la cotización.'
+      );
+    }
   }
 
   function cambiar(e) {
@@ -192,6 +209,32 @@ export default function NuevaCotizacion({
       return false;
     }
 
+    if (!form.artista_id) {
+      toast.error('Selecciona un artista.');
+      return false;
+    }
+
+    const artistaSeleccionado = artistas.find(
+      (artista) =>
+        String(artista.id) ===
+        String(form.artista_id)
+    );
+
+    if (!artistaSeleccionado) {
+      toast.error('El artista seleccionado no existe.');
+      return false;
+    }
+
+    if (
+      artistaSeleccionado.estado_autorizacion !==
+      'autorizado'
+    ) {
+      toast.error(
+        'El artista debe autorizar la comisión antes de cotizar.'
+      );
+      return false;
+    }
+
     if (!form.provincia_id) {
       toast.error('Selecciona una zona.');
       return false;
@@ -239,26 +282,36 @@ export default function NuevaCotizacion({
       return;
     }
 
-    let perfilActual = profile;
+    const artistaSeleccionado = artistas.find(
+      (artista) =>
+        String(artista.id) ===
+        String(form.artista_id)
+    );
 
-    if (!perfilActual) {
-      perfilActual = await getMyProfile();
-      setProfile(perfilActual);
+    if (
+      !artistaSeleccionado ||
+      artistaSeleccionado.estado_autorizacion !==
+        'autorizado'
+    ) {
+      toast.error(
+        'El artista debe autorizar la comisión antes de cotizar.'
+      );
+      return;
     }
 
-    const rol = String(perfilActual?.rol || '').trim().toLowerCase();
-
-    const esAdmin =
-      rol === 'admin' ||
-      rol === 'administrador';
+    const comisionPorcentaje =
+      Number(
+        artistaSeleccionado.comision_porcentaje ||
+          0
+      ) / 100;
 
     const calculo = calcularCotizacion({
       provincia,
       cantidadMusicos: Number(form.cantidad_musicos),
       incluyeSonido: form.incluye_sonido,
       descuento: Number(form.descuento),
-      aplicarComision: !esAdmin,
-      comisionPorcentaje: Number(perfilActual?.comision_porcentaje || 0) / 100,
+      aplicarComision: comisionPorcentaje > 0,
+      comisionPorcentaje,
       tipoEventoConfig: tipoEventoSeleccionado,
     });
 
@@ -307,6 +360,7 @@ export default function NuevaCotizacion({
         id: form.id,
         cliente_id: clienteIdFinal,
         vendedor_id: user.id,
+        artista_id: Number(form.artista_id),
         provincia_id: form.provincia_id,
         formato_id: form.formato_id || null,
 
@@ -413,6 +467,73 @@ export default function NuevaCotizacion({
               value={form.cliente_email}
               onChange={cambiar}
             />
+          </section>
+
+          <section className="form-section">
+            <h2>Artista</h2>
+
+            <label>Artista de la cotización *</label>
+            <select
+              name="artista_id"
+              value={form.artista_id}
+              onChange={cambiar}
+              required
+            >
+              <option value="">
+                Seleccionar artista
+              </option>
+
+              {artistas.map((artista) => {
+                const autorizado =
+                  artista.estado_autorizacion ===
+                  'autorizado';
+
+                return (
+                  <option
+                    key={artista.id}
+                    value={artista.id}
+                    disabled={!autorizado}
+                  >
+                    {artista.nombre}
+                    {autorizado
+                      ? ` — ${Number(
+                          artista.comision_porcentaje ||
+                            0
+                        ).toLocaleString(
+                          'es-DO',
+                          {
+                            maximumFractionDigits: 2,
+                          }
+                        )}%`
+                      : ` — ${artista.estado_autorizacion}`}
+                  </option>
+                );
+              })}
+            </select>
+
+            {artistas.length === 0 ? (
+              <div className="cotizacion-artista-alerta">
+                <p>
+                  Debes crear un artista y
+                  obtener su autorización antes
+                  de generar una cotización.
+                </p>
+
+                {goArtistas && (
+                  <button
+                    type="button"
+                    onClick={goArtistas}
+                  >
+                    Ir a Artistas
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p>
+                Solo puedes cotizar artistas con
+                comisión autorizada.
+              </p>
+            )}
           </section>
 
           <section className="form-section">
@@ -660,6 +781,17 @@ export default function NuevaCotizacion({
 
           <div className="resultado-grid">
             <div className="fila">
+              <span>Artista</span>
+              <strong>
+                {artistas.find(
+                  (artista) =>
+                    String(artista.id) ===
+                    String(form.artista_id)
+                )?.nombre || 'No seleccionado'}
+              </strong>
+            </div>
+
+            <div className="fila">
               <span>Formato</span>
               <strong>
                 {formatos.find((f) => String(f.id) === String(form.formato_id))?.nombre ||
@@ -742,9 +874,24 @@ export default function NuevaCotizacion({
 
             <div className="fila">
               <span>
-                Comisión {profile?.rol === 'admin' ? '(Admin: no aplica)' : '(10%)'}
+                Comisión del agente{' '}
+                (
+                {Number(
+                  artistas.find(
+                    (artista) =>
+                      String(artista.id) ===
+                      String(form.artista_id)
+                  )?.comision_porcentaje || 0
+                ).toLocaleString('es-DO', {
+                  maximumFractionDigits: 2,
+                })}
+                %)
               </span>
-              <strong>RD$ {resultado.comision.toLocaleString()}</strong>
+
+              <strong>
+                RD${' '}
+                {resultado.comision.toLocaleString()}
+              </strong>
             </div>
 
             <div className="fila">
