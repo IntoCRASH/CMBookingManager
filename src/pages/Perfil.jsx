@@ -15,6 +15,7 @@ import {
 import { CONTRACT_VARIABLES } from '../lib/contratoTemplate';
 import { updateCurrentPassword } from '../lib/authService';
 import {
+  changeSubscriptionPlan,
   createCustomerPortalSession,
   formatSubscriptionDate,
   getPlanLabel,
@@ -141,6 +142,8 @@ export default function Perfil({
     useState(null);
   const [portalLoading, setPortalLoading] =
     useState(false);
+  const [changingPlan, setChangingPlan] =
+    useState('');
 
   const logoInputRef = useRef(null);
   const firmaInputRef = useRef(null);
@@ -795,6 +798,138 @@ export default function Perfil({
       setError(mensaje);
       toast.error(mensaje);
       setPortalLoading(false);
+    }
+  }
+
+
+  async function cambiarPlan(
+    targetPlan
+  ) {
+    const currentPlan =
+      subscription?.plan_code || '';
+
+    if (
+      !targetPlan ||
+      targetPlan === currentPlan
+    ) {
+      return;
+    }
+
+    const targetLabel =
+      getPlanLabel(targetPlan);
+
+    const confirmation =
+      targetPlan === 'essential'
+        ? window.confirm(
+            'El plan Esencial admite un solo Gestor. Stripe aplicará el cambio y cualquier ajuste proporcional correspondiente. ¿Deseas continuar?'
+          )
+        : window.confirm(
+            'El plan Profesional admite Gestores ilimitados. Stripe cobrará inmediatamente el ajuste proporcional del período actual. ¿Deseas continuar?'
+          );
+
+    if (!confirmation) {
+      return;
+    }
+
+    try {
+      setChangingPlan(targetPlan);
+      setError('');
+
+      const result =
+        await changeSubscriptionPlan({
+          workspaceId,
+          targetPlan,
+        });
+
+      if (result?.pendingUpdate) {
+        toast(
+          'Stripe dejó el cambio pendiente de completar el cobro. Revisa Administrar suscripción.',
+          {
+            duration: 9000,
+          }
+        );
+      } else {
+        toast.success(
+          `Cambio al plan ${targetLabel} enviado correctamente.`,
+          {
+            duration: 7000,
+          }
+        );
+      }
+
+      let updatedSubscription =
+        null;
+
+      for (
+        let attempt = 0;
+        attempt < 12;
+        attempt += 1
+      ) {
+        await new Promise(
+          (resolve) =>
+            setTimeout(
+              resolve,
+              attempt === 0
+                ? 700
+                : 1200
+            )
+        );
+
+        const refreshed =
+          await getWorkspaceSubscription(
+            workspaceId
+          );
+
+        setSubscription(refreshed);
+        updatedSubscription =
+          refreshed;
+
+        if (
+          refreshed?.plan_code ===
+          targetPlan
+        ) {
+          break;
+        }
+      }
+
+      if (
+        updatedSubscription
+          ?.plan_code === targetPlan
+      ) {
+        toast.success(
+          `Tu plan ${targetLabel} ya está activo.`,
+          {
+            id:
+              `plan-active-${targetPlan}`,
+            duration: 7000,
+          }
+        );
+      } else if (
+        !result?.pendingUpdate
+      ) {
+        toast(
+          'Stripe está procesando el cambio. El plan se actualizará automáticamente cuando llegue la confirmación.',
+          {
+            duration: 9000,
+          }
+        );
+      }
+    } catch (err) {
+      console.error(err);
+
+      const mensaje =
+        err.message ||
+        'No se pudo cambiar el plan.';
+
+      setError(mensaje);
+      toast.error(
+        mensaje,
+        {
+          duration: 9000,
+        }
+      );
+    } finally {
+      setChangingPlan('');
     }
   }
 
@@ -1974,6 +2109,115 @@ export default function Perfil({
                     consultar facturas y cancelar la
                     renovación.
                   </p>
+
+
+                  <div
+                    style={{
+                      marginTop: 22,
+                      marginBottom: 30,
+                      padding: 18,
+                      borderRadius: 16,
+                      border:
+                        '1px solid rgba(99, 102, 241, 0.22)',
+                      background:
+                        'linear-gradient(135deg, rgba(45,157,245,.07), rgba(112,85,245,.09))',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems:
+                          'flex-start',
+                        justifyContent:
+                          'space-between',
+                        gap: 18,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <div
+                        style={{
+                          maxWidth: 620,
+                        }}
+                      >
+                        <strong>
+                          Cambiar de plan
+                        </strong>
+
+                        {subscription
+                          ?.plan_code ===
+                        'essential' ? (
+                          <p
+                            style={{
+                              margin:
+                                '7px 0 0',
+                            }}
+                          >
+                            Pasa a Profesional para
+                            trabajar con Gestores
+                            ilimitados. Stripe cobrará
+                            el ajuste proporcional del
+                            período actual.
+                          </p>
+                        ) : (
+                          <p
+                            style={{
+                              margin:
+                                '7px 0 0',
+                            }}
+                          >
+                            Esencial admite un solo
+                            Gestor. No podrás bajar de
+                            plan hasta conservar como
+                            máximo un acceso entre
+                            Gestores e invitaciones
+                            pendientes.
+                          </p>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          cambiarPlan(
+                            subscription
+                              ?.plan_code ===
+                            'essential'
+                              ? 'professional'
+                              : 'essential'
+                          )
+                        }
+                        disabled={
+                          Boolean(
+                            changingPlan
+                          ) ||
+                          portalLoading ||
+                          subscription
+                            ?.cancel_at_period_end
+                        }
+                      >
+                        {changingPlan
+                          ? 'Procesando cambio...'
+                          : subscription
+                                ?.plan_code ===
+                              'essential'
+                            ? 'Mejorar a Profesional'
+                            : 'Cambiar a Esencial'}
+                      </button>
+                    </div>
+
+                    {subscription
+                      ?.cancel_at_period_end && (
+                      <small
+                        style={{
+                          display: 'block',
+                          marginTop: 10,
+                        }}
+                      >
+                        Reactiva primero la renovación
+                        desde Administrar suscripción.
+                      </small>
+                    )}
+                  </div>
 
                   <button
                     type="button"

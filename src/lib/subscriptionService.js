@@ -246,6 +246,63 @@ export async function createCheckoutSession({
 }
 
 
+
+export async function changeSubscriptionPlan({
+  workspaceId,
+  targetPlan,
+}) {
+  const parsedWorkspaceId =
+    Number(workspaceId);
+
+  const plan =
+    normalizePlanCode(targetPlan);
+
+  if (
+    !Number.isInteger(
+      parsedWorkspaceId
+    ) ||
+    parsedWorkspaceId <= 0
+  ) {
+    throw new Error(
+      'El proyecto del Artista no es válido.'
+    );
+  }
+
+  if (!plan) {
+    throw new Error(
+      'Selecciona un plan válido.'
+    );
+  }
+
+  const { data, error } =
+    await supabase.functions.invoke(
+      'change-subscription-plan',
+      {
+        body: {
+          workspaceId:
+            parsedWorkspaceId,
+          targetPlan:
+            plan,
+        },
+      }
+    );
+
+  if (error) {
+    throw new Error(
+      await functionErrorMessage(error)
+    );
+  }
+
+  if (!data?.ok) {
+    throw new Error(
+      data?.error ||
+        'No se pudo cambiar el plan.'
+    );
+  }
+
+  return data;
+}
+
 export async function createCustomerPortalSession({
   workspaceId,
 }) {
