@@ -1037,7 +1037,10 @@ export default function Perfil({
               </p>
             )}
 
-            <div className="form-actions">
+            <div
+              className="form-actions"
+              style={{ marginTop: 30 }}
+            >
               <button
                 type="submit"
                 disabled={guardando}
@@ -1821,7 +1824,7 @@ export default function Perfil({
                 type="button"
                 onClick={guardarPassword}
                 disabled={guardandoPassword}
-                style={{ marginTop: 16 }}
+                style={{ marginTop: 18, marginBottom: 8 }}
               >
                 {guardandoPassword
                   ? 'Actualizando...'
@@ -1836,7 +1839,10 @@ export default function Perfil({
             </p>
           )}
 
-          <div className="form-actions">
+          <div
+            className="form-actions"
+            style={{ marginTop: 30 }}
+          >
             <button
               type="submit"
               disabled={guardando}

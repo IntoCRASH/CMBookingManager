@@ -6,6 +6,31 @@ export default function Landing() {
   const [portal, setPortal] =
     useState('');
 
+  function irAPlanes() {
+    document
+      .getElementById('planes')
+      ?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+  }
+
+  function seleccionarPlan(plan) {
+    try {
+      window.localStorage.setItem(
+        'mibooking_selected_plan',
+        plan
+      );
+    } catch (error) {
+      console.warn(
+        'No se pudo guardar el plan seleccionado.',
+        error
+      );
+    }
+
+    setPortal('signup');
+  }
+
   if (portal) {
     return (
       <Login
@@ -27,7 +52,15 @@ export default function Landing() {
           alt="MiBooking"
         />
 
-        <div>
+        <div className="landing-nav-actions">
+          <button
+            type="button"
+            className="landing-nav-plan"
+            onClick={irAPlanes}
+          >
+            Planes
+          </button>
+
           <button
             type="button"
             onClick={() =>
@@ -91,98 +124,331 @@ export default function Landing() {
         </div>
 
         <div className="landing-preview">
-          <div className="landing-window">
-            <div className="landing-window-top">
-              <span />
-              <span />
-              <span />
+          <figure className="landing-live-card">
+            <img
+              src="/mibooking-concert.webp"
+              alt="Artista en concierto frente a un público"
+              loading="eager"
+            />
+
+            <div className="landing-photo-shade" />
+
+            <figcaption className="landing-photo-caption">
+              <span>
+                Del primer contacto al último aplauso
+              </span>
+
+              <strong>
+                Tu booking, bajo control.
+              </strong>
+            </figcaption>
+
+            <div className="landing-photo-badge badge-agenda">
+              <small>Agenda</small>
+              <strong>Eventos organizados</strong>
             </div>
 
-            <div className="landing-preview-brand">
-              <img
-                src="/mibooking-icon.png"
-                alt=""
-              />
-
-              <div>
-                <strong>MiBooking</strong>
-                <small>
-                  Panel de operaciones
-                </small>
-              </div>
+            <div className="landing-photo-badge badge-booking">
+              <small>Booking</small>
+              <strong>Cotizaciones claras</strong>
             </div>
-
-            <div className="landing-metrics">
-              <article>
-                <span>Próximo evento</span>
-                <strong>Agenda clara</strong>
-              </article>
-
-              <article>
-                <span>Cotizaciones</span>
-                <strong>Todo controlado</strong>
-              </article>
-
-              <article>
-                <span>Comisiones</span>
-                <strong>Sin confusiones</strong>
-              </article>
-            </div>
-
-            <div className="landing-lines">
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
-          </div>
+          </figure>
         </div>
       </section>
 
       <section className="landing-audiences">
         <article>
-          <span>Para Artistas</span>
-          <h2>
-            Controla tu proyecto y tu equipo.
-          </h2>
-          <p>
-            Configura tus tarifas, formatos,
-            tipos de evento, perfil comercial
-            y Gestores autorizados.
-          </p>
+          <div className="landing-audience-media">
+            <img
+              src="/mibooking-artist.webp"
+              alt="Artista cantando en vivo"
+              loading="lazy"
+            />
+          </div>
 
-          <button
-            type="button"
-            onClick={() =>
-              setPortal('signup')
-            }
-          >
-            Registrarme como Artista
-          </button>
+          <div className="landing-audience-content">
+            <span>Para Artistas</span>
+
+            <h2>
+              Controla tu proyecto y tu equipo.
+            </h2>
+
+            <p>
+              Configura tus tarifas, formatos,
+              tipos de evento, perfil comercial
+              y Gestores autorizados.
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPortal('signup')
+              }
+            >
+              Registrarme como Artista
+            </button>
+          </div>
         </article>
 
         <article>
-          <span>Para Gestores</span>
-          <h2>
-            Trabaja con varios Artistas.
-          </h2>
-          <p>
-            Acepta invitaciones, crea
-            cotizaciones y controla las
-            comisiones que te corresponden.
-          </p>
+          <div className="landing-audience-media">
+            <img
+              src="/mibooking-manager.webp"
+              alt="Reunión profesional para contratar un evento"
+              loading="lazy"
+            />
+          </div>
 
-          <button
-            type="button"
-            onClick={() =>
-              setPortal('signup')
-            }
-          >
-            Registrarme como Gestor
-          </button>
+          <div className="landing-audience-content">
+            <span>Para Gestores</span>
+
+            <h2>
+              Trabaja con varios Artistas.
+            </h2>
+
+            <p>
+              Acepta invitaciones, crea
+              cotizaciones y controla las
+              comisiones que te corresponden.
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPortal('signup')
+              }
+            >
+              Registrarme como Gestor
+            </button>
+          </div>
         </article>
       </section>
 
+
+
+      <section
+        className="landing-pricing"
+        id="planes"
+      >
+        <div className="landing-pricing-heading">
+          <span className="landing-pricing-kicker">
+            Planes de suscripción
+          </span>
+
+          <h2>
+            Una operación profesional sin el costo
+            de una gran agencia.
+          </h2>
+
+          <p>
+            Elige el nivel de colaboración que necesita
+            tu proyecto. Ambos planes incluyen las
+            herramientas esenciales de MiBooking.
+          </p>
+        </div>
+
+        <div className="landing-manager-free-note">
+          <div className="landing-manager-free-icon">
+            G
+          </div>
+
+          <div>
+            <strong>
+              Las cuentas de Gestor no tienen costo.
+            </strong>
+
+            <p>
+              Los Gestores acceden gratuitamente a MiBooking,
+              pero su cuenta debe estar vinculada mediante una
+              invitación enviada por un Artista.
+            </p>
+          </div>
+        </div>
+
+        <div className="landing-pricing-grid">
+          <article className="landing-price-card">
+            <div className="landing-price-name">
+              <span>Esencial</span>
+
+              <h3>
+                Para Artistas que trabajan solos o con
+                un colaborador de confianza.
+              </h3>
+            </div>
+
+            <div className="landing-price">
+              <strong>US$20</strong>
+              <span>por mes</span>
+            </div>
+
+            <ul>
+              <li>
+                Un espacio de trabajo para tu proyecto
+                artístico
+              </li>
+
+              <li>
+                Clientes, cotizaciones, agenda y pagos
+              </li>
+
+              <li>
+                Tarifas por zona, formatos y tipos de
+                evento
+              </li>
+
+              <li>
+                Contratos, riders y documentos
+              </li>
+
+              <li>
+                Control de comisiones
+              </li>
+
+              <li className="landing-plan-highlight">
+                Hasta 1 Gestor autorizado
+              </li>
+            </ul>
+
+            <button
+              type="button"
+              onClick={() =>
+                seleccionarPlan('essential')
+              }
+            >
+              Elegir Esencial
+            </button>
+          </article>
+
+          <article className="landing-price-card featured">
+            <span className="landing-price-popular">
+              Más flexible
+            </span>
+
+            <div className="landing-price-name">
+              <span>Profesional</span>
+
+              <h3>
+                Para Artistas con equipos de booking,
+                representantes o varios colaboradores.
+              </h3>
+            </div>
+
+            <div className="landing-price">
+              <strong>US$30</strong>
+              <span>por mes</span>
+            </div>
+
+            <ul>
+              <li>
+                Todo lo incluido en el plan Esencial
+              </li>
+
+              <li>
+                Operación colaborativa con todo tu
+                equipo
+              </li>
+
+              <li>
+                Cotizaciones y comisiones por cada
+                Gestor
+              </li>
+
+              <li>
+                Acceso independiente para cada
+                colaborador
+              </li>
+
+              <li>
+                Gestión centralizada del proyecto
+                artístico
+              </li>
+
+              <li className="landing-plan-highlight">
+                Gestores ilimitados
+              </li>
+            </ul>
+
+            <button
+              type="button"
+              className="primary"
+              onClick={() =>
+                seleccionarPlan('professional')
+              }
+            >
+              Elegir Profesional
+            </button>
+          </article>
+        </div>
+
+        <div className="landing-partner-offer">
+          <div className="landing-partner-mark">
+            <img
+              src="/la-oreja-mark.png"
+              alt=""
+              aria-hidden="true"
+            />
+          </div>
+
+          <div className="landing-partner-copy">
+            <span>
+              Beneficio especial
+            </span>
+
+            <h3>
+              50% de descuento durante los primeros
+              6 meses.
+            </h3>
+
+            <p>
+              Los Artistas verificados de La Oreja
+              Media reciben una tarifa preferencial
+              al comenzar a utilizar MiBooking.
+            </p>
+          </div>
+
+          <div className="landing-partner-prices">
+            <div>
+              <small>Esencial</small>
+              <strong>US$10</strong>
+              <span>
+                al mes durante 6 meses
+              </span>
+            </div>
+
+            <div>
+              <small>Profesional</small>
+              <strong>US$15</strong>
+              <span>
+                al mes durante 6 meses
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="landing-partner-logos">
+          <div>
+            <img
+              className="la-oreja-logo"
+              src="/la-oreja-media.png"
+              alt="La Oreja Media"
+              loading="lazy"
+            />
+
+            <img
+              className="dmw-logo"
+              src="/dominicana-music-week.png"
+              alt="Dominicana Music Week"
+              loading="lazy"
+            />
+          </div>
+
+          <small>
+            Verificación y elegibilidad sujetas a
+            validación. El descuento aplica a los
+            primeros seis cobros mensuales.
+          </small>
+        </div>
+      </section>
 
       <section className="landing-faq">
         <div className="landing-faq-heading">
@@ -196,9 +462,11 @@ export default function Landing() {
           </h2>
 
           <p>
-            MiBooking está pensado para que puedas
-            organizar tu operación sin convertirte
-            en experto en sistemas.
+            MiBooking está pensado para que Artistas
+            y sus colaboradores autogestionen sus
+            contrataciones, cotizaciones, agenda y
+            equipo, sin depender de grandes agencias
+            ni asumir costos excesivos.
           </p>
         </div>
 

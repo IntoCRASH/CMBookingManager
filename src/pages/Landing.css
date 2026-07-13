@@ -116,138 +116,128 @@
   padding: 0 23px;
 }
 
+
+/* =========================================================
+   HERO VISUAL — ARTISTA Y PÚBLICO
+========================================================= */
+
 .landing-preview {
   position: relative;
+  isolation: isolate;
 }
 
 .landing-preview::before {
   content: '';
   position: absolute;
-  inset: 8% -8% -9% 10%;
-  border-radius: 40px;
+  z-index: -1;
+  inset: 7% -8% -7% 8%;
+  border-radius: 42px;
   background:
     linear-gradient(
       135deg,
-      rgba(45, 157, 245, 0.18),
-      rgba(112, 85, 245, 0.2)
+      rgba(45, 157, 245, 0.24),
+      rgba(112, 85, 245, 0.28)
     );
-  filter: blur(10px);
+  filter: blur(18px);
   transform: rotate(4deg);
 }
 
-.landing-window {
+.landing-live-card {
   position: relative;
-  z-index: 1;
-  padding: 22px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 28px;
-  background:
-    rgba(255, 255, 255, 0.9);
+  min-height: 600px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 30px;
+  background: #101828;
   box-shadow:
-    0 34px 90px rgba(30, 41, 59, 0.18);
-  backdrop-filter: blur(16px);
+    0 34px 90px rgba(30, 41, 59, 0.24);
 }
 
-.landing-window-top {
-  display: flex;
-  gap: 6px;
-}
-
-.landing-window-top span {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  background: #d0d5dd;
-}
-
-.landing-preview-brand {
-  margin: 30px 0 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.landing-preview-brand img {
-  width: 50px;
-  height: 50px;
-  object-fit: contain;
-}
-
-.landing-preview-brand strong,
-.landing-preview-brand small {
+.landing-live-card > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   display: block;
+  object-fit: cover;
+  object-position: 50% 48%;
+  transform: scale(1.015);
 }
 
-.landing-preview-brand strong {
-  font-size: 20px;
-}
-
-.landing-preview-brand small {
-  color: #667085;
-}
-
-.landing-metrics {
-  display: grid;
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.landing-metrics article {
-  min-height: 105px;
-  padding: 15px;
-  display: grid;
-  align-content: space-between;
-  border: 1px solid #e6e8f2;
-  border-radius: 17px;
+.landing-photo-shade {
+  position: absolute;
+  inset: 0;
   background:
     linear-gradient(
-      145deg,
-      #ffffff,
-      #f7f7ff
+      180deg,
+      rgba(8, 12, 24, 0.04) 30%,
+      rgba(8, 12, 24, 0.24) 57%,
+      rgba(8, 12, 24, 0.86) 100%
     );
 }
 
-.landing-metrics span {
-  color: #667085;
+.landing-photo-caption {
+  position: absolute;
+  z-index: 2;
+  right: 25px;
+  bottom: 25px;
+  left: 25px;
+  display: grid;
+  gap: 5px;
+  color: #ffffff;
+}
+
+.landing-photo-caption span {
   font-size: 11px;
-  font-weight: 750;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
 }
 
-.landing-metrics strong {
-  font-size: 15px;
+.landing-photo-caption strong {
+  max-width: 350px;
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
 }
 
-.landing-lines {
-  margin-top: 18px;
-  padding: 18px;
+.landing-photo-badge {
+  position: absolute;
+  z-index: 3;
+  min-width: 150px;
+  padding: 12px 14px;
   display: grid;
-  gap: 12px;
-  border-radius: 18px;
-  background: #f4f6fb;
+  gap: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 15px 38px rgba(15, 23, 42, 0.2);
+  backdrop-filter: blur(13px);
 }
 
-.landing-lines span {
-  height: 12px;
-  border-radius: 99px;
-  background:
-    linear-gradient(
-      90deg,
-      #dce4f3,
-      #ece9ff
-    );
+.landing-photo-badge small {
+  color: #6951f1;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
 }
 
-.landing-lines span:nth-child(2) {
-  width: 78%;
+.landing-photo-badge strong {
+  color: #101828;
+  font-size: 12px;
 }
 
-.landing-lines span:nth-child(3) {
-  width: 90%;
+.badge-agenda {
+  top: 26px;
+  left: -24px;
 }
 
-.landing-lines span:nth-child(4) {
-  width: 61%;
+.badge-booking {
+  top: 124px;
+  right: -24px;
 }
 
 .landing-audiences {
@@ -260,30 +250,416 @@
 }
 
 .landing-audiences article {
-  padding: 34px;
+  overflow: hidden;
+  min-height: 260px;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
   border: 1px solid rgba(148, 163, 184, 0.23);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.86);
   box-shadow:
     0 18px 48px rgba(30, 41, 59, 0.08);
 }
 
+.landing-audience-media {
+  min-height: 100%;
+  background: #101828;
+}
+
+.landing-audience-media img {
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  display: block;
+  object-fit: cover;
+}
+
+.landing-audience-content {
+  padding: 30px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.landing-audience-content > span {
+  color: #6149e7;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .landing-audiences h2 {
   margin: 12px 0;
-  font-size: 29px;
+  font-size: 27px;
   letter-spacing: -0.035em;
 }
 
 .landing-audiences p {
   min-height: 55px;
+  margin: 0;
   color: #667085;
   line-height: 1.65;
 }
 
 .landing-audiences button {
-  margin-top: 9px;
+  margin-top: auto;
+  transform: translateY(9px);
 }
 
+
+
+/* =========================================================
+   PLANES DE SUSCRIPCIÓN
+========================================================= */
+
+.landing-pricing {
+  width: min(1100px, calc(100% - 36px));
+  margin: 0 auto 90px;
+  scroll-margin-top: 24px;
+}
+
+.landing-pricing-heading {
+  max-width: 760px;
+  margin: 0 auto 35px;
+  text-align: center;
+}
+
+.landing-pricing-kicker {
+  color: #6149e7;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.landing-pricing-heading h2 {
+  margin: 12px 0 14px;
+  font-size: clamp(34px, 4.4vw, 52px);
+  line-height: 1.06;
+  letter-spacing: -0.05em;
+}
+
+.landing-pricing-heading p {
+  margin: 0;
+  color: #667085;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.landing-manager-free-note {
+  max-width: 760px;
+  margin: 0 auto 25px;
+  padding: 17px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(45, 157, 245, 0.08),
+      rgba(112, 85, 245, 0.1)
+    ),
+    rgba(255, 255, 255, 0.86);
+}
+
+.landing-manager-free-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    );
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 950;
+  box-shadow:
+    0 10px 24px rgba(91, 69, 245, 0.2);
+}
+
+.landing-manager-free-note strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #101828;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.landing-manager-free-note p {
+  margin: 0;
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.landing-pricing-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 20px;
+}
+
+.landing-price-card {
+  position: relative;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 20px 55px rgba(30, 41, 59, 0.09);
+}
+
+.landing-price-card.featured {
+  border-color: rgba(104, 80, 242, 0.35);
+  background:
+    linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(244, 241, 255, 0.96)
+    );
+  box-shadow:
+    0 24px 65px rgba(91, 69, 245, 0.15);
+}
+
+.landing-price-popular {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #ece8ff;
+  color: #5b43dd;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.landing-price-name > span {
+  color: #6149e7;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.landing-price-name h3 {
+  min-height: 58px;
+  margin: 12px 0 0;
+  max-width: 430px;
+  color: #344054;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.landing-price {
+  margin: 27px 0 23px;
+  display: flex;
+  align-items: flex-end;
+  gap: 9px;
+}
+
+.landing-price strong {
+  color: #101828;
+  font-size: clamp(43px, 5vw, 58px);
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+}
+
+.landing-price span {
+  padding-bottom: 6px;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.landing-price-card ul {
+  margin: 0 0 28px;
+  padding: 0;
+  display: grid;
+  gap: 13px;
+  list-style: none;
+}
+
+.landing-price-card li {
+  position: relative;
+  padding-left: 29px;
+  color: #475467;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.landing-price-card li::before {
+  content: '✓';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #e9f8ef;
+  color: #079455;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.landing-price-card li.landing-plan-highlight {
+  color: #3826a7;
+  font-weight: 900;
+}
+
+.landing-price-card button {
+  width: 100%;
+  min-height: 51px;
+  margin-top: auto;
+}
+
+.landing-partner-offer {
+  margin-top: 24px;
+  padding: 25px 27px;
+  display: grid;
+  grid-template-columns:
+    auto minmax(0, 1.45fr)
+    minmax(280px, 0.9fr);
+  align-items: center;
+  gap: 22px;
+  border: 1px solid rgba(255, 19, 116, 0.24);
+  border-radius: 24px;
+  background:
+    radial-gradient(
+      circle at 0 0,
+      rgba(255, 19, 116, 0.12),
+      transparent 42%
+    ),
+    rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 18px 48px rgba(30, 41, 59, 0.07);
+}
+
+.landing-partner-mark {
+  width: 76px;
+  height: 76px;
+  padding: 10px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow:
+    0 12px 30px rgba(255, 19, 116, 0.13);
+}
+
+.landing-partner-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.landing-partner-copy > span {
+  color: #ed1164;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.landing-partner-copy h3 {
+  margin: 7px 0 7px;
+  color: #101828;
+  font-size: 24px;
+  letter-spacing: -0.035em;
+}
+
+.landing-partner-copy p {
+  margin: 0;
+  color: #667085;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.landing-partner-prices {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.landing-partner-prices > div {
+  padding: 13px;
+  display: grid;
+  gap: 2px;
+  border: 1px solid rgba(255, 19, 116, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.landing-partner-prices small {
+  color: #667085;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.landing-partner-prices strong {
+  color: #ed1164;
+  font-size: 23px;
+  letter-spacing: -0.04em;
+}
+
+.landing-partner-prices span {
+  color: #667085;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.landing-partner-logos {
+  margin-top: 18px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.landing-partner-logos > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.landing-partner-logos img {
+  display: block;
+  object-fit: contain;
+}
+
+.landing-partner-logos .la-oreja-logo {
+  width: 180px;
+  max-height: 48px;
+}
+
+.landing-partner-logos .dmw-logo {
+  width: 170px;
+  max-height: 58px;
+}
+
+.landing-partner-logos > small {
+  color: #98a2b3;
+  font-size: 10px;
+  line-height: 1.45;
+}
 
 /* =========================================================
    PREGUNTAS FRECUENTES
@@ -460,6 +836,15 @@
 }
 
 @media (max-width: 900px) {
+  .landing-partner-offer {
+    grid-template-columns:
+      auto minmax(0, 1fr);
+  }
+
+  .landing-partner-prices {
+    grid-column: 1 / -1;
+  }
+
   .landing-hero {
     margin-top: 35px;
     grid-template-columns: 1fr;
@@ -478,9 +863,73 @@
   .landing-actions {
     justify-content: center;
   }
+
+  .landing-preview {
+    width: min(100%, 560px);
+    margin: 0 auto;
+  }
+
+  .landing-live-card {
+    min-height: 610px;
+  }
 }
 
 @media (max-width: 660px) {
+  .landing-pricing {
+    margin-bottom: 65px;
+  }
+
+  .landing-pricing-heading {
+    margin-bottom: 26px;
+  }
+
+  .landing-manager-free-note {
+    padding: 16px;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .landing-pricing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-price-card {
+    padding: 27px 23px;
+  }
+
+  .landing-price-name h3 {
+    min-height: 0;
+  }
+
+  .landing-partner-offer {
+    padding: 22px;
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .landing-partner-mark {
+    margin: 0 auto;
+  }
+
+  .landing-partner-prices {
+    grid-column: auto;
+  }
+
+  .landing-partner-copy h3 {
+    font-size: 22px;
+  }
+
+  .landing-partner-logos > div {
+    gap: 13px;
+  }
+
+  .landing-partner-logos .la-oreja-logo {
+    width: 145px;
+  }
+
+  .landing-partner-logos .dmw-logo {
+    width: 125px;
+  }
 
   .landing-faq {
     margin-bottom: 60px;
@@ -516,17 +965,25 @@
 
 
   .landing-nav {
-    align-items: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .landing-nav > img {
+    margin: 0 auto;
   }
 
   .landing-nav > div {
+    width: 100%;
     display: grid;
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
   }
 
   .landing-nav button {
     min-height: 39px;
-    padding: 0 12px;
-    font-size: 12px;
+    padding: 0 8px;
+    font-size: 11px;
   }
 
   .landing-hero {
@@ -546,7 +1003,39 @@
   }
 
   .landing-preview {
-    display: none;
+    display: block;
+    width: min(100%, 470px);
+    margin: 0 auto;
+  }
+
+  .landing-live-card {
+    min-height: 470px;
+    border-radius: 24px;
+  }
+
+  .landing-photo-caption {
+    right: 20px;
+    bottom: 20px;
+    left: 20px;
+  }
+
+  .landing-photo-caption strong {
+    font-size: 29px;
+  }
+
+  .landing-photo-badge {
+    min-width: 132px;
+    padding: 10px 12px;
+  }
+
+  .badge-agenda {
+    top: 18px;
+    left: 14px;
+  }
+
+  .badge-booking {
+    top: 90px;
+    right: 14px;
   }
 
   .landing-audiences {
@@ -554,6 +1043,44 @@
   }
 
   .landing-audiences article {
-    padding: 27px 23px;
+    min-height: 0;
+    grid-template-columns: 112px minmax(0, 1fr);
+  }
+
+  .landing-audience-media img {
+    min-height: 100%;
+  }
+
+  .landing-audience-content {
+    padding: 22px 18px;
+  }
+
+  .landing-audiences h2 {
+    font-size: 22px;
+  }
+
+  .landing-audiences p {
+    min-height: 0;
+    font-size: 14px;
+  }
+
+  .landing-audiences button {
+    width: 100%;
+    margin-top: 16px;
+    transform: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .landing-audiences article {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-audience-media {
+    height: 190px;
+  }
+
+  .landing-audience-media img {
+    min-height: 190px;
   }
 }
