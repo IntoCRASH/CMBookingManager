@@ -3,10 +3,19 @@ import { supabase } from './supabaseClient';
 const SELECTED_PLAN_KEY =
   'mibooking_selected_plan';
 
+const SELECTED_BILLING_CYCLE_KEY =
+  'mibooking_selected_billing_cycle';
+
 const VALID_PLANS = new Set([
   'essential',
   'professional',
 ]);
+
+const VALID_BILLING_CYCLES =
+  new Set([
+    'monthly',
+    'annual',
+  ]);
 
 export function normalizePlanCode(value) {
   const normalized =
@@ -17,6 +26,41 @@ export function normalizePlanCode(value) {
   return VALID_PLANS.has(normalized)
     ? normalized
     : '';
+}
+
+export function normalizeBillingCycle(value) {
+  const normalized =
+    String(value || '')
+      .trim()
+      .toLowerCase();
+
+  if (
+    normalized === 'mensual' ||
+    normalized === 'month'
+  ) {
+    return 'monthly';
+  }
+
+  if (
+    normalized === 'anual' ||
+    normalized === 'year' ||
+    normalized === 'yearly'
+  ) {
+    return 'annual';
+  }
+
+  return VALID_BILLING_CYCLES.has(
+    normalized
+  )
+    ? normalized
+    : '';
+}
+
+export function getBillingCycleLabel(value) {
+  return normalizeBillingCycle(value) ===
+    'annual'
+    ? 'Anual'
+    : 'Mensual';
 }
 
 export function getPlanLabel(value) {
@@ -33,15 +77,32 @@ export function getPlanLabel(value) {
   return '';
 }
 
-export function getPlanPrice(value) {
-  const plan = normalizePlanCode(value);
+export function getPlanPrice(
+  value,
+  billingCycle = 'monthly'
+) {
+  const plan =
+    normalizePlanCode(value);
 
-  if (plan === 'professional') {
-    return 'US$30 al mes';
+  const cycle =
+    normalizeBillingCycle(
+      billingCycle
+    ) || 'monthly';
+
+  if (
+    plan === 'professional'
+  ) {
+    return cycle === 'annual'
+      ? 'US$275 al año'
+      : 'US$35 al mes';
   }
 
-  if (plan === 'essential') {
-    return 'US$20 al mes';
+  if (
+    plan === 'essential'
+  ) {
+    return cycle === 'annual'
+      ? 'US$140 al año'
+      : 'US$20 al mes';
   }
 
   return '';
@@ -137,6 +198,49 @@ export function clearStoredSelectedPlan() {
   );
 }
 
+export function storeSelectedBillingCycle(
+  value
+) {
+  const billingCycle =
+    normalizeBillingCycle(value);
+
+  if (
+    !billingCycle ||
+    typeof window === 'undefined'
+  ) {
+    return '';
+  }
+
+  window.localStorage.setItem(
+    SELECTED_BILLING_CYCLE_KEY,
+    billingCycle
+  );
+
+  return billingCycle;
+}
+
+export function getStoredSelectedBillingCycle() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  return normalizeBillingCycle(
+    window.localStorage.getItem(
+      SELECTED_BILLING_CYCLE_KEY
+    )
+  );
+}
+
+export function clearStoredSelectedBillingCycle() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.removeItem(
+    SELECTED_BILLING_CYCLE_KEY
+  );
+}
+
 export function planFromLocation() {
   if (typeof window === 'undefined') {
     return '';
@@ -146,6 +250,21 @@ export function planFromLocation() {
     new URLSearchParams(
       window.location.search
     ).get('plan')
+  );
+}
+
+export function billingCycleFromLocation() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  return normalizeBillingCycle(
+    new URLSearchParams(
+      window.location.search
+    ).get('billingCycle') ||
+    new URLSearchParams(
+      window.location.search
+    ).get('billing_cycle')
   );
 }
 
@@ -209,8 +328,31 @@ async function functionErrorMessage(error) {
 export async function createCheckoutSession({
   workspaceId,
   planCode,
+  billingCycle = '',
 }) {
-  const plan = normalizePlanCode(planCode);
+  const parsedWorkspaceId =
+    Number(workspaceId);
+
+  const plan =
+    normalizePlanCode(planCode);
+
+  const cycle =
+    normalizeBillingCycle(
+      billingCycle
+    ) ||
+    getStoredSelectedBillingCycle() ||
+    'monthly';
+
+  if (
+    !Number.isInteger(
+      parsedWorkspaceId
+    ) ||
+    parsedWorkspaceId <= 0
+  ) {
+    throw new Error(
+      'El proyecto del Artista no es válido.'
+    );
+  }
 
   if (!plan) {
     throw new Error(
@@ -224,8 +366,13 @@ export async function createCheckoutSession({
       {
         body: {
           workspaceId:
-            Number(workspaceId),
-          planCode: plan,
+            parsedWorkspaceId,
+
+          planCode:
+            plan,
+
+          billingCycle:
+            cycle,
         },
       }
     );
@@ -238,6 +385,7 @@ export async function createCheckoutSession({
 
   if (!data?.checkoutUrl) {
     throw new Error(
+      data?.error ||
       'Stripe no devolvió una página de pago.'
     );
   }

@@ -4,21 +4,26 @@ function clean(value) {
   return String(value || '').trim();
 }
 
-function normalizePlanCode(value) {
-  const plan =
-    clean(value).toLowerCase();
+function normalizePlan(value) {
+  if (value === 'professional') {
+    return 'professional';
+  }
 
-  return [
-    'essential',
-    'professional',
-  ].includes(plan)
-    ? plan
-    : '';
+  if (value === 'essential') {
+    return 'essential';
+  }
+
+  return '';
+}
+
+function normalizeBillingCycle(value) {
+  return value === 'annual'
+    ? 'annual'
+    : 'monthly';
 }
 
 export function buildAuthRedirectUrl(
-  invitationToken = '',
-  planCode = ''
+  invitationToken = ''
 ) {
   const url = new URL(
     window.location.href
@@ -38,28 +43,6 @@ export function buildAuthRedirectUrl(
       'accept'
     );
   }
-
-  const plan =
-    normalizePlanCode(planCode);
-
-  if (plan) {
-    url.searchParams.set('plan', plan);
-  }
-
-  return url.toString();
-}
-
-export function buildPasswordResetRedirectUrl() {
-  const url = new URL(
-    window.location.href
-  );
-
-  url.search = '';
-  url.hash = '';
-  url.searchParams.set(
-    'reset_password',
-    '1'
-  );
 
   return url.toString();
 }
@@ -117,12 +100,24 @@ export async function signUpAccount({
   password,
   accountType,
   invitationToken = '',
-  planCode = '',
+  selectedPlan = '',
+  billingCycle = '',
 }) {
   const type =
     accountType === 'artista'
       ? 'artista'
       : 'gestor';
+
+  const plan =
+    type === 'artista'
+      ? normalizePlan(selectedPlan)
+      : '';
+
+  const cycle = plan
+    ? normalizeBillingCycle(
+        billingCycle
+      )
+    : '';
 
   const { data, error } =
     await supabase.auth.signUp({
@@ -134,8 +129,7 @@ export async function signUpAccount({
       options: {
         emailRedirectTo:
           buildAuthRedirectUrl(
-            invitationToken,
-            planCode
+            invitationToken
           ),
 
         data: {
@@ -150,10 +144,11 @@ export async function signUpAccount({
           tipo_registro_inicial:
             type,
 
-          mibooking_plan_code:
-            type === 'artista'
-              ? normalizePlanCode(planCode) || null
-              : null,
+          selected_plan:
+            plan || null,
+
+          billing_cycle:
+            cycle || null,
         },
       },
     });
@@ -171,48 +166,39 @@ export async function signUpAccount({
   return data;
 }
 
-export async function requestPasswordReset(
-  email
+export async function updateCurrentPassword(
+  passwordOrPayload,
+  maybeNewPassword = ''
 ) {
-  const cleanEmail =
-    clean(email).toLowerCase();
+  let newPassword = '';
 
-  if (!cleanEmail) {
-    throw new Error(
-      'El correo es obligatorio.'
-    );
+  if (typeof maybeNewPassword === 'string' && maybeNewPassword) {
+    newPassword = maybeNewPassword;
+  } else if (typeof passwordOrPayload === 'string') {
+    newPassword = passwordOrPayload;
+  } else if (
+    passwordOrPayload &&
+    typeof passwordOrPayload === 'object'
+  ) {
+    newPassword =
+      passwordOrPayload.newPassword ||
+      passwordOrPayload.password ||
+      passwordOrPayload.nuevaPassword ||
+      passwordOrPayload.nuevaContrasena ||
+      '';
   }
 
-  const { data, error } =
-    await supabase.auth
-      .resetPasswordForEmail(
-        cleanEmail,
-        {
-          redirectTo:
-            buildPasswordResetRedirectUrl(),
-        }
-      );
+  newPassword = String(newPassword || '');
 
-  if (error) throw error;
-
-  return data;
-}
-
-export async function updateCurrentPassword(
-  newPassword
-) {
-  const password =
-    String(newPassword || '');
-
-  if (password.length < 8) {
+  if (newPassword.length < 8) {
     throw new Error(
-      'La contraseña debe tener al menos 8 caracteres.'
+      'La nueva contraseña debe tener al menos 8 caracteres.'
     );
   }
 
   const { data, error } =
     await supabase.auth.updateUser({
-      password,
+      password: newPassword,
     });
 
   if (error) throw error;

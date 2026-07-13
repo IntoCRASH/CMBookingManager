@@ -2,12 +2,88 @@ import { useState } from 'react';
 import Login from './Login';
 import './Landing.css';
 
+const trialBannerStyles = {
+  card: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    width: 'min(100%, 760px)',
+    margin: '24px auto 28px',
+    padding: '16px 18px',
+    border: '1px solid rgba(91, 79, 242, 0.22)',
+    borderRadius: '20px',
+    background:
+      'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(244,242,255,0.96))',
+    boxShadow: '0 16px 40px rgba(54, 44, 120, 0.09)',
+    boxSizing: 'border-box',
+  },
+  badge: {
+    display: 'flex',
+    flex: '0 0 auto',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '72px',
+    height: '72px',
+    borderRadius: '18px',
+    background: 'linear-gradient(145deg, #6757ff, #445cf5)',
+    color: '#ffffff',
+    boxShadow: '0 12px 26px rgba(79, 70, 229, 0.24)',
+  },
+  number: {
+    fontSize: '27px',
+    fontWeight: 900,
+    lineHeight: 1,
+  },
+  days: {
+    display: 'block',
+    width: '100%',
+    marginTop: '5px',
+    fontSize: '10px',
+    fontWeight: 800,
+    letterSpacing: '0.08em',
+    lineHeight: 1.05,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  content: {
+    minWidth: 0,
+    flex: '1 1 280px',
+  },
+  eyebrow: {
+    display: 'block',
+    marginBottom: '4px',
+    color: '#5b4ff2',
+    fontSize: '11px',
+    fontWeight: 900,
+    letterSpacing: '0.14em',
+    lineHeight: 1.2,
+    textTransform: 'uppercase',
+  },
+  title: {
+    display: 'block',
+    color: '#20283c',
+    fontSize: '16px',
+    fontWeight: 850,
+    lineHeight: 1.35,
+  },
+  description: {
+    margin: '5px 0 0',
+    color: '#667085',
+    fontSize: '13px',
+    lineHeight: 1.55,
+  },
+};
+
 export default function Landing() {
   const [portal, setPortal] =
     useState('');
 
   const [selectedPlan, setSelectedPlan] =
     useState('');
+
+  const [billingCycle, setBillingCycle] =
+    useState('monthly');
 
   function abrirRegistroGeneral() {
     setSelectedPlan('');
@@ -28,6 +104,11 @@ export default function Landing() {
       window.localStorage.setItem(
         'mibooking_selected_plan',
         plan
+      );
+
+      window.localStorage.setItem(
+        'mibooking_selected_billing_cycle',
+        billingCycle
       );
     } catch (error) {
       console.warn(
@@ -51,6 +132,12 @@ export default function Landing() {
         selectedPlan={
           portal === 'signup'
             ? selectedPlan
+            : ''
+        }
+        selectedBillingCycle={
+          portal === 'signup' &&
+          selectedPlan
+            ? billingCycle
             : ''
         }
         forcedAccountType={
@@ -113,10 +200,14 @@ export default function Landing() {
 
           <p>
             Gestiona clientes, cotizaciones,
-            tarifas, formatos, agenda, pagos,
+            tarifas, contratos, riders, agenda, pagos,
             equipos y comisiones con una
             plataforma diseñada para Artistas
-            y Gestores.
+            y Gestores. ¡Es como tener un asistente,
+            un vendedor, un asesor legal y un técnico de sonido,
+            en una sóla herramienta trabajando
+            para ti!
+
           </p>
 
           <div className="landing-actions">
@@ -228,6 +319,7 @@ export default function Landing() {
               Acepta invitaciones, crea
               cotizaciones y controla las
               comisiones que te corresponden.
+              <br></br>
             </p>
 
             <button
@@ -241,7 +333,22 @@ export default function Landing() {
           </div>
         </article>
       </section>
+        <div className="landing-manager-free-note">
+          <div className="landing-manager-free-icon">
+            $0
+          </div>
+          <div>
+            <strong>
+              Las cuentas de Gestor no tienen costo.
+            </strong>
 
+            <p>
+              Los Gestores acceden gratuitamente a MiBooking,
+              pero su cuenta debe estar vinculada mediante una
+              invitación enviada por un Artista.
+            </p>
+          </div>
+        </div>
 
 
       <section
@@ -259,29 +366,57 @@ export default function Landing() {
           </h2>
 
           <p>
-            Elige el nivel de colaboración que necesita
-            tu proyecto. Ambos planes incluyen las
-            herramientas esenciales de MiBooking.
+            Elige el nivel de colaboración y la modalidad
+            de pago que necesita tu proyecto. Ambos planes
+            incluyen <strong>3 días de prueba gratis</strong> antes del
+            primer cobro. Si no te gusta o no se adapta a tus necesidades 
+            cancela antes de finalizar el periodo de prueba.
+            
           </p>
+
+          <div
+            className="landing-billing-switch"
+            role="group"
+            aria-label="Modalidad de facturación"
+          >
+            <button
+              type="button"
+              className={
+                billingCycle === 'monthly'
+                  ? 'active'
+                  : ''
+              }
+              aria-pressed={
+                billingCycle === 'monthly'
+              }
+              onClick={() =>
+                setBillingCycle('monthly')
+              }
+            >
+              Mensual
+            </button>
+
+            <button
+              type="button"
+              className={
+                billingCycle === 'annual'
+                  ? 'active'
+                  : ''
+              }
+              aria-pressed={
+                billingCycle === 'annual'
+              }
+              onClick={() =>
+                setBillingCycle('annual')
+              }
+            >
+              Anual
+              <small>Ahorra hasta 42%</small>
+            </button>
+          </div>
         </div>
 
-        <div className="landing-manager-free-note">
-          <div className="landing-manager-free-icon">
-            G
-          </div>
 
-          <div>
-            <strong>
-              Las cuentas de Gestor no tienen costo.
-            </strong>
-
-            <p>
-              Los Gestores acceden gratuitamente a MiBooking,
-              pero su cuenta debe estar vinculada mediante una
-              invitación enviada por un Artista.
-            </p>
-          </div>
-        </div>
 
         <div className="landing-pricing-grid">
           <article className="landing-price-card">
@@ -294,10 +429,26 @@ export default function Landing() {
               </h3>
             </div>
 
+
             <div className="landing-price">
-              <strong>US$20</strong>
-              <span>por mes</span>
+              <strong>
+                {billingCycle === 'annual'
+                  ? 'US$140'
+                  : 'US$20'}
+              </strong>
+
+              <span>
+                {billingCycle === 'annual'
+                  ? 'por año'
+                  : 'por mes'}
+              </span>
             </div>
+
+            <p className="landing-price-detail">
+              {billingCycle === 'annual'
+                ? 'Equivale a US$11.67 al mes, facturado anualmente.'
+                : 'Facturación mensual después de los 3 días gratis.'}
+            </p>
 
             <ul>
               <li>
@@ -333,7 +484,7 @@ export default function Landing() {
                 seleccionarPlan('essential')
               }
             >
-              Elegir Esencial
+              Probar Esencial gratis
             </button>
           </article>
 
@@ -351,10 +502,26 @@ export default function Landing() {
               </h3>
             </div>
 
+
             <div className="landing-price">
-              <strong>US$30</strong>
-              <span>por mes</span>
+              <strong>
+                {billingCycle === 'annual'
+                  ? 'US$275'
+                  : 'US$35'}
+              </strong>
+
+              <span>
+                {billingCycle === 'annual'
+                  ? 'por año'
+                  : 'por mes'}
+              </span>
             </div>
+
+            <p className="landing-price-detail">
+              {billingCycle === 'annual'
+                ? 'Equivale a US$22.92 al mes, facturado anualmente.'
+                : 'Facturación mensual después de los 3 días gratis.'}
+            </p>
 
             <ul>
               <li>
@@ -393,7 +560,7 @@ export default function Landing() {
                 seleccionarPlan('professional')
               }
             >
-              Elegir Profesional
+              Probar Profesional gratis
             </button>
           </article>
         </div>
@@ -413,32 +580,32 @@ export default function Landing() {
             </span>
 
             <h3>
-              50% de descuento durante los primeros
-              6 meses.
+              40% de descuento durante los primeros
+              3 meses en la modalidad mensual.
             </h3>
 
             <p>
               Los artistas que distribuyen su música
               a través de La Oreja Media reciben una
               tarifa preferencial al comenzar a utilizar
-              MiBooking.
+              MiBooking con facturación mensual.
             </p>
           </div>
 
           <div className="landing-partner-prices">
             <div>
               <small>Esencial</small>
-              <strong>US$10</strong>
+              <strong>US$12</strong>
               <span>
-                al mes durante 6 meses
+                al mes durante 3 meses
               </span>
             </div>
 
             <div>
               <small>Profesional</small>
-              <strong>US$15</strong>
+              <strong>US$21</strong>
               <span>
-                al mes durante 6 meses
+                al mes durante 3 meses
               </span>
             </div>
           </div>
@@ -464,8 +631,8 @@ export default function Landing() {
           <small>
             Solicita tu código de descuento a tu
             representante en La Oreja Media. El beneficio
-            se aplica durante los primeros seis meses
-            de suscripción.
+            se aplica durante los primeros tres meses
+            de una suscripción mensual.
           </small>
         </div>
       </section>
@@ -508,16 +675,30 @@ export default function Landing() {
 
           <details>
             <summary>
+              ¿Cómo funcionan la prueba gratis y el cobro?
+            </summary>
+
+            <p>
+              Tanto el plan Esencial como el Profesional
+              incluyen 3 días de prueba gratis. Puedes elegir
+              facturación mensual o anual y el primer cobro
+              se realiza al terminar el período de prueba.
+              Después, la suscripción se renueva según la
+              modalidad seleccionada hasta que la canceles.
+            </p>
+          </details>
+
+          <details>
+            <summary>
               ¿Puedo usarlo aunque trabaje solo?
             </summary>
 
             <p>
-              Claro. No necesitas tener una orquesta
-              completa ni un equipo grande. Puedes
-              crear formatos sin músicos acompañantes,
-              organizar tus propias tarifas y trabajar
-              únicamente con los servicios que
-              realmente ofreces.
+              Claro. No necesitas tener un equipo grande
+              para trabajar como los grandes. Puedes
+              crear cotizaciones, contratos, riders,
+              documentos y tarifas a partir de los formatos
+              y servicios que realmente ofreces.
             </p>
           </details>
 

@@ -9,11 +9,33 @@ const stripeSecretKey =
 const webhookSecret =
   Deno.env.get('STRIPE_WEBHOOK_SECRET') || '';
 
-const essentialPriceId =
-  Deno.env.get('STRIPE_PRICE_ESSENTIAL') || '';
+const essentialMonthlyPriceId =
+  Deno.env.get(
+    'STRIPE_PRICE_ESSENTIAL_MONTHLY',
+  ) ||
+  Deno.env.get(
+    'STRIPE_PRICE_ESSENTIAL',
+  ) ||
+  '';
 
-const professionalPriceId =
-  Deno.env.get('STRIPE_PRICE_PROFESSIONAL') || '';
+const essentialAnnualPriceId =
+  Deno.env.get(
+    'STRIPE_PRICE_ESSENTIAL_ANNUAL',
+  ) || '';
+
+const professionalMonthlyPriceId =
+  Deno.env.get(
+    'STRIPE_PRICE_PROFESSIONAL_MONTHLY',
+  ) ||
+  Deno.env.get(
+    'STRIPE_PRICE_PROFESSIONAL',
+  ) ||
+  '';
+
+const professionalAnnualPriceId =
+  Deno.env.get(
+    'STRIPE_PRICE_PROFESSIONAL_ANNUAL',
+  ) || '';
 
 const supabaseUrl =
   Deno.env.get('SUPABASE_URL') || '';
@@ -148,24 +170,71 @@ function allowedStatus(
     : 'pending_payment';
 }
 
-function planFromPrice(
+function billingFromPrice(
   priceId: string,
-):
-  | 'essential'
-  | 'professional'
-  | null {
+): {
+  planCode:
+    | 'essential'
+    | 'professional';
+
+  billingCycle:
+    | 'monthly'
+    | 'annual';
+} | null {
   if (
     priceId &&
-    priceId === essentialPriceId
+    priceId ===
+      essentialMonthlyPriceId
   ) {
-    return 'essential';
+    return {
+      planCode:
+        'essential',
+
+      billingCycle:
+        'monthly',
+    };
   }
 
   if (
     priceId &&
-    priceId === professionalPriceId
+    priceId ===
+      essentialAnnualPriceId
   ) {
-    return 'professional';
+    return {
+      planCode:
+        'essential',
+
+      billingCycle:
+        'annual',
+    };
+  }
+
+  if (
+    priceId &&
+    priceId ===
+      professionalMonthlyPriceId
+  ) {
+    return {
+      planCode:
+        'professional',
+
+      billingCycle:
+        'monthly',
+    };
+  }
+
+  if (
+    priceId &&
+    priceId ===
+      professionalAnnualPriceId
+  ) {
+    return {
+      planCode:
+        'professional',
+
+      billingCycle:
+        'annual',
+    };
   }
 
   return null;
@@ -750,14 +819,21 @@ async function syncSubscription(
       subscription,
     );
 
-  const planCode =
-    planFromPrice(priceId);
+  const billing =
+    billingFromPrice(
+      priceId,
+    );
 
-  if (!planCode) {
+  if (!billing) {
     throw new Error(
       `El precio ${priceId || '(vacío)'} no corresponde a un plan de MiBooking.`,
     );
   }
+
+  const {
+    planCode,
+    billingCycle,
+  } = billing;
 
   const status =
     allowedStatus(
@@ -837,6 +913,9 @@ async function syncSubscription(
     plan_code:
       planCode,
 
+    billing_cycle:
+      billingCycle,
+
     billing_mode:
       'stripe',
 
@@ -867,6 +946,18 @@ async function syncSubscription(
       unixToIso(
         subscription
           ?.canceled_at,
+      ),
+
+    trial_started_at:
+      unixToIso(
+        subscription
+          ?.trial_start,
+      ),
+
+    trial_ends_at:
+      unixToIso(
+        subscription
+          ?.trial_end,
       ),
 
     promotion_code_id:
@@ -932,6 +1023,7 @@ async function syncSubscription(
     ignored: false,
     workspaceId,
     planCode,
+    billingCycle,
     status,
   };
 }
@@ -1236,8 +1328,10 @@ Deno.serve(async (request) => {
   if (
     !stripeSecretKey ||
     !webhookSecret ||
-    !essentialPriceId ||
-    !professionalPriceId ||
+    !essentialMonthlyPriceId ||
+    !essentialAnnualPriceId ||
+    !professionalMonthlyPriceId ||
+    !professionalAnnualPriceId ||
     !supabaseUrl ||
     !serviceRoleKey
   ) {

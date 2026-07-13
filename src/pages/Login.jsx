@@ -35,6 +35,8 @@ export default function Login({
   lockedEmail = '',
   forcedAccountType = '',
   invitationToken = '',
+  selectedPlan = '',
+  selectedBillingCycle = '',
   embedded = false,
   onBack,
   onAuthenticated,
@@ -76,6 +78,20 @@ export default function Login({
 
   const [confirmationSent, setConfirmationSent] =
     useState(false);
+
+  const normalizedSelectedPlan =
+    selectedPlan === 'professional'
+      ? 'professional'
+      : selectedPlan === 'essential'
+        ? 'essential'
+        : '';
+
+  const normalizedBillingCycle =
+    selectedBillingCycle === 'annual'
+      ? 'annual'
+      : selectedBillingCycle === 'monthly'
+        ? 'monthly'
+        : '';
 
   useEffect(() => {
     if (lockedEmail) {
@@ -173,6 +189,16 @@ export default function Login({
           password,
           accountType,
           invitationToken,
+          selectedPlan:
+            accountType === 'artista'
+              ? normalizedSelectedPlan
+              : '',
+          billingCycle:
+            accountType === 'artista' &&
+            normalizedSelectedPlan
+              ? normalizedBillingCycle ||
+                'monthly'
+              : '',
         });
 
       if (data?.session) {
