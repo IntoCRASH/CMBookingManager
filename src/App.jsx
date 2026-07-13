@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { supabase } from './lib/supabaseClient';
 import { getMyProfile } from './lib/profileService';
 import {
@@ -16,6 +16,7 @@ import {
   createCheckoutSession,
   getStoredSelectedPlan,
   getWorkspaceSubscription,
+  getPlanLabel,
   isSubscriptionAccessAllowed,
   normalizePlanCode,
   planFromLocation,
@@ -75,6 +76,9 @@ export default function App() {
     new URLSearchParams(
       window.location.search
     ).get('checkout') || '';
+
+  const checkoutNoticeShown =
+    useRef(false);
 
   const navigationHistory = useRef([]);
 
@@ -251,6 +255,34 @@ export default function App() {
       return;
     }
 
+    if (
+      checkoutResult === 'success' &&
+      !checkoutNoticeShown.current
+    ) {
+      checkoutNoticeShown.current = true;
+
+      const activePlanLabel =
+        getPlanLabel(
+          workspaceSubscription?.plan_code
+        ) || 'MiBooking';
+
+      toast.success(
+        `Pago confirmado. Tu plan ${activePlanLabel} está activo.`,
+        {
+          id: `checkout-success-${
+            activeWorkspace?.workspace_id ||
+            'workspace'
+          }`,
+          duration: 9000,
+        }
+      );
+
+      setPage('dashboard');
+      setCotizacionId(null);
+      setMoreOpen(false);
+      navigationHistory.current = [];
+    }
+
     clearStoredSelectedPlan();
     setSelectedPlan('');
 
@@ -280,8 +312,11 @@ export default function App() {
       );
     }
   }, [
+    checkoutResult,
+    activeWorkspace?.workspace_id,
     workspaceSubscription?.status,
     workspaceSubscription?.billing_mode,
+    workspaceSubscription?.plan_code,
   ]);
 
   const esArtista = canEditWorkspaceConfiguration(activeWorkspace);
