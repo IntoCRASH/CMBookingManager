@@ -3,12 +3,6 @@ import {
   signInAccount,
   signUpAccount,
 } from '../lib/authService';
-import {
-  getPlanLabel,
-  getPlanPrice,
-  normalizePlanCode,
-  storeSelectedPlan,
-} from '../lib/subscriptionService';
 import './Login.css';
 
 function readableError(error) {
@@ -41,7 +35,6 @@ export default function Login({
   lockedEmail = '',
   forcedAccountType = '',
   invitationToken = '',
-  selectedPlan = '',
   embedded = false,
   onBack,
   onAuthenticated,
@@ -83,22 +76,6 @@ export default function Login({
 
   const [confirmationSent, setConfirmationSent] =
     useState(false);
-
-  const normalizedPlan =
-    normalizePlanCode(selectedPlan);
-
-  const selectedPlanLabel =
-    getPlanLabel(normalizedPlan);
-
-  const selectedPlanPrice =
-    getPlanPrice(normalizedPlan);
-
-  useEffect(() => {
-    if (normalizedPlan) {
-      storeSelectedPlan(normalizedPlan);
-      setAccountType('artista');
-    }
-  }, [normalizedPlan]);
 
   useEffect(() => {
     if (lockedEmail) {
@@ -196,7 +173,6 @@ export default function Login({
           password,
           accountType,
           invitationToken,
-          planCode: normalizedPlan,
         });
 
       if (data?.session) {
@@ -250,12 +226,6 @@ export default function Login({
               Después de confirmar, regresarás
               automáticamente a esta invitación
               para completar la aceptación.
-            </p>
-          ) : normalizedPlan ? (
-            <p>
-              Después de confirmar podrás entrar
-              y completar el pago del plan{' '}
-              <strong>{selectedPlanLabel}</strong>.
             </p>
           ) : (
             <p>
@@ -363,23 +333,7 @@ export default function Login({
         </header>
 
         {mode === 'signup' &&
-          normalizedPlan && (
-          <div className="auth-selected-plan">
-            <span>Plan seleccionado</span>
-            <strong>
-              {selectedPlanLabel} ·{' '}
-              {selectedPlanPrice}
-            </strong>
-            <small>
-              El cobro se completa en Stripe
-              después de crear y confirmar la cuenta.
-            </small>
-          </div>
-        )}
-
-        {mode === 'signup' &&
-          !forcedAccountType &&
-          !normalizedPlan && (
+          !forcedAccountType && (
           <div className="auth-role-selector">
             <button
               type="button"
@@ -445,7 +399,6 @@ export default function Login({
                       event.target.value
                     )
                   }
-                  placeholder="Ej: Cruzmonty"
                   autoComplete="organization"
                   required
                 />

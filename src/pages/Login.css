@@ -131,13 +131,19 @@
 }
 
 .auth-role-selector button {
-  min-height: 105px;
+  width: 100%;
+  min-width: 0;
+  min-height: 112px;
+  box-sizing: border-box;
   border: 1px solid #d9ddea;
   border-radius: 15px;
-  padding: 15px;
-  display: grid;
-  align-content: center;
-  gap: 5px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  overflow: hidden;
   background: #ffffff;
   color: #344054;
   text-align: left;
@@ -151,9 +157,22 @@
     0 0 0 3px rgba(112, 87, 245, 0.1);
 }
 
+.auth-role-selector strong,
+.auth-role-selector span {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
 .auth-role-selector strong {
   color: #101828;
   font-size: 15px;
+  line-height: 1.25;
 }
 
 .auth-role-selector span {
@@ -308,38 +327,8 @@
   .auth-role-selector {
     grid-template-columns: 1fr;
   }
-}
 
-
-/* Plan elegido desde el landing */
-.auth-selected-plan {
-  margin: -4px 0 19px;
-  padding: 14px 16px;
-  display: grid;
-  gap: 3px;
-  border: 1px solid rgba(101, 76, 232, 0.22);
-  border-radius: 14px;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(45, 157, 245, 0.08),
-      rgba(112, 85, 245, 0.1)
-    );
-}
-
-.auth-selected-plan span {
-  color: #654ce8;
-  font-size: 10px;
-  font-weight: 950;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.auth-selected-plan strong {
-  color: #101828;
-}
-
-.auth-selected-plan small {
-  color: #667085;
-  line-height: 1.45;
+  .auth-role-selector button {
+    min-height: 96px;
+  }
 }
