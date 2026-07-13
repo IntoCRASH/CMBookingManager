@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import {
-  requestPasswordReset,
   signInAccount,
   signUpAccount,
-  updateCurrentPassword,
 } from '../lib/authService';
+import {
+  getPlanLabel,
+  getPlanPrice,
+  normalizePlanCode,
+  storeSelectedPlan,
+} from '../lib/subscriptionService';
 import './Login.css';
 
 function readableError(error) {
@@ -22,16 +26,7 @@ function readableError(error) {
       'Ya existe una cuenta con ese correo. Usa Iniciar sesión.',
 
     'Password should be at least 6 characters':
-      'La contraseña debe tener al menos 8 caracteres.',
-
-    'New password should be different from the old password.':
-      'La nueva contraseña debe ser diferente a la contraseña actual.',
-
-    'Auth session missing!':
-      'El enlace de recuperación no es válido o ya venció. Solicita uno nuevo.',
-
-    'Email rate limit exceeded':
-      'Se han enviado demasiados correos. Espera unos minutos antes de intentarlo otra vez.',
+      'La contraseña debe tener al menos 6 caracteres.',
   };
 
   return (
@@ -46,21 +41,17 @@ export default function Login({
   lockedEmail = '',
   forcedAccountType = '',
   invitationToken = '',
+  selectedPlan = '',
   embedded = false,
   onBack,
   onAuthenticated,
-  onPasswordUpdated,
 }) {
-  const normalizedInitialMode = [
-    'signup',
-    'forgot',
-    'reset',
-  ].includes(initialMode)
-    ? initialMode
-    : 'login';
-
   const [mode, setMode] =
-    useState(normalizedInitialMode);
+    useState(
+      initialMode === 'signup'
+        ? 'signup'
+        : 'login'
+    );
 
   const [accountType, setAccountType] =
     useState(
@@ -93,20 +84,21 @@ export default function Login({
   const [confirmationSent, setConfirmationSent] =
     useState(false);
 
-  const [recoverySent, setRecoverySent] =
-    useState(false);
+  const normalizedPlan =
+    normalizePlanCode(selectedPlan);
+
+  const selectedPlanLabel =
+    getPlanLabel(normalizedPlan);
+
+  const selectedPlanPrice =
+    getPlanPrice(normalizedPlan);
 
   useEffect(() => {
-    setMode(
-      [
-        'signup',
-        'forgot',
-        'reset',
-      ].includes(initialMode)
-        ? initialMode
-        : 'login'
-    );
-  }, [initialMode]);
+    if (normalizedPlan) {
+      storeSelectedPlan(normalizedPlan);
+      setAccountType('artista');
+    }
+  }, [normalizedPlan]);
 
   useEffect(() => {
     if (lockedEmail) {
@@ -130,60 +122,24 @@ export default function Login({
     setPassword('');
     setConfirmPassword('');
     setConfirmationSent(false);
-    setRecoverySent(false);
   }
 
   async function submit(event) {
     event.preventDefault();
     setError('');
 
+    if (!email.trim()) {
+      setError('El correo es obligatorio.');
+      return;
+    }
+
+    if (!password) {
+      setError('La contraseña es obligatoria.');
+      return;
+    }
+
     try {
       setLoading(true);
-
-      if (mode === 'forgot') {
-        if (!email.trim()) {
-          setError('El correo es obligatorio.');
-          return;
-        }
-
-        await requestPasswordReset(email);
-        setRecoverySent(true);
-        return;
-      }
-
-      if (mode === 'reset') {
-        if (password.length < 8) {
-          setError(
-            'La contraseña debe tener al menos 8 caracteres.'
-          );
-          return;
-        }
-
-        if (password !== confirmPassword) {
-          setError(
-            'Las contraseñas no coinciden.'
-          );
-          return;
-        }
-
-        await updateCurrentPassword(password);
-
-        if (onPasswordUpdated) {
-          onPasswordUpdated();
-        }
-
-        return;
-      }
-
-      if (!email.trim()) {
-        setError('El correo es obligatorio.');
-        return;
-      }
-
-      if (!password) {
-        setError('La contraseña es obligatoria.');
-        return;
-      }
 
       if (mode === 'login') {
         const data =
@@ -240,6 +196,7 @@ export default function Login({
           password,
           accountType,
           invitationToken,
+          planCode: normalizedPlan,
         });
 
       if (data?.session) {
@@ -294,6 +251,12 @@ export default function Login({
               automáticamente a esta invitación
               para completar la aceptación.
             </p>
+          ) : normalizedPlan ? (
+            <p>
+              Después de confirmar podrás entrar
+              y completar el pago del plan{' '}
+              <strong>{selectedPlanLabel}</strong>.
+            </p>
           ) : (
             <p>
               Después de confirmar podrás entrar
@@ -315,52 +278,6 @@ export default function Login({
     );
   }
 
-  if (recoverySent) {
-    return (
-      <section
-        className={
-          embedded
-            ? 'auth-panel embedded'
-            : 'auth-screen'
-        }
-      >
-        <div className="auth-card auth-confirmation">
-          <img
-            src="/mibooking-logo.png"
-            alt="MiBooking"
-          />
-
-          <span className="auth-success-icon">
-            ✓
-          </span>
-
-          <h1>Revisa tu correo</h1>
-
-          <p>
-            Si existe una cuenta asociada a{' '}
-            <strong>{email}</strong>, recibirás un enlace
-            para crear una nueva contraseña.
-          </p>
-
-          <p>
-            El enlace puede tardar unos minutos. Revisa
-            también la carpeta de correo no deseado.
-          </p>
-
-          <button
-            type="button"
-            onClick={() => changeMode('login')}
-          >
-            Volver a Iniciar sesión
-          </button>
-        </div>
-      </section>
-    );
-  }
-
-  const isReset = mode === 'reset';
-  const isForgot = mode === 'forgot';
-
   return (
     <section
       className={
@@ -381,7 +298,7 @@ export default function Login({
           />
         )}
 
-        {onBack && !isReset && (
+        {onBack && (
           <button
             className="auth-back"
             type="button"
@@ -391,76 +308,78 @@ export default function Login({
           </button>
         )}
 
-        {!isReset && !isForgot && (
-          <div className="auth-tabs">
-            <button
-              type="button"
-              className={
-                mode === 'login'
-                  ? 'active'
-                  : ''
-              }
-              onClick={() =>
-                changeMode('login')
-              }
-            >
-              Iniciar sesión
-            </button>
+        <div className="auth-tabs">
+          <button
+            type="button"
+            className={
+              mode === 'login'
+                ? 'active'
+                : ''
+            }
+            onClick={() =>
+              changeMode('login')
+            }
+          >
+            Iniciar sesión
+          </button>
 
-            <button
-              type="button"
-              className={
-                mode === 'signup'
-                  ? 'active'
-                  : ''
-              }
-              onClick={() =>
-                changeMode('signup')
-              }
-            >
-              Crear cuenta
-            </button>
-          </div>
-        )}
+          <button
+            type="button"
+            className={
+              mode === 'signup'
+                ? 'active'
+                : ''
+            }
+            onClick={() =>
+              changeMode('signup')
+            }
+          >
+            Crear cuenta
+          </button>
+        </div>
 
         <header className="auth-heading">
           <span>
-            {isReset
-              ? 'Seguridad'
-              : isForgot
-                ? 'Recuperar acceso'
-                : mode === 'login'
-                  ? 'Bienvenido'
-                  : forcedAccountType === 'gestor'
-                    ? 'Cuenta de Gestor'
-                    : 'Únete a MiBooking'}
+            {mode === 'login'
+              ? 'Bienvenido'
+              : forcedAccountType === 'gestor'
+                ? 'Cuenta de Gestor'
+                : 'Únete a MiBooking'}
           </span>
 
           <h1>
-            {isReset
-              ? 'Crea una nueva contraseña'
-              : isForgot
-                ? '¿Olvidaste tu contraseña?'
-                : mode === 'login'
-                  ? 'Entra a tu cuenta'
-                  : 'Crea tus credenciales'}
+            {mode === 'login'
+              ? 'Entra a tu cuenta'
+              : 'Crea tus credenciales'}
           </h1>
 
           <p>
-            {isReset
-              ? 'Escribe una contraseña nueva para recuperar el acceso a tu cuenta.'
-              : isForgot
-                ? 'Indica el correo de tu cuenta y te enviaremos un enlace seguro.'
-                : mode === 'login'
-                  ? 'Accede a tus artistas, cotizaciones, agenda y comisiones.'
-                  : forcedAccountType === 'gestor'
-                    ? 'Crea tu cuenta con el correo al que llegó la invitación.'
-                    : 'Selecciona cómo vas a utilizar MiBooking.'}
+            {mode === 'login'
+              ? 'Accede a tus artistas, cotizaciones, agenda y comisiones.'
+              : forcedAccountType === 'gestor'
+                ? 'Crea tu cuenta con el correo al que llegó la invitación.'
+                : 'Selecciona cómo vas a utilizar MiBooking.'}
           </p>
         </header>
 
         {mode === 'signup' &&
-          !forcedAccountType && (
+          normalizedPlan && (
+          <div className="auth-selected-plan">
+            <span>Plan seleccionado</span>
+            <strong>
+              {selectedPlanLabel} ·{' '}
+              {selectedPlanPrice}
+            </strong>
+            <small>
+              El cobro se completa en Stripe
+              después de crear y confirmar la cuenta.
+            </small>
+          </div>
+        )}
+
+        {mode === 'signup' &&
+          !forcedAccountType &&
+          !normalizedPlan && (
           <div className="auth-role-selector">
             <button
               type="button"
@@ -535,67 +454,47 @@ export default function Login({
           </>
         )}
 
-        {!isReset && (
-          <label>
-            Correo *
-            <input
-              type="email"
-              value={email}
-              onChange={(event) =>
-                setEmail(event.target.value)
-              }
-              readOnly={Boolean(lockedEmail)}
-              autoComplete="email"
-              required
-            />
-          </label>
-        )}
+        <label>
+          Correo *
+          <input
+            type="email"
+            value={email}
+            onChange={(event) =>
+              setEmail(event.target.value)
+            }
+            readOnly={Boolean(lockedEmail)}
+            autoComplete="email"
+            required
+          />
+        </label>
 
-        {lockedEmail && !isReset && (
+        {lockedEmail && (
           <small className="auth-locked-email">
             Este correo está vinculado a la
             invitación y no puede modificarse.
           </small>
         )}
 
-        {!isForgot && (
-          <label>
-            {isReset
-              ? 'Nueva contraseña *'
-              : 'Contraseña *'}
-
-            <input
-              type="password"
-              value={password}
-              onChange={(event) =>
-                setPassword(
-                  event.target.value
-                )
-              }
-              autoComplete={
-                mode === 'login'
-                  ? 'current-password'
-                  : 'new-password'
-              }
-              minLength={isReset || mode === 'signup' ? 8 : undefined}
-              required
-            />
-          </label>
-        )}
-
-        {mode === 'login' && (
-          <button
-            className="auth-inline-action"
-            type="button"
-            onClick={() =>
-              changeMode('forgot')
+        <label>
+          Contraseña *
+          <input
+            type="password"
+            value={password}
+            onChange={(event) =>
+              setPassword(
+                event.target.value
+              )
             }
-          >
-            ¿Olvidaste tu contraseña?
-          </button>
-        )}
+            autoComplete={
+              mode === 'login'
+                ? 'current-password'
+                : 'new-password'
+            }
+            required
+          />
+        </label>
 
-        {(mode === 'signup' || isReset) && (
+        {mode === 'signup' && (
           <label>
             Confirmar contraseña *
             <input
@@ -607,17 +506,9 @@ export default function Login({
                 )
               }
               autoComplete="new-password"
-              minLength="8"
               required
             />
           </label>
-        )}
-
-        {isReset && (
-          <p className="auth-notice">
-            Usa al menos 8 caracteres y evita reutilizar
-            una contraseña de otro servicio.
-          </p>
         )}
 
         {error && (
@@ -633,43 +524,31 @@ export default function Login({
         >
           {loading
             ? 'Procesando...'
-            : isReset
-              ? 'Guardar nueva contraseña'
-              : isForgot
-                ? 'Enviar enlace de recuperación'
-                : mode === 'login'
-                  ? 'Entrar a MiBooking'
-                  : 'Crear mi cuenta'}
+            : mode === 'login'
+              ? 'Entrar a MiBooking'
+              : 'Crear mi cuenta'}
         </button>
 
-        {!isReset && (
-          <p className="auth-switch">
-            {isForgot
-              ? '¿Recordaste tu contraseña?'
-              : mode === 'login'
-                ? '¿Todavía no tienes credenciales?'
-                : '¿Ya tienes una cuenta?'}
+        <p className="auth-switch">
+          {mode === 'login'
+            ? '¿Todavía no tienes credenciales?'
+            : '¿Ya tienes una cuenta?'}
 
-            <button
-              type="button"
-              onClick={() =>
-                changeMode(
-                  isForgot
-                    ? 'login'
-                    : mode === 'login'
-                      ? 'signup'
-                      : 'login'
-                )
-              }
-            >
-              {isForgot
-                ? 'Iniciar sesión'
-                : mode === 'login'
-                  ? 'Crear cuenta'
-                  : 'Iniciar sesión'}
-            </button>
-          </p>
-        )}
+          <button
+            type="button"
+            onClick={() =>
+              changeMode(
+                mode === 'login'
+                  ? 'signup'
+                  : 'login'
+              )
+            }
+          >
+            {mode === 'login'
+              ? 'Crear cuenta'
+              : 'Iniciar sesión'}
+          </button>
+        </p>
       </form>
     </section>
   );

@@ -6,6 +6,14 @@ export default function Landing() {
   const [portal, setPortal] =
     useState('');
 
+  const [selectedPlan, setSelectedPlan] =
+    useState('');
+
+  function abrirRegistroGeneral() {
+    setSelectedPlan('');
+    setPortal('signup');
+  }
+
   function irAPlanes() {
     document
       .getElementById('planes')
@@ -28,6 +36,7 @@ export default function Landing() {
       );
     }
 
+    setSelectedPlan(plan);
     setPortal('signup');
   }
 
@@ -38,6 +47,17 @@ export default function Landing() {
           portal === 'signup'
             ? 'signup'
             : 'login'
+        }
+        selectedPlan={
+          portal === 'signup'
+            ? selectedPlan
+            : ''
+        }
+        forcedAccountType={
+          portal === 'signup' &&
+          selectedPlan
+            ? 'artista'
+            : ''
         }
         onBack={() => setPortal('')}
       />
@@ -73,9 +93,7 @@ export default function Landing() {
           <button
             type="button"
             className="primary"
-            onClick={() =>
-              setPortal('signup')
-            }
+            onClick={abrirRegistroGeneral}
           >
             Crear cuenta
           </button>
@@ -400,9 +418,10 @@ export default function Landing() {
             </h3>
 
             <p>
-              Los Artistas verificados de La Oreja
-              Media reciben una tarifa preferencial
-              al comenzar a utilizar MiBooking.
+              Los artistas que distribuyen su música
+              a través de La Oreja Media reciben una
+              tarifa preferencial al comenzar a utilizar
+              MiBooking.
             </p>
           </div>
 
@@ -443,9 +462,10 @@ export default function Landing() {
           </div>
 
           <small>
-            Verificación y elegibilidad sujetas a
-            validación. El descuento aplica a los
-            primeros seis cobros mensuales.
+            Solicita tu código de descuento a tu
+            representante en La Oreja Media. El beneficio
+            se aplica durante los primeros seis meses
+            de suscripción.
           </small>
         </div>
       </section>
@@ -581,9 +601,7 @@ export default function Landing() {
           <button
             type="button"
             className="primary"
-            onClick={() =>
-              setPortal('signup')
-            }
+            onClick={abrirRegistroGeneral}
           >
             Comenzar con MiBooking
           </button>

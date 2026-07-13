@@ -4,8 +4,21 @@ function clean(value) {
   return String(value || '').trim();
 }
 
+function normalizePlanCode(value) {
+  const plan =
+    clean(value).toLowerCase();
+
+  return [
+    'essential',
+    'professional',
+  ].includes(plan)
+    ? plan
+    : '';
+}
+
 export function buildAuthRedirectUrl(
-  invitationToken = ''
+  invitationToken = '',
+  planCode = ''
 ) {
   const url = new URL(
     window.location.href
@@ -26,20 +39,12 @@ export function buildAuthRedirectUrl(
     );
   }
 
-  return url.toString();
-}
+  const plan =
+    normalizePlanCode(planCode);
 
-export function buildPasswordResetRedirectUrl() {
-  const url = new URL(
-    window.location.href
-  );
-
-  url.search = '';
-  url.hash = '';
-  url.searchParams.set(
-    'reset_password',
-    '1'
-  );
+  if (plan) {
+    url.searchParams.set('plan', plan);
+  }
 
   return url.toString();
 }
@@ -97,6 +102,7 @@ export async function signUpAccount({
   password,
   accountType,
   invitationToken = '',
+  planCode = '',
 }) {
   const type =
     accountType === 'artista'
@@ -113,7 +119,8 @@ export async function signUpAccount({
       options: {
         emailRedirectTo:
           buildAuthRedirectUrl(
-            invitationToken
+            invitationToken,
+            planCode
           ),
 
         data: {
@@ -127,6 +134,11 @@ export async function signUpAccount({
 
           tipo_registro_inicial:
             type,
+
+          mibooking_plan_code:
+            type === 'artista'
+              ? normalizePlanCode(planCode) || null
+              : null,
         },
       },
     });
@@ -140,55 +152,6 @@ export async function signUpAccount({
       artistName,
     });
   }
-
-  return data;
-}
-
-export async function requestPasswordReset(
-  email
-) {
-  const cleanEmail =
-    clean(email).toLowerCase();
-
-  if (!cleanEmail) {
-    throw new Error(
-      'El correo es obligatorio.'
-    );
-  }
-
-  const { data, error } =
-    await supabase.auth
-      .resetPasswordForEmail(
-        cleanEmail,
-        {
-          redirectTo:
-            buildPasswordResetRedirectUrl(),
-        }
-      );
-
-  if (error) throw error;
-
-  return data;
-}
-
-export async function updateCurrentPassword(
-  newPassword
-) {
-  const password =
-    String(newPassword || '');
-
-  if (password.length < 8) {
-    throw new Error(
-      'La contraseña debe tener al menos 8 caracteres.'
-    );
-  }
-
-  const { data, error } =
-    await supabase.auth.updateUser({
-      password,
-    });
-
-  if (error) throw error;
 
   return data;
 }

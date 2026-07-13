@@ -10,8 +10,18 @@ import {
   selectWorkspace,
 } from './lib/workspaceService';
 import Landing from './pages/Landing';
-import Login from './pages/Login';
 import { ensureMyAccountReady } from './lib/authService';
+import {
+  clearStoredSelectedPlan,
+  createCheckoutSession,
+  getStoredSelectedPlan,
+  getWorkspaceSubscription,
+  isSubscriptionAccessAllowed,
+  normalizePlanCode,
+  planFromLocation,
+  storeSelectedPlan,
+} from './lib/subscriptionService';
+import SubscriptionGate from './pages/SubscriptionGate';
 import Dashboard from './pages/Dashboard';
 import Tarifas from './pages/Tarifas';
 import Clientes from './pages/Clientes';
@@ -43,12 +53,28 @@ export default function App() {
   const [cotizacionId, setCotizacionId] = useState(null);
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const [passwordRecovery, setPasswordRecovery] =
+  const [workspaceSubscription, setWorkspaceSubscription] =
+    useState(null);
+
+  const [subscriptionLoading, setSubscriptionLoading] =
+    useState(false);
+
+  const [subscriptionError, setSubscriptionError] =
+    useState('');
+
+  const [checkoutLoading, setCheckoutLoading] =
+    useState(false);
+
+  const [selectedPlan, setSelectedPlan] =
     useState(() =>
-      new URLSearchParams(
-        window.location.search
-      ).get('reset_password') === '1'
+      planFromLocation() ||
+      getStoredSelectedPlan()
     );
+
+  const checkoutResult =
+    new URLSearchParams(
+      window.location.search
+    ).get('checkout') || '';
 
   const navigationHistory = useRef([]);
 
@@ -72,12 +98,8 @@ export default function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, currentSession) => {
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       setSession(currentSession);
-
-      if (event === 'PASSWORD_RECOVERY') {
-        setPasswordRecovery(true);
-      }
 
       if (!currentSession) {
         setProfile(null);
@@ -87,6 +109,9 @@ export default function App() {
         setPage('dashboard');
         setCotizacionId(null);
         setMoreOpen(false);
+        setWorkspaceSubscription(null);
+        setSubscriptionError('');
+        setCheckoutLoading(false);
         clearCurrentActiveWorkspace();
         navigationHistory.current = [];
       }
@@ -144,8 +169,128 @@ export default function App() {
     };
   }, [session?.user?.id]);
 
+  useEffect(() => {
+    const metadataPlan =
+      normalizePlanCode(
+        session?.user?.user_metadata
+          ?.mibooking_plan_code
+      );
+
+    const pendingPlan =
+      planFromLocation() ||
+      getStoredSelectedPlan() ||
+      metadataPlan;
+
+    if (pendingPlan) {
+      setSelectedPlan(pendingPlan);
+      storeSelectedPlan(pendingPlan);
+    }
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSubscription() {
+      const workspaceId =
+        activeWorkspace?.workspace_id;
+
+      if (!session?.user?.id || !workspaceId) {
+        setWorkspaceSubscription(null);
+        setSubscriptionError('');
+        setSubscriptionLoading(false);
+        return;
+      }
+
+      try {
+        setSubscriptionLoading(true);
+        setSubscriptionError('');
+
+        const currentSubscription =
+          await getWorkspaceSubscription(
+            workspaceId
+          );
+
+        if (cancelled) return;
+
+        setWorkspaceSubscription(
+          currentSubscription
+        );
+      } catch (error) {
+        if (cancelled) return;
+
+        console.error(error);
+        setWorkspaceSubscription(null);
+        setSubscriptionError(
+          error.message ||
+            'No se pudo consultar la suscripción.'
+        );
+      } finally {
+        if (!cancelled) {
+          setSubscriptionLoading(false);
+        }
+      }
+    }
+
+    loadSubscription();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    session?.user?.id,
+    activeWorkspace?.workspace_id,
+    workspaceVersion,
+  ]);
+
+  useEffect(() => {
+    if (
+      !isSubscriptionAccessAllowed(
+        workspaceSubscription
+      )
+    ) {
+      return;
+    }
+
+    clearStoredSelectedPlan();
+    setSelectedPlan('');
+
+    const url =
+      new URL(window.location.href);
+
+    let changed = false;
+
+    [
+      'checkout',
+      'session_id',
+      'plan',
+    ].forEach((key) => {
+      if (url.searchParams.has(key)) {
+        url.searchParams.delete(key);
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      window.history.replaceState(
+        {},
+        '',
+        `${url.pathname}${
+          url.search
+        }${url.hash}`
+      );
+    }
+  }, [
+    workspaceSubscription?.status,
+    workspaceSubscription?.billing_mode,
+  ]);
+
   const esArtista = canEditWorkspaceConfiguration(activeWorkspace);
   const roleLabel = getWorkspaceRoleLabel(activeWorkspace);
+
+  const subscriptionAccessAllowed =
+    isSubscriptionAccessAllowed(
+      workspaceSubscription
+    );
 
   function normalizarCotizacionId(nombrePagina, id) {
     const paginasConCotizacion = [
@@ -161,6 +306,7 @@ export default function App() {
 
   function navegarA(nombrePagina, id = null) {
     const paginasSoloArtista = [
+      'perfil',
       'tarifas',
       'formatos',
       'tipos-evento',
@@ -363,6 +509,96 @@ export default function App() {
     }
   }
 
+  function seleccionarPlanSuscripcion(planCode) {
+    const plan = normalizePlanCode(planCode);
+
+    if (!plan) return;
+
+    setSelectedPlan(plan);
+    storeSelectedPlan(plan);
+    setSubscriptionError('');
+  }
+
+  async function recargarSuscripcion() {
+    if (!activeWorkspace?.workspace_id) {
+      return;
+    }
+
+    try {
+      setSubscriptionLoading(true);
+      setSubscriptionError('');
+
+      const currentSubscription =
+        await getWorkspaceSubscription(
+          activeWorkspace.workspace_id
+        );
+
+      setWorkspaceSubscription(
+        currentSubscription
+      );
+    } catch (error) {
+      console.error(error);
+      setSubscriptionError(
+        error.message ||
+          'No se pudo actualizar la suscripción.'
+      );
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  }
+
+  async function iniciarCheckout(planCode) {
+    const plan = normalizePlanCode(
+      planCode || selectedPlan
+    );
+
+    if (!esArtista) {
+      setSubscriptionError(
+        'Solo el Artista propietario puede contratar un plan.'
+      );
+      return;
+    }
+
+    if (!activeWorkspace?.workspace_id) {
+      setSubscriptionError(
+        'No se encontró el proyecto del Artista.'
+      );
+      return;
+    }
+
+    if (!plan) {
+      setSubscriptionError(
+        'Selecciona un plan antes de continuar.'
+      );
+      return;
+    }
+
+    try {
+      setCheckoutLoading(true);
+      setSubscriptionError('');
+      storeSelectedPlan(plan);
+      setSelectedPlan(plan);
+
+      const checkout =
+        await createCheckoutSession({
+          workspaceId:
+            activeWorkspace.workspace_id,
+          planCode: plan,
+        });
+
+      window.location.assign(
+        checkout.checkoutUrl
+      );
+    } catch (error) {
+      console.error(error);
+      setSubscriptionError(
+        error.message ||
+          'No se pudo abrir Stripe Checkout.'
+      );
+      setCheckoutLoading(false);
+    }
+  }
+
   async function logout() {
     navigationHistory.current = [];
     clearCurrentActiveWorkspace();
@@ -411,11 +647,6 @@ export default function App() {
     if (!esArtista) {
       return [
         ...base,
-        {
-          id: 'perfil',
-          label: 'Mi perfil',
-          action: () => irA('perfil'),
-        },
         {
           id: 'invitaciones',
           label: 'Invitaciones',
@@ -481,52 +712,10 @@ export default function App() {
     },
   ];
 
-  function terminarRecuperacionPassword() {
-    const url = new URL(
-      window.location.href
-    );
-
-    url.searchParams.delete(
-      'reset_password'
-    );
-
-    url.searchParams.delete(
-      'code'
-    );
-
-    url.hash = '';
-
-    window.history.replaceState(
-      {},
-      '',
-      `${url.pathname}${url.search}`
-    );
-
-    setPasswordRecovery(false);
-    setPage('dashboard');
-  }
-
   const invitationToken =
     new URLSearchParams(
       window.location.search
     ).get('invitacion_gestor');
-
-  if (passwordRecovery) {
-    return (
-      <>
-        <Login
-          initialMode="reset"
-          onPasswordUpdated={
-            terminarRecuperacionPassword
-          }
-        />
-
-        <Toaster
-          position="bottom-right"
-        />
-      </>
-    );
-  }
 
   if (invitationToken) {
     return (
@@ -546,7 +735,16 @@ export default function App() {
 
   let contenido;
 
-  if (loading || accountLoading) {
+  if (
+    loading ||
+    accountLoading ||
+    (
+      session &&
+      activeWorkspace &&
+      subscriptionLoading &&
+      !workspaceSubscription
+    )
+  ) {
     contenido = <div className="app-loading">Cargando MiBooking...</div>;
   } else if (!session) {
     contenido = <Landing />;
@@ -561,47 +759,31 @@ export default function App() {
       </div>
     );
   } else if (!activeWorkspace) {
-    contenido =
-      page === 'perfil' ? (
-        <Perfil
-          workspaceId={null}
-          workspace={null}
-          esArtista={false}
-          readOnly={false}
-          goBack={() => setPage('dashboard')}
-          onProfileUpdated={
-            actualizarPerfilLocal
-          }
-        />
-      ) : (
-        <>
-          <section className="workspace-state-card">
-            <h1>Tu cuenta de Gestor</h1>
-
-            <p>
-              Completa tu perfil personal o acepta
-              una invitación para comenzar a trabajar
-              con un Artista.
-            </p>
-
-            <button
-              type="button"
-              onClick={() =>
-                setPage('perfil')
-              }
-            >
-              Abrir mi perfil
-            </button>
-          </section>
-
-          <InvitacionesPendientes
-            onInvitationAccepted={
-              refreshWorkspaceAccess
-            }
-            onLogout={logout}
-          />
-        </>
-      );
+    contenido = (
+      <InvitacionesPendientes
+        onInvitationAccepted={refreshWorkspaceAccess}
+        onLogout={logout}
+      />
+    );
+  } else if (!subscriptionAccessAllowed) {
+    contenido = (
+      <SubscriptionGate
+        workspace={activeWorkspace}
+        subscription={workspaceSubscription}
+        loading={subscriptionLoading}
+        error={subscriptionError}
+        esArtista={esArtista}
+        selectedPlan={selectedPlan}
+        checkoutResult={checkoutResult}
+        checkoutLoading={checkoutLoading}
+        onChoosePlan={
+          seleccionarPlanSuscripcion
+        }
+        onCheckout={iniciarCheckout}
+        onReload={recargarSuscripcion}
+        onLogout={logout}
+      />
+    );
   } else {
     const sharedProps = {
       workspaceId: activeWorkspace.workspace_id,
@@ -741,12 +923,22 @@ export default function App() {
         break;
 
       case 'perfil':
-        contenido = (
+        contenido = esArtista ? (
           <Perfil
             {...sharedProps}
             goBack={volverAtras}
             goEquipo={() => irA('equipo')}
             onProfileUpdated={actualizarPerfilLocal}
+          />
+        ) : (
+          <Dashboard
+            {...sharedProps}
+            session={session}
+            goCotizaciones={() => irA('cotizaciones')}
+            goCalendario={() => irA('calendario')}
+            goDocumentos={() => irA('documentos')}
+            goTutorial={() => irA('tutorial')}
+            goComisiones={() => irA('comisiones')}
           />
         );
         break;
@@ -785,7 +977,11 @@ export default function App() {
     }
   }
 
-  if (!session || !activeWorkspace) {
+  if (
+    !session ||
+    !activeWorkspace ||
+    !subscriptionAccessAllowed
+  ) {
     return (
       <>
         {contenido}
@@ -967,14 +1163,14 @@ export default function App() {
                 ◇ Comisiones
               </button>
 
-              <button type="button" onClick={() => irA('perfil')}>
-                ◉ {esArtista ? 'Perfil del Artista' : 'Mi perfil'}
-              </button>
-
               {esArtista ? (
                 <>
                   <button type="button" onClick={() => irA('equipo')}>
                     ◉ Equipo y Gestores
+                  </button>
+
+                  <button type="button" onClick={() => irA('perfil')}>
+                    ◉ Perfil del Artista
                   </button>
 
                   <button type="button" onClick={() => irA('formatos')}>
