@@ -72,12 +72,21 @@ export default function App() {
       getStoredSelectedPlan()
     );
 
-  const checkoutResult =
+  const currentQuery =
     new URLSearchParams(
       window.location.search
-    ).get('checkout') || '';
+    );
+
+  const checkoutResult =
+    currentQuery.get('checkout') || '';
+
+  const billingResult =
+    currentQuery.get('billing') || '';
 
   const checkoutNoticeShown =
+    useRef(false);
+
+  const billingNoticeShown =
     useRef(false);
 
   const navigationHistory = useRef([]);
@@ -633,6 +642,50 @@ export default function App() {
       setCheckoutLoading(false);
     }
   }
+
+
+  useEffect(() => {
+    if (
+      billingResult !== 'return' ||
+      !session?.user?.id ||
+      !activeWorkspace?.workspace_id ||
+      billingNoticeShown.current
+    ) {
+      return;
+    }
+
+    billingNoticeShown.current = true;
+
+    setPage('perfil');
+    setCotizacionId(null);
+    setMoreOpen(false);
+    navigationHistory.current = [];
+
+    toast.success(
+      'Facturación actualizada. Stripe sincronizará cualquier cambio con MiBooking.',
+      {
+        id: 'billing-return',
+        duration: 8000,
+      }
+    );
+
+    const url =
+      new URL(window.location.href);
+
+    url.searchParams.delete('billing');
+
+    window.history.replaceState(
+      {},
+      '',
+      `${url.pathname}${
+        url.search
+      }${url.hash}`
+    );
+  }, [
+    billingResult,
+    session?.user?.id,
+    activeWorkspace?.workspace_id,
+  ]);
 
   async function logout() {
     navigationHistory.current = [];

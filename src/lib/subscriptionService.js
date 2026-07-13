@@ -47,6 +47,56 @@ export function getPlanPrice(value) {
   return '';
 }
 
+
+export function getSubscriptionStatusLabel(
+  value
+) {
+  const status =
+    String(value || '')
+      .trim()
+      .toLowerCase();
+
+  const labels = {
+    pending_payment: 'Pendiente de pago',
+    incomplete: 'Pago incompleto',
+    incomplete_expired:
+      'Proceso de pago vencido',
+    trialing: 'Período de prueba',
+    active: 'Activa',
+    past_due: 'Pago pendiente',
+    unpaid: 'Sin pagar',
+    paused: 'Pausada',
+    canceled: 'Cancelada',
+  };
+
+  return labels[status] || 'Sin estado';
+}
+
+export function formatSubscriptionDate(
+  value
+) {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+
+  if (
+    Number.isNaN(date.getTime())
+  ) {
+    return '';
+  }
+
+  return new Intl.DateTimeFormat(
+    'es-DO',
+    {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }
+  ).format(date);
+}
+
 export function storeSelectedPlan(value) {
   const plan = normalizePlanCode(value);
 
@@ -189,6 +239,48 @@ export async function createCheckoutSession({
   if (!data?.checkoutUrl) {
     throw new Error(
       'Stripe no devolvió una página de pago.'
+    );
+  }
+
+  return data;
+}
+
+
+export async function createCustomerPortalSession({
+  workspaceId,
+}) {
+  const parsedWorkspaceId =
+    Number(workspaceId);
+
+  if (
+    !Number.isInteger(parsedWorkspaceId) ||
+    parsedWorkspaceId <= 0
+  ) {
+    throw new Error(
+      'El proyecto del Artista no es válido.'
+    );
+  }
+
+  const { data, error } =
+    await supabase.functions.invoke(
+      'create-customer-portal-session',
+      {
+        body: {
+          workspaceId:
+            parsedWorkspaceId,
+        },
+      }
+    );
+
+  if (error) {
+    throw new Error(
+      await functionErrorMessage(error)
+    );
+  }
+
+  if (!data?.portalUrl) {
+    throw new Error(
+      'Stripe no devolvió el portal de facturación.'
     );
   }
 

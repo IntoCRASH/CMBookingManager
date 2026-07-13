@@ -14,6 +14,14 @@ import {
 } from '../lib/profileService';
 import { CONTRACT_VARIABLES } from '../lib/contratoTemplate';
 import { updateCurrentPassword } from '../lib/authService';
+import {
+  createCustomerPortalSession,
+  formatSubscriptionDate,
+  getPlanLabel,
+  getPlanPrice,
+  getSubscriptionStatusLabel,
+  getWorkspaceSubscription,
+} from '../lib/subscriptionService';
 
 const MAX_PNG_SIZE = 5 * 1024 * 1024;
 
@@ -129,6 +137,10 @@ export default function Perfil({
   const [confirmarPassword, setConfirmarPassword] =
     useState('');
   const [error, setError] = useState('');
+  const [subscription, setSubscription] =
+    useState(null);
+  const [portalLoading, setPortalLoading] =
+    useState(false);
 
   const logoInputRef = useRef(null);
   const firmaInputRef = useRef(null);
@@ -210,11 +222,17 @@ export default function Perfil({
         perfilUsuario,
         perfilArtistico,
         perfilNegocio,
+        suscripcionWorkspace,
       ] = await Promise.all([
         getMyProfile(),
         getWorkspaceArtistProfile(workspaceId),
         getMyBusinessProfile(workspaceId),
+        getWorkspaceSubscription(workspaceId),
       ]);
+
+      setSubscription(
+        suscripcionWorkspace
+      );
 
       setProfile(perfilUsuario);
 
@@ -743,6 +761,40 @@ export default function Perfil({
       toast.error(mensaje);
     } finally {
       setGuardando(false);
+    }
+  }
+
+
+  async function abrirPortalFacturacion() {
+    if (!workspaceId) {
+      toast.error(
+        'No se encontró el proyecto del Artista.'
+      );
+      return;
+    }
+
+    try {
+      setPortalLoading(true);
+      setError('');
+
+      const result =
+        await createCustomerPortalSession({
+          workspaceId,
+        });
+
+      window.location.assign(
+        result.portalUrl
+      );
+    } catch (err) {
+      console.error(err);
+
+      const mensaje =
+        err.message ||
+        'No se pudo abrir el portal de facturación.';
+
+      setError(mensaje);
+      toast.error(mensaje);
+      setPortalLoading(false);
     }
   }
 
@@ -1763,6 +1815,186 @@ export default function Perfil({
                 Los cambios se aplicarán únicamente a
                 contratos nuevos.
               </p>
+            </section>
+
+
+            <section className="form-section form-full">
+              <h2>Suscripción y facturación</h2>
+
+              {subscription?.billing_mode ===
+              'legacy' ? (
+                <>
+                  <p>
+                    Este proyecto conserva acceso
+                    administrativo anterior al sistema
+                    de suscripciones.
+                  </p>
+
+                  <div
+                    style={{
+                      padding: 16,
+                      borderRadius: 14,
+                      border:
+                        '1px solid rgba(148, 163, 184, 0.25)',
+                      background:
+                        'rgba(59, 130, 246, 0.06)',
+                    }}
+                  >
+                    <strong>
+                      Acceso heredado activo
+                    </strong>
+
+                    <p
+                      style={{
+                        margin:
+                          '6px 0 0',
+                      }}
+                    >
+                      No hay una suscripción de Stripe
+                      vinculada a este proyecto.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns:
+                        'repeat(auto-fit, minmax(190px, 1fr))',
+                      gap: 14,
+                      marginTop: 14,
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: 16,
+                        borderRadius: 14,
+                        border:
+                          '1px solid rgba(148, 163, 184, 0.25)',
+                        background:
+                          'rgba(255, 255, 255, 0.03)',
+                      }}
+                    >
+                      <small>
+                        Plan actual
+                      </small>
+
+                      <h3
+                        style={{
+                          margin:
+                            '7px 0 2px',
+                        }}
+                      >
+                        {getPlanLabel(
+                          subscription?.plan_code
+                        ) || 'Sin plan'}
+                      </h3>
+
+                      <span>
+                        {getPlanPrice(
+                          subscription?.plan_code
+                        )}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        padding: 16,
+                        borderRadius: 14,
+                        border:
+                          '1px solid rgba(148, 163, 184, 0.25)',
+                        background:
+                          'rgba(255, 255, 255, 0.03)',
+                      }}
+                    >
+                      <small>
+                        Estado
+                      </small>
+
+                      <h3
+                        style={{
+                          margin:
+                            '7px 0 2px',
+                        }}
+                      >
+                        {getSubscriptionStatusLabel(
+                          subscription?.status
+                        )}
+                      </h3>
+
+                      <span>
+                        {subscription?.cancel_at_period_end
+                          ? 'La renovación automática está cancelada.'
+                          : 'Renovación automática activa.'}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        padding: 16,
+                        borderRadius: 14,
+                        border:
+                          '1px solid rgba(148, 163, 184, 0.25)',
+                        background:
+                          'rgba(255, 255, 255, 0.03)',
+                      }}
+                    >
+                      <small>
+                        {subscription?.cancel_at_period_end
+                          ? 'Acceso disponible hasta'
+                          : 'Próxima renovación'}
+                      </small>
+
+                      <h3
+                        style={{
+                          margin:
+                            '7px 0 2px',
+                        }}
+                      >
+                        {formatSubscriptionDate(
+                          subscription?.current_period_end
+                        ) || 'Por confirmar'}
+                      </h3>
+
+                      <span>
+                        Los cambios se sincronizan
+                        mediante Stripe.
+                      </span>
+                    </div>
+                  </div>
+
+                  <p
+                    style={{
+                      marginTop: 18,
+                    }}
+                  >
+                    Desde el portal seguro de Stripe
+                    puedes actualizar tu método de pago,
+                    consultar facturas y cancelar la
+                    renovación.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={
+                      abrirPortalFacturacion
+                    }
+                    disabled={
+                      portalLoading ||
+                      !subscription
+                        ?.stripe_customer_id
+                    }
+                    style={{
+                      marginTop: 8,
+                    }}
+                  >
+                    {portalLoading
+                      ? 'Abriendo Stripe...'
+                      : 'Administrar suscripción'}
+                  </button>
+                </>
+              )}
             </section>
 
             <section className="form-section form-full">
