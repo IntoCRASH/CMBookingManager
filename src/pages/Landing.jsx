@@ -609,15 +609,34 @@ export default function Landing() {
       </section>
 
       <footer className="landing-footer">
-        <img
-          src="/mibooking-icon.png"
-          alt=""
-        />
+        <div className="landing-footer-brand">
+          <img
+            src="/mibooking-icon.png"
+            alt=""
+          />
 
-        <span>
-          MiBooking · Música, eventos y
-          negocio.
-        </span>
+          <span>
+            MiBooking · Música, eventos y
+            negocio.
+          </span>
+        </div>
+
+        <nav
+          className="landing-legal-links"
+          aria-label="Información legal"
+        >
+          <a href="/?legal=terms">
+            Términos
+          </a>
+
+          <a href="/?legal=privacy">
+            Privacidad
+          </a>
+
+          <a href="/?legal=refunds">
+            Cancelaciones
+          </a>
+        </nav>
       </footer>
     </main>
   );

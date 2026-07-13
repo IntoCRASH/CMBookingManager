@@ -1,0 +1,288 @@
+/* =========================================================
+   DASHBOARD EQUILIBRADO
+========================================================= */
+
+.dashboard-primary-balanced {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.25fr)
+    minmax(0, 0.75fr);
+  gap: 12px;
+}
+
+.dashboard-primary-balanced
+  .primary-action.secondary {
+  border:
+    1px solid rgba(99, 102, 241, 0.2);
+  background:
+    rgba(255, 255, 255, 0.8);
+  color: #5145cd;
+  box-shadow:
+    0 10px 26px
+    rgba(30, 41, 59, 0.055);
+}
+
+.dashboard-section-title {
+  display: grid;
+  gap: 3px;
+}
+
+.dashboard-section-title small {
+  color: #98a2b3;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dashboard-config-card {
+  border-color:
+    rgba(99, 102, 241, 0.17);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.92),
+      rgba(245, 243, 255, 0.74)
+    );
+}
+
+.balanced-actions-grid {
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+}
+
+.balanced-actions-grid button {
+  min-height: 94px;
+}
+
+.config-actions-grid button {
+  background:
+    rgba(255, 255, 255, 0.66);
+}
+
+/* =========================================================
+   BIENVENIDA
+========================================================= */
+
+.dashboard-welcome-integrated {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+  align-items: center;
+  gap: 34px;
+}
+
+.dashboard-welcome-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.dashboard-account-summary {
+  width: fit-content;
+  margin-top: 17px;
+  padding: 7px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border:
+    1px solid rgba(99, 102, 241, 0.14);
+  border-radius: 999px;
+  background:
+    rgba(99, 102, 241, 0.055);
+  color: #667085;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.dashboard-account-summary i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #8b7cf6;
+}
+
+/* Tutorial integrado, sin una segunda tarjeta interna. */
+
+.dashboard-welcome-tutorial {
+  width: 275px;
+  min-width: 275px;
+  padding: 7px 0 7px 28px;
+  display: grid;
+  grid-template-columns:
+    40px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-left:
+    1px solid rgba(99, 102, 241, 0.17);
+  border-radius: 0;
+  background: transparent;
+  color: #344054;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.dashboard-welcome-tutorial:hover {
+  transform: translateX(2px);
+  opacity: 0.84;
+}
+
+.welcome-tutorial-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background:
+    linear-gradient(
+      135deg,
+      #48b8f9,
+      #8063f5
+    );
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 950;
+  box-shadow:
+    0 9px 20px
+    rgba(99, 102, 241, 0.17);
+}
+
+.welcome-tutorial-content {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.welcome-tutorial-content small {
+  color: #7161da;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.welcome-tutorial-content strong {
+  overflow: visible;
+  color: #101828;
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  white-space: normal;
+}
+
+.welcome-tutorial-content > span {
+  overflow: visible;
+  color: #98a2b3;
+  font-size: 10px;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.welcome-tutorial-arrow {
+  color: #6254df;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: right;
+}
+
+/* Próximo evento vuelve a ser una tarjeta independiente completa. */
+
+.next-event-card {
+  width: 100%;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 960px) {
+  .dashboard-welcome-integrated {
+    gap: 22px;
+  }
+
+  .dashboard-welcome-tutorial {
+    width: 235px;
+    min-width: 235px;
+    padding-left: 20px;
+  }
+
+  .welcome-tutorial-content > span {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-primary-balanced {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .balanced-actions-grid {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+
+  .balanced-actions-grid button {
+    min-height: 86px;
+  }
+
+  .dashboard-welcome-integrated {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .dashboard-welcome-tutorial {
+    width: 100%;
+    min-width: 0;
+    padding:
+      17px 0 0;
+    border-left: 0;
+    border-top:
+      1px solid rgba(99, 102, 241, 0.15);
+  }
+
+  .welcome-tutorial-content > span {
+    display: block;
+  }
+}
+
+@media (max-width: 520px) {
+  .dashboard-primary-balanced {
+    grid-template-columns: 1fr;
+  }
+
+  .balanced-actions-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-section-title small {
+    display: none;
+  }
+
+  .dashboard-account-summary {
+    margin-top: 13px;
+  }
+
+  .dashboard-welcome-tutorial {
+    grid-template-columns:
+      38px minmax(0, 1fr) 24px;
+    gap: 10px;
+  }
+
+  .welcome-tutorial-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .welcome-tutorial-content > span {
+    display: none;
+  }
+}

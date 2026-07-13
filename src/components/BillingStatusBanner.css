@@ -1,0 +1,78 @@
+.billing-status-banner {
+  margin: 14px auto 0;
+  width:
+    min(
+      1180px,
+      calc(100% - 32px)
+    );
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-radius: 14px;
+}
+
+.billing-status-banner > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.billing-status-banner strong {
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.billing-status-banner span {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.billing-status-banner button {
+  min-height: 35px;
+  padding: 0 12px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 10px;
+  background:
+    rgba(255, 255, 255, 0.78);
+  color: inherit;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.billing-status-banner.warning {
+  border:
+    1px solid rgba(245, 158, 11, 0.3);
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.billing-status-banner.neutral {
+  border:
+    1px solid rgba(100, 116, 139, 0.22);
+  background: #f8fafc;
+  color: #475569;
+}
+
+.billing-status-banner.info {
+  border:
+    1px solid rgba(59, 130, 246, 0.24);
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+@media (max-width: 620px) {
+  .billing-status-banner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .billing-status-banner button {
+    width: 100%;
+  }
+}

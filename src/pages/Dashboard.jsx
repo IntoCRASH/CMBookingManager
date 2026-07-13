@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 import { getCotizaciones } from '../lib/cotizacionesService';
+import {
+  getPlanLabel,
+  getWorkspaceSubscription,
+} from '../lib/subscriptionService';
+import './DashboardBalanced.css';
 
 export default function Dashboard({
   workspaceId,
@@ -16,6 +21,9 @@ export default function Dashboard({
   goPerfil,
   goEquipo,
   goInvitaciones,
+  goSuscripcion,
+  goNuevaCotizacion,
+  subscription,
 }) {
   const [eventosConfirmados, setEventosConfirmados] =
     useState(0);
@@ -25,10 +33,25 @@ export default function Dashboard({
     useState(0);
   const [balancePendiente, setBalancePendiente] = useState(0);
   const [cobradoMes, setCobradoMes] = useState(0);
+  const [
+    currentSubscription,
+    setCurrentSubscription,
+  ] = useState(subscription || null);
 
   useEffect(() => {
     cargarResumen();
+    cargarSuscripcionActual();
   }, [workspaceId]);
+
+  useEffect(() => {
+    setCurrentSubscription(
+      subscription || null
+    );
+  }, [
+    subscription?.plan_code,
+    subscription?.billing_mode,
+    subscription?.status,
+  ]);
 
   function normalizarEstado(value) {
     return String(value || '')
@@ -165,6 +188,24 @@ export default function Dashboard({
     }
   }
 
+
+  async function cargarSuscripcionActual() {
+    if (!workspaceId) {
+      return;
+    }
+
+    try {
+      const result =
+        await getWorkspaceSubscription(
+          workspaceId
+        );
+
+      setCurrentSubscription(result);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   function money(valor) {
     return `RD$ ${Number(valor || 0).toLocaleString(
       'es-DO'
@@ -202,16 +243,27 @@ export default function Dashboard({
   const nombreArtista =
     workspace?.workspace_name || 'Artista';
 
+  const planLabel =
+    currentSubscription?.billing_mode ===
+    'legacy'
+      ? 'Acceso heredado'
+      : getPlanLabel(
+          currentSubscription?.plan_code
+        ) || 'Sin plan';
+
+  const accountType =
+    esArtista ? 'Artista' : 'Gestor';
+
   return (
     <div className="dashboard dashboard-mobile-first">
-      <section className="mobile-welcome-card">
-        <div>
+      <section className="mobile-welcome-card dashboard-welcome-integrated">
+        <div className="dashboard-welcome-copy">
           <span className="eyebrow">MiBooking</span>
 
           <h1>Hola, {nombreArtista}!</h1>
 
           <p>
-            <strong>{nombreArtista}</strong> tiene{' '}
+            Tienes{' '}
             <strong>{eventosConfirmados}</strong>{' '}
             evento
             {eventosConfirmados !== 1 ? 's' : ''}{' '}
@@ -219,29 +271,61 @@ export default function Dashboard({
             {eventosConfirmados !== 1 ? 's' : ''}{' '}
             en agenda.
           </p>
-        </div>
 
-        <div className="profile-pill">
-          <span>
-            {nombreArtista
-              .slice(0, 1)
-              .toUpperCase()}
-          </span>
+          <div className="dashboard-account-summary">
+            <span>{planLabel}</span>
 
-          <div>
-            <strong>{nombreArtista}</strong>
+            <i aria-hidden="true" />
 
-            <small>
-              {esArtista ? 'Artista' : 'Gestor'}
-            </small>
+            <span>{accountType}</span>
           </div>
         </div>
+
+        <button
+          type="button"
+          className="dashboard-welcome-tutorial"
+          onClick={goTutorial}
+        >
+          <span className="welcome-tutorial-icon">
+            ?
+          </span>
+
+          <span className="welcome-tutorial-content">
+            <small>Tutorial</small>
+
+            <strong>
+              Primeros pasos
+            </strong>
+
+            <span>
+              Configura tu cuenta
+            </span>
+          </span>
+
+          <span
+            className="welcome-tutorial-arrow"
+            aria-hidden="true"
+          >
+            →
+          </span>
+        </button>
       </section>
 
-      <section className="dashboard-primary-actions">
+      <section className="dashboard-primary-actions dashboard-primary-balanced">
         <button
           type="button"
           className="primary-action"
+          onClick={
+            goNuevaCotizacion ||
+            goCotizaciones
+          }
+        >
+          Nueva cotización
+        </button>
+
+        <button
+          type="button"
+          className="primary-action secondary"
           onClick={goCotizaciones}
         >
           Ver cotizaciones
@@ -345,13 +429,24 @@ export default function Dashboard({
 
       <section className="quick-actions-card">
         <div className="section-heading">
-          <span>Operación rápida</span>
+          <div className="dashboard-section-title">
+            <span>Operación rápida</span>
+            <small>
+              Las acciones que usas en el día a día.
+            </small>
+          </div>
         </div>
 
-        <div className="quick-actions-grid">
-          <button type="button" onClick={goTutorial}>
-            🧭
-            <span>Tutorial</span>
+        <div className="quick-actions-grid balanced-actions-grid">
+          <button
+            type="button"
+            onClick={
+              goNuevaCotizacion ||
+              goCotizaciones
+            }
+          >
+            ➕
+            <span>Nueva cotización</span>
           </button>
 
           <button type="button" onClick={goCotizaciones}>
@@ -374,44 +469,69 @@ export default function Dashboard({
             <span>Documentos</span>
           </button>
 
-          {esArtista ? (
-            <button type="button" onClick={goEquipo}>
-              👥
-              <span>Equipo</span>
-            </button>
-          ) : (
-            <button type="button" onClick={goInvitaciones}>
-              ✉
-              <span>Invitaciones</span>
-            </button>
-          )}
+        </div>
+      </section>
 
-          <button type="button" onClick={goPerfil}>
-            👤
+      <section className="quick-actions-card dashboard-config-card">
+        <div className="section-heading">
+          <div className="dashboard-section-title">
             <span>
-              {esArtista ? 'Perfil' : 'Mi perfil'}
+              {esArtista
+                ? 'Configuración del Artista'
+                : 'Cuenta y colaboración'}
             </span>
-          </button>
 
-          {esArtista && (
-            <button type="button" onClick={goFormatos}>
-              🎵
-              <span>Formatos</span>
-            </button>
-          )}
+            <small>
+              Ajustes menos frecuentes, separados de la operación diaria.
+            </small>
+          </div>
+        </div>
 
-          {esArtista && (
-            <button type="button" onClick={goTiposEvento}>
-              🎤
-              <span>Tipos de evento</span>
-            </button>
-          )}
+        <div className="quick-actions-grid balanced-actions-grid config-actions-grid">
+          {esArtista ? (
+            <>
+              <button type="button" onClick={goEquipo}>
+                👥
+                <span>Equipo</span>
+              </button>
 
-          {esArtista && (
-            <button type="button" onClick={goTarifas}>
-              ⚙️
-              <span>Tarifas</span>
-            </button>
+              <button type="button" onClick={goPerfil}>
+                👤
+                <span>Perfil</span>
+              </button>
+
+              <button type="button" onClick={goSuscripcion}>
+                💳
+                <span>Suscripción</span>
+              </button>
+
+              <button type="button" onClick={goFormatos}>
+                🎵
+                <span>Formatos</span>
+              </button>
+
+              <button type="button" onClick={goTiposEvento}>
+                🎤
+                <span>Tipos de evento</span>
+              </button>
+
+              <button type="button" onClick={goTarifas}>
+                ⚙️
+                <span>Tarifas</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={goInvitaciones}>
+                ✉
+                <span>Invitaciones</span>
+              </button>
+
+              <button type="button" onClick={goPerfil}>
+                👤
+                <span>Mi perfil</span>
+              </button>
+            </>
           )}
         </div>
       </section>

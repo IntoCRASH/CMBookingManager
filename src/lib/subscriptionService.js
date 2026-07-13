@@ -344,23 +344,153 @@ export async function createCustomerPortalSession({
   return data;
 }
 
-export function isSubscriptionAccessAllowed(
+export function getSubscriptionAccessState(
   subscription
 ) {
   if (!subscription) {
-    return false;
+    return 'restricted';
+  }
+
+  if (
+    subscription.access_state === 'full' ||
+    subscription.access_state === 'grace' ||
+    subscription.access_state === 'restricted'
+  ) {
+    return subscription.access_state;
   }
 
   if (
     subscription.billing_mode === 'legacy' &&
     subscription.status === 'active'
   ) {
+    return 'full';
+  }
+
+  if (
+    [
+      'trialing',
+      'active',
+    ].includes(subscription.status)
+  ) {
+    return 'full';
+  }
+
+  if (
+    subscription.status === 'past_due' &&
+    subscription.payment_grace_ends_at
+  ) {
+    const graceEnd =
+      new Date(
+        subscription.payment_grace_ends_at
+      );
+
+    if (
+      !Number.isNaN(graceEnd.getTime()) &&
+      graceEnd.getTime() > Date.now()
+    ) {
+      return 'grace';
+    }
+  }
+
+  return 'restricted';
+}
+
+export function isSubscriptionAccessAllowed(
+  subscription
+) {
+  return [
+    'full',
+    'grace',
+  ].includes(
+    getSubscriptionAccessState(
+      subscription
+    )
+  );
+}
+
+export function isInitialSubscriptionState(
+  subscription
+) {
+  if (!subscription) {
     return true;
   }
 
   return [
-    'trialing',
-    'active',
-    'past_due',
-  ].includes(subscription.status);
+    'pending_payment',
+    'incomplete',
+    'incomplete_expired',
+  ].includes(
+    String(
+      subscription.status || ''
+    )
+  );
+}
+
+export function getSubscriptionDaysRemaining(
+  value
+) {
+  if (!value) {
+    return null;
+  }
+
+  const target =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      target.getTime()
+    )
+  ) {
+    return null;
+  }
+
+  return Math.max(
+    0,
+    Math.ceil(
+      (
+        target.getTime() -
+        Date.now()
+      ) /
+      86400000
+    )
+  );
+}
+
+export function getDiscountDescription(
+  subscription
+) {
+  const percent =
+    Number(
+      subscription?.discount_percent
+    );
+
+  if (
+    !Number.isFinite(percent) ||
+    percent <= 0
+  ) {
+    return '';
+  }
+
+  const code =
+    String(
+      subscription?.promotion_code ||
+      ''
+    ).trim();
+
+  const endDate =
+    formatSubscriptionDate(
+      subscription?.discount_ends_at
+    );
+
+  return [
+    `${percent}% de descuento`,
+    code
+      ? `Código ${code}`
+      : '',
+    endDate
+      ? `Vigente hasta ${endDate}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }

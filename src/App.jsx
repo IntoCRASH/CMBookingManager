@@ -17,12 +17,17 @@ import {
   getStoredSelectedPlan,
   getWorkspaceSubscription,
   getPlanLabel,
+  getSubscriptionAccessState,
+  isInitialSubscriptionState,
   isSubscriptionAccessAllowed,
   normalizePlanCode,
   planFromLocation,
   storeSelectedPlan,
 } from './lib/subscriptionService';
 import SubscriptionGate from './pages/SubscriptionGate';
+import BillingAccessGate from './pages/BillingAccessGate';
+import BillingStatusBanner from './components/BillingStatusBanner';
+import Legal from './pages/Legal';
 import Dashboard from './pages/Dashboard';
 import Tarifas from './pages/Tarifas';
 import Clientes from './pages/Clientes';
@@ -37,9 +42,11 @@ import Tutorial from './pages/Tutorial';
 import Formatos from './pages/Formatos';
 import TiposEvento from './pages/TiposEvento';
 import Perfil from './pages/Perfil';
+import Suscripcion from './pages/Suscripcion';
 import Equipo from './pages/Equipo';
 import InvitacionesPendientes from './pages/InvitacionesPendientes';
 import AceptarInvitacionGestor from './pages/AceptarInvitacionGestor';
+import './styles/NavigationBalanced.css';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -53,6 +60,8 @@ export default function App() {
   const [page, setPage] = useState('dashboard');
   const [cotizacionId, setCotizacionId] = useState(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] =
+    useState(false);
 
   const [workspaceSubscription, setWorkspaceSubscription] =
     useState(null);
@@ -83,11 +92,17 @@ export default function App() {
   const billingResult =
     currentQuery.get('billing') || '';
 
+  const legalSection =
+    currentQuery.get('legal') || '';
+
   const checkoutNoticeShown =
     useRef(false);
 
   const billingNoticeShown =
     useRef(false);
+
+  const settingsRef =
+    useRef(null);
 
   const navigationHistory = useRef([]);
 
@@ -135,6 +150,35 @@ export default function App() {
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!settingsOpen) {
+      return undefined;
+    }
+
+    function closeSettings(event) {
+      if (
+        settingsRef.current &&
+        !settingsRef.current.contains(
+          event.target
+        )
+      ) {
+        setSettingsOpen(false);
+      }
+    }
+
+    document.addEventListener(
+      'pointerdown',
+      closeSettings
+    );
+
+    return () => {
+      document.removeEventListener(
+        'pointerdown',
+        closeSettings
+      );
+    };
+  }, [settingsOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -331,10 +375,32 @@ export default function App() {
   const esArtista = canEditWorkspaceConfiguration(activeWorkspace);
   const roleLabel = getWorkspaceRoleLabel(activeWorkspace);
 
+  const subscriptionAccessState =
+    getSubscriptionAccessState(
+      workspaceSubscription
+    );
+
   const subscriptionAccessAllowed =
     isSubscriptionAccessAllowed(
       workspaceSubscription
     );
+
+  const initialSubscriptionRequired =
+    isInitialSubscriptionState(
+      workspaceSubscription
+    );
+
+  const subscriptionRestricted =
+    subscriptionAccessState ===
+    'restricted';
+
+  const recoveryPageAllowed =
+    subscriptionRestricted &&
+    esArtista &&
+    [
+      'suscripcion',
+      'perfil',
+    ].includes(page);
 
   function normalizarCotizacionId(nombrePagina, id) {
     const paginasConCotizacion = [
@@ -351,6 +417,7 @@ export default function App() {
   function navegarA(nombrePagina, id = null) {
     const paginasSoloArtista = [
       'perfil',
+      'suscripcion',
       'tarifas',
       'formatos',
       'tipos-evento',
@@ -360,6 +427,25 @@ export default function App() {
     if (paginasSoloArtista.includes(nombrePagina) && !esArtista) {
       setMoreOpen(false);
       return;
+    }
+
+    if (subscriptionRestricted) {
+      const recoveryPages =
+        esArtista
+          ? [
+              'suscripcion',
+              'perfil',
+            ]
+          : [];
+
+      if (
+        !recoveryPages.includes(
+          nombrePagina
+        )
+      ) {
+        setMoreOpen(false);
+        return;
+      }
     }
 
     const destinoCotizacionId = normalizarCotizacionId(nombrePagina, id);
@@ -380,6 +466,7 @@ export default function App() {
     setPage(nombrePagina);
     setCotizacionId(destinoCotizacionId);
     setMoreOpen(false);
+    setSettingsOpen(false);
   }
 
   function abrirCotizacion(id) {
@@ -656,7 +743,7 @@ export default function App() {
 
     billingNoticeShown.current = true;
 
-    setPage('perfil');
+    setPage('suscripcion');
     setCotizacionId(null);
     setMoreOpen(false);
     navigationHistory.current = [];
@@ -693,85 +780,99 @@ export default function App() {
     await supabase.auth.signOut();
   }
 
-  const navDesktop = (() => {
-    const base = [
-      {
-        id: 'dashboard',
-        label: 'Inicio',
-        action: volverDashboard,
-      },
-      {
-        id: 'tutorial',
-        label: 'Tutorial',
-        action: () => irA('tutorial'),
-      },
-      {
-        id: 'cotizaciones',
-        label: 'Cotizaciones',
-        action: () => irA('cotizaciones'),
-      },
-      {
-        id: 'clientes',
-        label: 'Clientes',
-        action: () => irA('clientes'),
-      },
-      {
-        id: 'calendario',
-        label: 'Calendario',
-        action: () => irA('calendario'),
-      },
-      {
-        id: 'documentos',
-        label: 'Documentos',
-        action: () => irA('documentos'),
-      },
-      {
-        id: 'comisiones',
-        label: 'Comisiones',
-        action: () => irA('comisiones'),
-      },
-    ];
+  const navDesktop = [
+    {
+      id: 'dashboard',
+      label: 'Inicio',
+      action: volverDashboard,
+    },
+    {
+      id: 'tutorial',
+      label: 'Tutorial',
+      action: () => irA('tutorial'),
+    },
+    {
+      id: 'cotizaciones',
+      label: 'Cotizaciones',
+      action: () => irA('cotizaciones'),
+    },
+    {
+      id: 'clientes',
+      label: 'Clientes',
+      action: () => irA('clientes'),
+    },
+    {
+      id: 'calendario',
+      label: 'Calendario',
+      action: () => irA('calendario'),
+    },
+    {
+      id: 'documentos',
+      label: 'Documentos',
+      action: () => irA('documentos'),
+    },
+    {
+      id: 'comisiones',
+      label: 'Comisiones',
+      action: () => irA('comisiones'),
+    },
+    ...(
+      esArtista
+        ? [
+            {
+              id: 'equipo',
+              label: 'Equipo',
+              action: () => irA('equipo'),
+            },
+          ]
+        : [
+            {
+              id: 'invitaciones',
+              label: 'Invitaciones',
+              action: () =>
+                irA('invitaciones'),
+            },
+          ]
+    ),
+  ];
 
-    if (!esArtista) {
-      return [
-        ...base,
+  const settingsNav = esArtista
+    ? [
         {
-          id: 'invitaciones',
-          label: 'Invitaciones',
-          action: () => irA('invitaciones'),
+          id: 'perfil',
+          label: 'Perfil del Artista',
+          action: () => irA('perfil'),
         },
-      ];
-    }
+        {
+          id: 'suscripcion',
+          label:
+            'Suscripción y facturación',
+          action: () =>
+            irA('suscripcion'),
+        },
+        {
+          id: 'formatos',
+          label: 'Formatos',
+          action: () => irA('formatos'),
+        },
+        {
+          id: 'tipos-evento',
+          label: 'Tipos de evento',
+          action: () =>
+            irA('tipos-evento'),
+        },
+        {
+          id: 'tarifas',
+          label: 'Tarifas por zona',
+          action: () => irA('tarifas'),
+        },
+      ]
+    : [];
 
-    return [
-      ...base,
-      {
-        id: 'equipo',
-        label: 'Equipo',
-        action: () => irA('equipo'),
-      },
-      {
-        id: 'perfil',
-        label: 'Perfil',
-        action: () => irA('perfil'),
-      },
-      {
-        id: 'formatos',
-        label: 'Formatos',
-        action: () => irA('formatos'),
-      },
-      {
-        id: 'tipos-evento',
-        label: 'Tipos',
-        action: () => irA('tipos-evento'),
-      },
-      {
-        id: 'tarifas',
-        label: 'Tarifas',
-        action: () => irA('tarifas'),
-      },
-    ];
-  })();
+  const settingsIsActive =
+    settingsNav.some(
+      (item) => item.id === page
+    );
 
   const mobileNav = [
     {
@@ -799,6 +900,69 @@ export default function App() {
       action: () => setMoreOpen(true),
     },
   ];
+
+  const visibleDesktopNav =
+    subscriptionRestricted
+      ? []
+      : navDesktop;
+
+  const visibleSettingsNav =
+    subscriptionRestricted
+      ? settingsNav.filter(
+          (item) =>
+            [
+              'perfil',
+              'suscripcion',
+            ].includes(item.id)
+        )
+      : settingsNav;
+
+  const visibleMobileNav =
+    subscriptionRestricted
+      ? (
+          esArtista
+            ? [
+                {
+                  id:
+                    'suscripcion',
+                  label:
+                    'Facturación',
+                  icon: '$',
+                  action: () =>
+                    irA(
+                      'suscripcion'
+                    ),
+                },
+                {
+                  id: 'perfil',
+                  label: 'Perfil',
+                  icon: '◉',
+                  action: () =>
+                    irA('perfil'),
+                },
+              ]
+            : []
+        )
+      : mobileNav;
+
+  if (
+    [
+      'terms',
+      'privacy',
+      'refunds',
+    ].includes(legalSection)
+  ) {
+    return (
+      <Legal
+        initialSection={
+          legalSection
+        }
+        onBack={() =>
+          window.location.assign('/')
+        }
+      />
+    );
+  }
 
   const invitationToken =
     new URLSearchParams(
@@ -853,7 +1017,11 @@ export default function App() {
         onLogout={logout}
       />
     );
-  } else if (!subscriptionAccessAllowed) {
+  } else if (
+    !subscriptionAccessAllowed &&
+    initialSubscriptionRequired &&
+    esArtista
+  ) {
     contenido = (
       <SubscriptionGate
         workspace={activeWorkspace}
@@ -872,12 +1040,37 @@ export default function App() {
         onLogout={logout}
       />
     );
+  } else if (
+    !subscriptionAccessAllowed &&
+    !recoveryPageAllowed
+  ) {
+    contenido = (
+      <BillingAccessGate
+        workspace={activeWorkspace}
+        subscription={
+          workspaceSubscription
+        }
+        esArtista={esArtista}
+        error={subscriptionError}
+        onSubscription={() =>
+          navegarA('suscripcion')
+        }
+        onProfile={() =>
+          navegarA('perfil')
+        }
+        onReload={
+          recargarSuscripcion
+        }
+        onLogout={logout}
+      />
+    );
   } else {
     const sharedProps = {
       workspaceId: activeWorkspace.workspace_id,
       workspace: activeWorkspace,
       esArtista,
       readOnly: !esArtista,
+      subscription: workspaceSubscription,
     };
 
     switch (page) {
@@ -1031,6 +1224,25 @@ export default function App() {
         );
         break;
 
+      case 'suscripcion':
+        contenido = esArtista ? (
+          <Suscripcion
+            {...sharedProps}
+            goBack={volverAtras}
+          />
+        ) : (
+          <Dashboard
+            {...sharedProps}
+            session={session}
+            goCotizaciones={() => irA('cotizaciones')}
+            goCalendario={() => irA('calendario')}
+            goDocumentos={() => irA('documentos')}
+            goTutorial={() => irA('tutorial')}
+            goComisiones={() => irA('comisiones')}
+          />
+        );
+        break;
+
       case 'formatos':
         contenido = (
           <Formatos {...sharedProps} goBack={volverAtras} />
@@ -1051,6 +1263,12 @@ export default function App() {
             goPerfil={() => irA('perfil')}
             goEquipo={() => irA('equipo')}
             goInvitaciones={() => irA('invitaciones')}
+            goSuscripcion={() =>
+              irA('suscripcion')
+            }
+            goNuevaCotizacion={() =>
+              irA('nueva-cotizacion')
+            }
             goTarifas={() => irA('tarifas')}
             goCotizaciones={() => irA('cotizaciones')}
             goCalendario={() => irA('calendario')}
@@ -1065,11 +1283,17 @@ export default function App() {
     }
   }
 
-  if (
-    !session ||
-    !activeWorkspace ||
-    !subscriptionAccessAllowed
-  ) {
+  const shouldRenderAppShell =
+    Boolean(
+      session &&
+      activeWorkspace &&
+      (
+        subscriptionAccessAllowed ||
+        recoveryPageAllowed
+      )
+    );
+
+  if (!shouldRenderAppShell) {
     return (
       <>
         {contenido}
@@ -1097,9 +1321,9 @@ export default function App() {
               aria-hidden="true"
               style={{
                 display: 'block',
-                width: '48px',
-                height: '48px',
-                flex: '0 0 48px',
+                width: '42px',
+                height: '42px',
+                flex: '0 0 42px',
                 objectFit: 'contain',
               }}
             />
@@ -1111,7 +1335,7 @@ export default function App() {
           </button>
 
           <div className="desktop-nav-links">
-            {navDesktop.map((item) => (
+            {visibleDesktopNav.map((item) => (
               <button
                 key={item.id}
                 type="button"
@@ -1124,37 +1348,78 @@ export default function App() {
           </div>
 
           <div className="topbar-user">
-            <div className="avatar">
-              {(activeWorkspace?.workspace_name || 'A')
-                .slice(0, 1)
-                .toUpperCase()}
-            </div>
+            {workspaces.length > 1 && (
+              <select
+                className="topbar-artist-select topbar-workspace-only"
+                value={activeWorkspace.workspace_id}
+                onChange={cambiarWorkspace}
+                aria-label="Cambiar Artista"
+                title="Cambiar Artista"
+              >
+                {workspaces.map((workspaceItem) => (
+                  <option
+                    key={workspaceItem.workspace_id}
+                    value={workspaceItem.workspace_id}
+                  >
+                    {workspaceItem.workspace_name}
+                  </option>
+                ))}
+              </select>
+            )}
 
-            <div className="user-meta">
-              {workspaces.length > 1 ? (
-                <select
-                  className="topbar-artist-select"
-                  value={activeWorkspace.workspace_id}
-                  onChange={cambiarWorkspace}
-                  aria-label="Seleccionar Artista"
+            {visibleSettingsNav.length > 0 && (
+              <div
+                className="balanced-settings"
+                ref={settingsRef}
+              >
+                <button
+                  type="button"
+                  className={
+                    `balanced-settings-trigger ${
+                      settingsOpen ||
+                      settingsIsActive
+                        ? 'active'
+                        : ''
+                    }`
+                  }
+                  title="Configuración"
+                  aria-label="Abrir configuración"
+                  aria-expanded={settingsOpen}
+                  onClick={() =>
+                    setSettingsOpen(
+                      (current) => !current
+                    )
+                  }
                 >
-                  {workspaces.map((workspaceItem) => (
-                    <option
-                      key={workspaceItem.workspace_id}
-                      value={workspaceItem.workspace_id}
-                    >
-                      {workspaceItem.workspace_name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <strong>
-                  {activeWorkspace.workspace_name || 'Artista'}
-                </strong>
-              )}
+                  ⚙
+                </button>
 
-              <small>{roleLabel}</small>
-            </div>
+                {settingsOpen && (
+                  <div className="balanced-settings-menu">
+                    <span>
+                      Configuración
+                    </span>
+
+                    {visibleSettingsNav.map(
+                      (item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className={
+                            page === item.id
+                              ? 'active'
+                              : ''
+                          }
+                          onClick={item.action}
+                        >
+                          {item.label}
+                        </button>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <button
               type="button"
@@ -1168,6 +1433,19 @@ export default function App() {
         </nav>
       )}
 
+      {page !== 'ver-cotizacion' && (
+        <BillingStatusBanner
+          subscription={
+            workspaceSubscription
+          }
+          esArtista={esArtista}
+          page={page}
+          onBilling={() =>
+            irA('suscripcion')
+          }
+        />
+      )}
+
       <main
         className="app-content"
         key={`${activeWorkspace.workspace_id}-${workspaceVersion}`}
@@ -1177,7 +1455,7 @@ export default function App() {
 
       {page !== 'ver-cotizacion' && (
         <nav className="mobile-bottom-nav">
-          {mobileNav.map((item) => (
+          {visibleMobileNav.map((item) => (
             <button
               key={item.id}
               type="button"
@@ -1235,6 +1513,40 @@ export default function App() {
             <h3>Más opciones</h3>
 
             <div className="sheet-actions">
+              {subscriptionRestricted ? (
+                <>
+                  {esArtista && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          irA('suscripcion')
+                        }
+                      >
+                        $ Suscripción y facturación
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          irA('perfil')
+                        }
+                      >
+                        ◉ Perfil del Artista
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    type="button"
+                    className="sheet-logout"
+                    onClick={logout}
+                  >
+                    Salir
+                  </button>
+                </>
+              ) : (
+                <>
               <button type="button" onClick={() => irA('tutorial')}>
                 ◈ Tutorial
               </button>
@@ -1259,6 +1571,15 @@ export default function App() {
 
                   <button type="button" onClick={() => irA('perfil')}>
                     ◉ Perfil del Artista
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      irA('suscripcion')
+                    }
+                  >
+                    ⚙ Suscripción y facturación
                   </button>
 
                   <button type="button" onClick={() => irA('formatos')}>
@@ -1292,6 +1613,8 @@ export default function App() {
               >
                 Salir
               </button>
+                </>
+              )}
             </div>
           </div>
         </div>

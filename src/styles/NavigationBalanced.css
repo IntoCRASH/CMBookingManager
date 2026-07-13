@@ -1,0 +1,183 @@
+/* =========================================================
+   TOPBAR EQUILIBRADO
+   Mantiene los módulos operativos visibles y agrupa ajustes.
+========================================================= */
+
+@media (min-width: 769px) {
+  .desktop-topbar {
+    min-height: 70px;
+    padding-inline: 16px;
+    gap: 14px;
+  }
+
+  .desktop-topbar .brand-button {
+    gap: 10px;
+  }
+
+  .desktop-topbar .brand-button strong {
+    font-size: 16px;
+  }
+
+  .desktop-topbar .brand-button small {
+    font-size: 9px;
+  }
+
+  .desktop-nav-links {
+    gap: 3px;
+  }
+
+  .desktop-nav-links > button {
+    min-height: 39px;
+    padding-inline: 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .topbar-user {
+    gap: 7px;
+  }
+
+  .topbar-user .avatar {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .topbar-user .user-meta {
+    max-width: 155px;
+  }
+
+  .balanced-settings {
+    position: relative;
+  }
+
+  .balanced-settings-trigger {
+    width: 39px;
+    height: 39px;
+    min-width: 39px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border:
+      1px solid rgba(148, 163, 184, 0.27);
+    border-radius: 11px;
+    background:
+      rgba(255, 255, 255, 0.76);
+    color: #475467;
+    font-size: 17px;
+    cursor: pointer;
+  }
+
+  .balanced-settings-trigger.active {
+    border-color:
+      rgba(99, 102, 241, 0.27);
+    background:
+      linear-gradient(
+        135deg,
+        #38aef8,
+        #8c68ff
+      );
+    color: #ffffff;
+  }
+
+  .balanced-settings-menu {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    z-index: 120;
+    width: 245px;
+    padding: 8px;
+    display: grid;
+    gap: 2px;
+    border:
+      1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 15px;
+    background:
+      rgba(255, 255, 255, 0.98);
+    box-shadow:
+      0 20px 50px
+      rgba(15, 23, 42, 0.14);
+  }
+
+  .balanced-settings-menu > span {
+    padding: 7px 10px 5px;
+    color: #98a2b3;
+    font-size: 10px;
+    font-weight: 950;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .balanced-settings-menu > button {
+    min-height: 39px;
+    padding: 0 11px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #344054;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .balanced-settings-menu > button:hover {
+    background: #f2f4f7;
+  }
+
+  .balanced-settings-menu > button.active {
+    background:
+      rgba(99, 102, 241, 0.1);
+    color: #4338ca;
+  }
+
+  .desktop-topbar .logout-button {
+    min-height: 39px;
+    padding-inline: 12px;
+    border-radius: 10px;
+    font-size: 11px;
+  }
+}
+
+@media (
+  min-width: 769px
+) and (
+  max-width: 1120px
+) {
+  .desktop-topbar {
+    gap: 8px;
+    padding-inline: 10px;
+  }
+
+  .desktop-nav-links > button {
+    padding-inline: 7px;
+    font-size: 10px;
+  }
+
+  .topbar-user .user-meta {
+    max-width: 115px;
+  }
+
+  .topbar-user .user-meta small {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .topbar-workspace-only {
+    width: auto;
+    max-width: 150px;
+    min-height: 38px;
+    padding: 0 30px 0 11px;
+    border:
+      1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 10px;
+    background-color:
+      rgba(255, 255, 255, 0.78);
+    color: #475467;
+    font-size: 11px;
+    font-weight: 800;
+  }
+}
