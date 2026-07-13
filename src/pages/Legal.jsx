@@ -181,8 +181,8 @@ export default function Legal({
                 Para consultas relacionadas con estos
                 términos, escribe a
                 {' '}
-                <a href="mailto:cruzmontyrd@gmail.com">
-                  cruzmontyrd@gmail.com
+                <a href="mailto:soporte@mibooking.app">
+                  soporte@mibooking.app
                 </a>.
               </p>
             </>
@@ -254,8 +254,8 @@ export default function Legal({
                 de información, cuando sea aplicable,
                 escribiendo a
                 {' '}
-                <a href="mailto:cruzmontyrd@gmail.com">
-                  cruzmontyrd@gmail.com
+                <a href="mailto:soporte@mibooking.app">
+                  soporte@mibooking.app
                 </a>.
               </p>
             </>
@@ -325,8 +325,8 @@ export default function Legal({
                 Para solicitar una revisión de un cobro,
                 escribe a
                 {' '}
-                <a href="mailto:cruzmontyrd@gmail.com">
-                  cruzmontyrd@gmail.com
+                <a href="mailto:soporte@mibooking.app">
+                  soporte@mibooking.app
                 </a>
                 {' '}
                 e incluye el correo de la cuenta, fecha y
@@ -335,12 +335,7 @@ export default function Legal({
             </>
           )}
 
-          <div className="legal-review-note">
-            Este texto es una base operativa y debe ser
-            revisado conforme a la jurisdicción y
-            estructura comercial definitiva de
-            MiBooking antes del lanzamiento público.
-          </div>
+
         </article>
       </div>
     </main>
