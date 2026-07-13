@@ -7,13 +7,34 @@ import {
   changeSubscriptionPlan,
   createCustomerPortalSession,
   formatSubscriptionDate,
+  getBillingCycleLabel,
   getDiscountDescription,
   getPlanLabel,
   getPlanPrice,
   getSubscriptionStatusLabel,
   getWorkspaceSubscription,
+  normalizeBillingCycle,
 } from '../lib/subscriptionService';
 import './Suscripcion.css';
+
+const PLAN_OPTIONS = [
+  {
+    code: 'essential',
+    title: 'Esencial',
+    description:
+      'Para Artistas que trabajan solos o con un colaborador de confianza.',
+    managerLimit:
+      'Hasta 1 Gestor autorizado',
+  },
+  {
+    code: 'professional',
+    title: 'Profesional',
+    description:
+      'Para Artistas con equipos de booking, representantes o varios colaboradores.',
+    managerLimit:
+      'Gestores ilimitados',
+  },
+];
 
 export default function Suscripcion({
   workspaceId,
@@ -32,8 +53,13 @@ export default function Suscripcion({
   const [portalLoading, setPortalLoading] =
     useState(false);
 
-  const [changingPlan, setChangingPlan] =
+  const [changingOption, setChangingOption] =
     useState('');
+
+  const [
+    selectedBillingCycle,
+    setSelectedBillingCycle,
+  ] = useState('monthly');
 
   useEffect(() => {
     cargarSuscripcion();
@@ -58,6 +84,12 @@ export default function Suscripcion({
         );
 
       setSubscription(result);
+
+      setSelectedBillingCycle(
+        normalizeBillingCycle(
+          result?.billing_cycle
+        ) || 'monthly'
+      );
     } catch (err) {
       console.error(err);
 
@@ -103,15 +135,26 @@ export default function Suscripcion({
     }
   }
 
-  async function cambiarPlan(
-    targetPlan
+  async function cambiarSuscripcion(
+    targetPlan,
+    targetBillingCycle
   ) {
     const currentPlan =
       subscription?.plan_code || '';
 
+    const currentBillingCycle =
+      normalizeBillingCycle(
+        subscription?.billing_cycle
+      ) || 'monthly';
+
     if (
       !targetPlan ||
-      targetPlan === currentPlan
+      !targetBillingCycle ||
+      (
+        targetPlan === currentPlan &&
+        targetBillingCycle ===
+          currentBillingCycle
+      )
     ) {
       return;
     }
@@ -119,27 +162,62 @@ export default function Suscripcion({
     const targetLabel =
       getPlanLabel(targetPlan);
 
-    const confirmation =
-      targetPlan === 'essential'
-        ? window.confirm(
-            'El plan Esencial admite un solo Gestor. Stripe aplicará el cambio y cualquier ajuste proporcional correspondiente. ¿Deseas continuar?'
-          )
-        : window.confirm(
-            'El plan Profesional admite Gestores ilimitados. Stripe cobrará inmediatamente el ajuste proporcional del período actual. ¿Deseas continuar?'
-          );
+    const targetCycleLabel =
+      getBillingCycleLabel(
+        targetBillingCycle
+      );
 
-    if (!confirmation) {
+    const cycleChanged =
+      targetBillingCycle !==
+      currentBillingCycle;
+
+    const trialing =
+      subscription?.status ===
+      'trialing';
+
+    let confirmationMessage = '';
+
+    if (trialing) {
+      confirmationMessage =
+        `Cambiarás al plan ${targetLabel} con facturación ${targetCycleLabel.toLowerCase()}. ` +
+        'El cambio conservará la fecha de finalización de tu prueba gratis. ¿Deseas continuar?';
+    } else if (cycleChanged) {
+      confirmationMessage =
+        `Cambiarás al plan ${targetLabel} con facturación ${targetCycleLabel.toLowerCase()}. ` +
+        'Stripe reiniciará el ciclo de facturación y calculará los créditos o cargos proporcionales correspondientes. ¿Deseas continuar?';
+    } else if (
+      targetPlan ===
+      'professional'
+    ) {
+      confirmationMessage =
+        'El plan Profesional admite Gestores ilimitados. Stripe cobrará inmediatamente el ajuste proporcional del período actual. ¿Deseas continuar?';
+    } else {
+      confirmationMessage =
+        'El plan Esencial admite un solo Gestor. Stripe aplicará el cambio y cualquier ajuste proporcional correspondiente. ¿Deseas continuar?';
+    }
+
+    if (
+      !window.confirm(
+        confirmationMessage
+      )
+    ) {
       return;
     }
 
+    const optionKey =
+      `${targetPlan}-${targetBillingCycle}`;
+
     try {
-      setChangingPlan(targetPlan);
+      setChangingOption(
+        optionKey
+      );
       setError('');
 
       const result =
         await changeSubscriptionPlan({
           workspaceId,
           targetPlan,
+          targetBillingCycle,
         });
 
       if (result?.pendingUpdate) {
@@ -151,7 +229,7 @@ export default function Suscripcion({
         );
       } else {
         toast.success(
-          `Cambio al plan ${targetLabel} enviado correctamente.`,
+          `Cambio a ${targetLabel} ${targetCycleLabel.toLowerCase()} enviado correctamente.`,
           {
             duration: 7000,
           }
@@ -185,23 +263,42 @@ export default function Suscripcion({
         updatedSubscription =
           refreshed;
 
+        const refreshedCycle =
+          normalizeBillingCycle(
+            refreshed?.billing_cycle
+          ) || 'monthly';
+
         if (
           refreshed?.plan_code ===
-          targetPlan
+            targetPlan &&
+          refreshedCycle ===
+            targetBillingCycle
         ) {
           break;
         }
       }
 
+      const updatedCycle =
+        normalizeBillingCycle(
+          updatedSubscription
+            ?.billing_cycle
+        ) || 'monthly';
+
       if (
         updatedSubscription
-          ?.plan_code === targetPlan
+          ?.plan_code === targetPlan &&
+        updatedCycle ===
+          targetBillingCycle
       ) {
+        setSelectedBillingCycle(
+          targetBillingCycle
+        );
+
         toast.success(
-          `Tu plan ${targetLabel} ya está activo.`,
+          `Tu plan ${targetLabel} ${targetCycleLabel.toLowerCase()} ya está activo.`,
           {
             id:
-              `plan-active-${targetPlan}`,
+              `subscription-active-${optionKey}`,
             duration: 7000,
           }
         );
@@ -209,7 +306,7 @@ export default function Suscripcion({
         !result?.pendingUpdate
       ) {
         toast(
-          'Stripe está procesando el cambio. El plan se actualizará automáticamente cuando llegue la confirmación.',
+          'Stripe está procesando el cambio. La suscripción se actualizará automáticamente cuando llegue la confirmación.',
           {
             duration: 9000,
           }
@@ -220,7 +317,7 @@ export default function Suscripcion({
 
       const mensaje =
         err.message ||
-        'No se pudo cambiar el plan.';
+        'No se pudo cambiar la suscripción.';
 
       setError(mensaje);
 
@@ -231,7 +328,7 @@ export default function Suscripcion({
         }
       );
     } finally {
-      setChangingPlan('');
+      setChangingOption('');
     }
   }
 
@@ -252,10 +349,25 @@ export default function Suscripcion({
   const currentPlan =
     subscription?.plan_code || '';
 
-  const targetPlan =
-    currentPlan === 'essential'
-      ? 'professional'
-      : 'essential';
+  const currentBillingCycle =
+    normalizeBillingCycle(
+      subscription?.billing_cycle
+    ) || 'monthly';
+
+  const isTrialing =
+    subscription?.status ===
+    'trialing';
+
+  const activeDiscount =
+    Number(
+      subscription?.discount_percent
+    ) > 0;
+
+  const renewalDate =
+    isTrialing
+      ? subscription?.trial_ends_at ||
+        subscription?.current_period_end
+      : subscription?.current_period_end;
 
   return (
     <div className="subscription-page">
@@ -277,8 +389,9 @@ export default function Suscripcion({
                   ?.workspace_name
               }
             </strong>
-            , los métodos de pago y las
-            facturas de MiBooking.
+            , la modalidad de pago, los
+            métodos de pago y las facturas
+            de MiBooking.
           </p>
         </div>
 
@@ -337,7 +450,12 @@ export default function Suscripcion({
 
               <small>
                 {getPlanPrice(
-                  currentPlan
+                  currentPlan,
+                  currentBillingCycle
+                )}
+                {' · '}
+                {getBillingCycleLabel(
+                  currentBillingCycle
                 )}
               </small>
             </article>
@@ -354,25 +472,28 @@ export default function Suscripcion({
               </strong>
 
               <small>
-                {subscription
-                  ?.cancel_at_period_end
-                  ? 'La renovación automática está cancelada.'
-                  : 'Renovación automática activa.'}
+                {isTrialing
+                  ? 'No se realizará ningún cobro hasta que termine la prueba.'
+                  : subscription
+                      ?.cancel_at_period_end
+                    ? 'La renovación automática está cancelada.'
+                    : 'Renovación automática activa.'}
               </small>
             </article>
 
             <article>
               <span>
-                {subscription
-                  ?.cancel_at_period_end
-                  ? 'Acceso disponible hasta'
-                  : 'Próxima renovación'}
+                {isTrialing
+                  ? 'Fin de la prueba'
+                  : subscription
+                      ?.cancel_at_period_end
+                    ? 'Acceso disponible hasta'
+                    : 'Próxima renovación'}
               </span>
 
               <strong>
                 {formatSubscriptionDate(
-                  subscription
-                    ?.current_period_end
+                  renewalDate
                 ) || 'Por confirmar'}
               </strong>
 
@@ -383,8 +504,7 @@ export default function Suscripcion({
             </article>
           </section>
 
-          {subscription
-            ?.discount_percent > 0 && (
+          {activeDiscount && (
             <section className="subscription-discount">
               <div>
                 <span>
@@ -412,65 +532,196 @@ export default function Suscripcion({
             </section>
           )}
 
-          <section className="subscription-actions">
-            <div className="subscription-action-copy">
-              <span>
-                Cambiar de plan
-              </span>
+          <section className="subscription-change">
+            <div className="subscription-change-heading">
+              <div>
+                <span>
+                  Plan y modalidad
+                </span>
 
-              {currentPlan ===
-              'essential' ? (
-                <>
-                  <h2>
-                    Pasa a Profesional
-                  </h2>
+                <h2>
+                  Elige cómo quieres continuar
+                </h2>
 
-                  <p>
-                    Trabaja con Gestores
-                    ilimitados. Stripe cobrará
-                    el ajuste proporcional del
-                    período actual.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h2>
-                    Cambiar a Esencial
-                  </h2>
+                <p>
+                  Puedes cambiar de plan o pasar
+                  de facturación mensual a anual
+                  desde esta misma página.
+                </p>
+              </div>
 
-                  <p>
-                    Esencial admite un solo
-                    Gestor. Debes conservar como
-                    máximo un acceso entre
-                    Gestores e invitaciones
-                    pendientes.
-                  </p>
-                </>
-              )}
+              <div
+                className="subscription-cycle-switch"
+                role="group"
+                aria-label="Modalidad de facturación"
+              >
+                <button
+                  type="button"
+                  className={
+                    selectedBillingCycle ===
+                    'monthly'
+                      ? 'active'
+                      : ''
+                  }
+                  aria-pressed={
+                    selectedBillingCycle ===
+                    'monthly'
+                  }
+                  onClick={() =>
+                    setSelectedBillingCycle(
+                      'monthly'
+                    )
+                  }
+                >
+                  Mensual
+                </button>
+
+                <button
+                  type="button"
+                  className={
+                    selectedBillingCycle ===
+                    'annual'
+                      ? 'active'
+                      : ''
+                  }
+                  aria-pressed={
+                    selectedBillingCycle ===
+                    'annual'
+                  }
+                  onClick={() =>
+                    setSelectedBillingCycle(
+                      'annual'
+                    )
+                  }
+                  disabled={
+                    activeDiscount
+                  }
+                  title={
+                    activeDiscount
+                      ? 'La promoción activa corresponde a una suscripción mensual.'
+                      : ''
+                  }
+                >
+                  Anual
+                  <small>
+                    Ahorra hasta 42%
+                  </small>
+                </button>
+              </div>
             </div>
 
-            <button
-              type="button"
-              className="subscription-primary"
-              onClick={() =>
-                cambiarPlan(
-                  targetPlan
-                )
-              }
-              disabled={
-                Boolean(changingPlan) ||
-                portalLoading ||
-                subscription
-                  ?.cancel_at_period_end
-              }
-            >
-              {changingPlan
-                ? 'Procesando cambio...'
-                : currentPlan ===
-                    'essential'
-                  ? 'Mejorar a Profesional'
-                  : 'Cambiar a Esencial'}
-            </button>
+            {activeDiscount && (
+              <p className="subscription-promotion-cycle-note">
+                Tu beneficio promocional está
+                vinculado a la modalidad mensual.
+                Podrás seleccionar la modalidad
+                anual cuando termine la promoción.
+              </p>
+            )}
+
+            <div className="subscription-plan-grid">
+              {PLAN_OPTIONS.map(
+                (planOption) => {
+                  const optionKey =
+                    `${planOption.code}-${selectedBillingCycle}`;
+
+                  const isCurrent =
+                    planOption.code ===
+                      currentPlan &&
+                    selectedBillingCycle ===
+                      currentBillingCycle;
+
+                  const isChanging =
+                    changingOption ===
+                      optionKey;
+
+                  return (
+                    <article
+                      key={planOption.code}
+                      className={[
+                        'subscription-plan-card',
+                        planOption.code ===
+                        'professional'
+                          ? 'featured'
+                          : '',
+                        isCurrent
+                          ? 'current'
+                          : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      {isCurrent && (
+                        <span className="subscription-current-badge">
+                          Plan actual
+                        </span>
+                      )}
+
+                      <div>
+                        <span className="subscription-plan-name">
+                          {planOption.title}
+                        </span>
+
+                        <h3>
+                          {getPlanPrice(
+                            planOption.code,
+                            selectedBillingCycle
+                          )}
+                        </h3>
+
+                        <p>
+                          {
+                            planOption.description
+                          }
+                        </p>
+                      </div>
+
+                      <strong className="subscription-manager-limit">
+                        {
+                          planOption.managerLimit
+                        }
+                      </strong>
+
+                      <button
+                        type="button"
+                        className={
+                          planOption.code ===
+                          'professional'
+                            ? 'subscription-primary'
+                            : 'subscription-secondary-light'
+                        }
+                        onClick={() =>
+                          cambiarSuscripcion(
+                            planOption.code,
+                            selectedBillingCycle
+                          )
+                        }
+                        disabled={
+                          isCurrent ||
+                          Boolean(
+                            changingOption
+                          ) ||
+                          portalLoading ||
+                          subscription
+                            ?.cancel_at_period_end ||
+                          (
+                            activeDiscount &&
+                            selectedBillingCycle ===
+                              'annual'
+                          )
+                        }
+                      >
+                        {isChanging
+                          ? 'Procesando cambio...'
+                          : isCurrent
+                            ? 'Selección actual'
+                            : `Cambiar a ${planOption.title}`}
+                      </button>
+                    </article>
+                  );
+                }
+              )}
+            </div>
 
             {subscription
               ?.cancel_at_period_end && (

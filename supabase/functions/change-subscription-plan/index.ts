@@ -3,6 +3,14 @@ import Stripe from 'npm:stripe@^22';
 
 type JsonObject = Record<string, any>;
 
+type PlanCode =
+  | 'essential'
+  | 'professional';
+
+type BillingCycle =
+  | 'monthly'
+  | 'annual';
+
 const JSON_HEADERS = {
   'Content-Type': 'application/json',
 };
@@ -62,18 +70,57 @@ function responseJson(
   );
 }
 
-function normalizePlan(value: unknown) {
+function normalizePlan(
+  value: unknown,
+): PlanCode | null {
   const plan =
     String(value || '')
       .trim()
       .toLowerCase();
 
-  return [
-    'essential',
-    'professional',
-  ].includes(plan)
-    ? plan
-    : '';
+  if (
+    plan === 'essential' ||
+    plan === 'esencial'
+  ) {
+    return 'essential';
+  }
+
+  if (
+    plan === 'professional' ||
+    plan === 'profesional'
+  ) {
+    return 'professional';
+  }
+
+  return null;
+}
+
+function normalizeBillingCycle(
+  value: unknown,
+): BillingCycle | null {
+  const cycle =
+    String(value || '')
+      .trim()
+      .toLowerCase();
+
+  if (
+    cycle === 'monthly' ||
+    cycle === 'mensual' ||
+    cycle === 'month'
+  ) {
+    return 'monthly';
+  }
+
+  if (
+    cycle === 'annual' ||
+    cycle === 'anual' ||
+    cycle === 'yearly' ||
+    cycle === 'year'
+  ) {
+    return 'annual';
+  }
+
+  return null;
 }
 
 function priceIdOf(item: JsonObject) {
@@ -85,6 +132,19 @@ function priceIdOf(item: JsonObject) {
 
   return String(
     item?.price?.id || '',
+  );
+}
+
+function unixSecondsAreFuture(
+  value: unknown,
+) {
+  const seconds = Number(value);
+
+  return (
+    Number.isFinite(seconds) &&
+    seconds > Math.floor(
+      Date.now() / 1000
+    )
   );
 }
 
@@ -113,14 +173,30 @@ Deno.serve(async (request) => {
         'STRIPE_SECRET_KEY',
       );
 
-    const essentialPriceId =
+    const essentialMonthlyPriceId =
+      Deno.env.get(
+        'STRIPE_PRICE_ESSENTIAL_MONTHLY',
+      ) ||
       Deno.env.get(
         'STRIPE_PRICE_ESSENTIAL',
       );
 
-    const professionalPriceId =
+    const essentialAnnualPriceId =
+      Deno.env.get(
+        'STRIPE_PRICE_ESSENTIAL_ANNUAL',
+      );
+
+    const professionalMonthlyPriceId =
+      Deno.env.get(
+        'STRIPE_PRICE_PROFESSIONAL_MONTHLY',
+      ) ||
       Deno.env.get(
         'STRIPE_PRICE_PROFESSIONAL',
+      );
+
+    const professionalAnnualPriceId =
+      Deno.env.get(
+        'STRIPE_PRICE_PROFESSIONAL_ANNUAL',
       );
 
     const supabaseUrl =
@@ -138,16 +214,61 @@ Deno.serve(async (request) => {
 
     if (
       !stripeSecretKey ||
-      !essentialPriceId ||
-      !professionalPriceId ||
+      !essentialMonthlyPriceId ||
+      !essentialAnnualPriceId ||
+      !professionalMonthlyPriceId ||
+      !professionalAnnualPriceId ||
       !supabaseUrl ||
       !anonKey ||
       !serviceRoleKey
     ) {
       throw new Error(
-        'Faltan secretos de configuración.',
+        'Faltan secretos de configuración para los cuatro precios de Stripe.',
       );
     }
+
+    const priceOptions = [
+      {
+        planCode:
+          'essential' as const,
+
+        billingCycle:
+          'monthly' as const,
+
+        priceId:
+          essentialMonthlyPriceId,
+      },
+      {
+        planCode:
+          'essential' as const,
+
+        billingCycle:
+          'annual' as const,
+
+        priceId:
+          essentialAnnualPriceId,
+      },
+      {
+        planCode:
+          'professional' as const,
+
+        billingCycle:
+          'monthly' as const,
+
+        priceId:
+          professionalMonthlyPriceId,
+      },
+      {
+        planCode:
+          'professional' as const,
+
+        billingCycle:
+          'annual' as const,
+
+        priceId:
+          professionalAnnualPriceId,
+      },
+    ];
 
     const authorization =
       request.headers.get(
@@ -212,6 +333,13 @@ Deno.serve(async (request) => {
         body?.targetPlan,
       );
 
+    const targetBillingCycle =
+      normalizeBillingCycle(
+        body
+          ?.targetBillingCycle ??
+        body?.billingCycle,
+      );
+
     if (
       !Number.isInteger(
         workspaceId,
@@ -234,6 +362,17 @@ Deno.serve(async (request) => {
         {
           error:
             'El plan seleccionado no es válido.',
+        },
+        400,
+      );
+    }
+
+    if (!targetBillingCycle) {
+      return responseJson(
+        request,
+        {
+          error:
+            'La modalidad de facturación no es válida.',
         },
         400,
       );
@@ -283,7 +422,7 @@ Deno.serve(async (request) => {
         request,
         {
           error:
-            'Solo el Artista propietario puede cambiar el plan.',
+            'Solo el Artista propietario puede cambiar la suscripción.',
         },
         403,
       );
@@ -299,11 +438,14 @@ Deno.serve(async (request) => {
       .select(`
         workspace_id,
         plan_code,
+        billing_cycle,
         billing_mode,
         status,
         stripe_customer_id,
         stripe_subscription_id,
-        cancel_at_period_end
+        cancel_at_period_end,
+        discount_percent,
+        discount_ends_at
       `)
       .eq(
         'workspace_id',
@@ -347,18 +489,23 @@ Deno.serve(async (request) => {
     }
 
     if (
-      localSubscription.plan_code ===
-      targetPlan
+      ![
+        'active',
+        'trialing',
+      ].includes(
+        String(
+          localSubscription
+            .status || '',
+        ),
+      )
     ) {
       return responseJson(
         request,
         {
-          ok: true,
-          unchanged: true,
-          planCode: targetPlan,
-          message:
-            'Ese plan ya está activo.',
+          error:
+            'Resuelve primero el estado pendiente de tu suscripción desde Administrar suscripción.',
         },
+        409,
       );
     }
 
@@ -471,6 +618,11 @@ Deno.serve(async (request) => {
         .retrieve(
           localSubscription
             .stripe_subscription_id,
+          {
+            expand: [
+              'discounts',
+            ],
+          },
         ) as unknown as JsonObject;
 
     if (
@@ -481,7 +633,7 @@ Deno.serve(async (request) => {
         request,
         {
           error:
-            'La renovación está cancelada en Stripe. Reactívala antes de cambiar de plan.',
+            'La renovación está cancelada en Stripe. Reactívala antes de cambiar la suscripción.',
         },
         409,
       );
@@ -493,11 +645,10 @@ Deno.serve(async (request) => {
           ?.items?.data || []
       ).find(
         (item: JsonObject) =>
-          [
-            essentialPriceId,
-            professionalPriceId,
-          ].includes(
-            priceIdOf(item),
+          priceOptions.some(
+            (option) =>
+              option.priceId ===
+              priceIdOf(item),
           ),
       );
 
@@ -510,79 +661,149 @@ Deno.serve(async (request) => {
     const currentPriceId =
       priceIdOf(currentItem);
 
-    const currentPlan =
-      currentPriceId ===
-      professionalPriceId
-        ? 'professional'
-        : currentPriceId ===
-            essentialPriceId
-          ? 'essential'
-          : '';
+    const currentOption =
+      priceOptions.find(
+        (option) =>
+          option.priceId ===
+          currentPriceId,
+      );
+
+    if (!currentOption) {
+      throw new Error(
+        'El precio actual de Stripe no corresponde a una tarifa configurada de MiBooking.',
+      );
+    }
 
     if (
-      currentPlan === targetPlan
+      currentOption.planCode ===
+        targetPlan &&
+      currentOption.billingCycle ===
+        targetBillingCycle
     ) {
       return responseJson(
         request,
         {
           ok: true,
           unchanged: true,
-          planCode: targetPlan,
+          planCode:
+            targetPlan,
+          billingCycle:
+            targetBillingCycle,
           message:
-            'Ese plan ya está activo en Stripe.',
+            'Esa suscripción ya está activa.',
         },
       );
     }
 
-    const targetPriceId =
-      targetPlan ===
-      'professional'
-        ? professionalPriceId
-        : essentialPriceId;
+    const activeDiscounts =
+      Array.isArray(
+        stripeSubscription
+          ?.discounts,
+      )
+        ? stripeSubscription
+            .discounts
+            .filter(Boolean)
+        : [];
+
+    if (
+      targetBillingCycle ===
+        'annual' &&
+      activeDiscounts.length > 0
+    ) {
+      return responseJson(
+        request,
+        {
+          error:
+            'Tu promoción actual corresponde a la modalidad mensual. Podrás cambiar a facturación anual cuando termine el beneficio promocional.',
+        },
+        409,
+      );
+    }
+
+    const targetOption =
+      priceOptions.find(
+        (option) =>
+          option.planCode ===
+            targetPlan &&
+          option.billingCycle ===
+            targetBillingCycle,
+      );
+
+    if (!targetOption) {
+      throw new Error(
+        'No se encontró la tarifa solicitada.',
+      );
+    }
+
+    const cycleChanged =
+      currentOption
+        .billingCycle !==
+      targetBillingCycle;
 
     const isUpgrade =
+      currentOption.planCode ===
+        'essential' &&
       targetPlan ===
-      'professional';
+        'professional';
+
+    const trialing =
+      stripeSubscription
+        ?.status ===
+        'trialing' &&
+      unixSecondsAreFuture(
+        stripeSubscription
+          ?.trial_end,
+      );
+
+    const updateParams:
+      Stripe.SubscriptionUpdateParams =
+      {
+        items: [
+          {
+            id:
+              currentItem.id,
+
+            price:
+              targetOption
+                .priceId,
+          },
+        ],
+
+        payment_behavior:
+          'pending_if_incomplete',
+      };
+
+    if (trialing) {
+      updateParams
+        .proration_behavior =
+        'none';
+
+      updateParams.trial_end =
+        Number(
+          stripeSubscription
+            .trial_end,
+        );
+    } else if (cycleChanged) {
+      updateParams
+        .billing_cycle_anchor =
+        'now';
+
+      updateParams
+        .proration_behavior =
+        'always_invoice';
+    } else {
+      updateParams
+        .proration_behavior =
+        isUpgrade
+          ? 'always_invoice'
+          : 'create_prorations';
+    }
 
     const updated =
       await stripe.subscriptions
         .update(
           stripeSubscription.id,
-          {
-            items: [
-              {
-                id:
-                  currentItem.id,
-                price:
-                  targetPriceId,
-              },
-            ],
-
-            payment_behavior:
-              'pending_if_incomplete',
-
-            proration_behavior:
-              isUpgrade
-                ? 'always_invoice'
-                : 'create_prorations',
-
-            metadata: {
-              ...(
-                stripeSubscription
-                  .metadata || {}
-              ),
-              workspace_id:
-                String(
-                  workspaceId,
-                ),
-              owner_user_id:
-                user.id,
-              plan_code:
-                targetPlan,
-              source:
-                'mibooking_plan_change',
-            },
-          },
+          updateParams,
         ) as unknown as JsonObject;
 
     const pendingUpdate =
@@ -590,22 +811,82 @@ Deno.serve(async (request) => {
         updated?.pending_update,
       );
 
+    if (!pendingUpdate) {
+      try {
+        await stripe
+          .subscriptions
+          .update(
+            stripeSubscription.id,
+            {
+              metadata: {
+                ...(
+                  stripeSubscription
+                    .metadata || {}
+                ),
+
+                workspace_id:
+                  String(
+                    workspaceId,
+                  ),
+
+                owner_user_id:
+                  user.id,
+
+                plan_code:
+                  targetPlan,
+
+                billing_cycle:
+                  targetBillingCycle,
+
+                source:
+                  'mibooking_subscription_change',
+              },
+            },
+          );
+      } catch (metadataError) {
+        console.error(
+          'El cambio se aplicó, pero no se pudo actualizar metadata:',
+          metadataError,
+        );
+      }
+    }
+
     return responseJson(
       request,
       {
         ok: true,
         unchanged: false,
+
+        previousPlan:
+          currentOption
+            .planCode,
+
+        previousBillingCycle:
+          currentOption
+            .billingCycle,
+
         requestedPlan:
           targetPlan,
+
+        requestedBillingCycle:
+          targetBillingCycle,
+
         stripeStatus:
           String(
             updated?.status || '',
           ),
+
+        preservedTrial:
+          trialing,
+
         pendingUpdate,
+
         message:
           pendingUpdate
             ? 'Stripe dejó el cambio pendiente hasta completar el cobro.'
-            : 'El cambio de plan fue enviado correctamente a Stripe.',
+            : trialing
+              ? 'El cambio fue aplicado sin alterar la fecha final de la prueba.'
+              : 'El cambio de suscripción fue enviado correctamente a Stripe.',
       },
     );
   } catch (error) {
@@ -620,7 +901,7 @@ Deno.serve(async (request) => {
         error:
           error instanceof Error
             ? error.message
-            : 'No se pudo cambiar el plan.',
+            : 'No se pudo cambiar la suscripción.',
       },
       500,
     );

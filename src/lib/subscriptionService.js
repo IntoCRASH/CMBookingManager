@@ -398,12 +398,18 @@ export async function createCheckoutSession({
 export async function changeSubscriptionPlan({
   workspaceId,
   targetPlan,
+  targetBillingCycle,
 }) {
   const parsedWorkspaceId =
     Number(workspaceId);
 
   const plan =
     normalizePlanCode(targetPlan);
+
+  const billingCycle =
+    normalizeBillingCycle(
+      targetBillingCycle
+    );
 
   if (
     !Number.isInteger(
@@ -422,6 +428,12 @@ export async function changeSubscriptionPlan({
     );
   }
 
+  if (!billingCycle) {
+    throw new Error(
+      'Selecciona una modalidad de facturación válida.'
+    );
+  }
+
   const { data, error } =
     await supabase.functions.invoke(
       'change-subscription-plan',
@@ -429,8 +441,12 @@ export async function changeSubscriptionPlan({
         body: {
           workspaceId:
             parsedWorkspaceId,
+
           targetPlan:
             plan,
+
+          targetBillingCycle:
+            billingCycle,
         },
       }
     );
@@ -444,7 +460,7 @@ export async function changeSubscriptionPlan({
   if (!data?.ok) {
     throw new Error(
       data?.error ||
-        'No se pudo cambiar el plan.'
+        'No se pudo cambiar la suscripción.'
     );
   }
 
