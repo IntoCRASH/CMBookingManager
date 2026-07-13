@@ -297,6 +297,81 @@ export async function getWorkspaceSubscription(
   return data || null;
 }
 
+function delay(milliseconds) {
+  return new Promise(
+    (resolve) =>
+      setTimeout(
+        resolve,
+        milliseconds
+      )
+  );
+}
+
+export async function waitForWorkspaceSubscriptionAccess({
+  workspaceId,
+  maxAttempts = 20,
+  intervalMs = 1500,
+}) {
+  const parsedWorkspaceId =
+    Number(workspaceId);
+
+  if (
+    !Number.isInteger(
+      parsedWorkspaceId
+    ) ||
+    parsedWorkspaceId <= 0
+  ) {
+    throw new Error(
+      'El proyecto del Artista no es válido.'
+    );
+  }
+
+  let latestSubscription =
+    null;
+
+  for (
+    let attempt = 0;
+    attempt < maxAttempts;
+    attempt += 1
+  ) {
+    latestSubscription =
+      await getWorkspaceSubscription(
+        parsedWorkspaceId
+      );
+
+    if (
+      isSubscriptionAccessAllowed(
+        latestSubscription
+      )
+    ) {
+      return {
+        confirmed: true,
+        subscription:
+          latestSubscription,
+        attempts:
+          attempt + 1,
+      };
+    }
+
+    if (
+      attempt <
+      maxAttempts - 1
+    ) {
+      await delay(
+        intervalMs
+      );
+    }
+  }
+
+  return {
+    confirmed: false,
+    subscription:
+      latestSubscription,
+    attempts:
+      maxAttempts,
+  };
+}
+
 async function functionErrorMessage(error) {
   const fallback =
     error?.message ||

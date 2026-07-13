@@ -12,6 +12,7 @@ import {
 import Landing from './pages/Landing';
 import { ensureMyAccountReady } from './lib/authService';
 import {
+  clearStoredSelectedBillingCycle,
   clearStoredSelectedPlan,
   createCheckoutSession,
   getStoredSelectedPlan,
@@ -23,6 +24,7 @@ import {
   normalizePlanCode,
   planFromLocation,
   storeSelectedPlan,
+  waitForWorkspaceSubscriptionAccess,
 } from './lib/subscriptionService';
 import SubscriptionGate from './pages/SubscriptionGate';
 import BillingAccessGate from './pages/BillingAccessGate';
@@ -75,6 +77,19 @@ export default function App() {
   const [checkoutLoading, setCheckoutLoading] =
     useState(false);
 
+  const [
+    checkoutConfirmation,
+    setCheckoutConfirmation,
+  ] = useState({
+    status: 'idle',
+    message: '',
+  });
+
+  const [
+    checkoutConfirmationAttempt,
+    setCheckoutConfirmationAttempt,
+  ] = useState(0);
+
   const [selectedPlan, setSelectedPlan] =
     useState(() =>
       planFromLocation() ||
@@ -96,6 +111,12 @@ export default function App() {
     currentQuery.get('legal') || '';
 
   const checkoutNoticeShown =
+    useRef(false);
+
+  const checkoutCancelNoticeShown =
+    useRef(false);
+
+  const checkoutConfirmationStarted =
     useRef(false);
 
   const billingNoticeShown =
@@ -140,6 +161,16 @@ export default function App() {
         setWorkspaceSubscription(null);
         setSubscriptionError('');
         setCheckoutLoading(false);
+        setCheckoutConfirmation({
+          status: 'idle',
+          message: '',
+        });
+        checkoutConfirmationStarted.current =
+          false;
+        checkoutNoticeShown.current =
+          false;
+        checkoutCancelNoticeShown.current =
+          false;
         clearCurrentActiveWorkspace();
         navigationHistory.current = [];
       }
@@ -300,77 +331,221 @@ export default function App() {
   ]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function confirmarRetornoCheckout() {
+      const checkoutWasSuccessful =
+        checkoutResult === 'success' ||
+        billingResult === 'success';
+
+      const workspaceId =
+        activeWorkspace?.workspace_id;
+
+      if (
+        !checkoutWasSuccessful ||
+        !session?.user?.id ||
+        !workspaceId ||
+        checkoutConfirmationStarted.current
+      ) {
+        return;
+      }
+
+      checkoutConfirmationStarted.current =
+        true;
+
+      setCheckoutConfirmation({
+        status: 'confirming',
+        message:
+          'Stripe confirmó el proceso. Estamos activando tu suscripción en MiBooking.',
+      });
+
+      setSubscriptionError('');
+
+      try {
+        const result =
+          await waitForWorkspaceSubscriptionAccess({
+            workspaceId,
+            maxAttempts: 24,
+            intervalMs: 1500,
+          });
+
+        if (cancelled) {
+          return;
+        }
+
+        if (result.subscription) {
+          setWorkspaceSubscription(
+            result.subscription
+          );
+        }
+
+        if (!result.confirmed) {
+          setCheckoutConfirmation({
+            status: 'failed',
+            message:
+              'Stripe completó el proceso, pero MiBooking todavía no ha recibido la confirmación del webhook. Puedes reintentar sin volver a pagar.',
+          });
+
+          return;
+        }
+
+        setCheckoutConfirmation({
+          status: 'success',
+          message:
+            'Tu suscripción está activa.',
+        });
+
+        if (
+          !checkoutNoticeShown.current
+        ) {
+          checkoutNoticeShown.current =
+            true;
+
+          const activePlanLabel =
+            getPlanLabel(
+              result.subscription
+                ?.plan_code
+            ) || 'MiBooking';
+
+          toast.success(
+            result.subscription
+              ?.status === 'trialing'
+              ? `Tu plan ${activePlanLabel} está activo. Comenzaron tus 3 días de prueba gratis.`
+              : `Pago confirmado. Tu plan ${activePlanLabel} está activo.`,
+            {
+              id: `checkout-success-${workspaceId}`,
+              duration: 9000,
+            }
+          );
+        }
+
+        clearStoredSelectedPlan();
+        clearStoredSelectedBillingCycle();
+        setSelectedPlan('');
+
+        setPage('dashboard');
+        setCotizacionId(null);
+        setMoreOpen(false);
+        navigationHistory.current = [];
+
+        const url =
+          new URL(
+            window.location.href
+          );
+
+        [
+          'billing',
+          'checkout',
+          'session_id',
+          'plan',
+          'billingCycle',
+          'billing_cycle',
+        ].forEach((key) => {
+          url.searchParams.delete(
+            key
+          );
+        });
+
+        window.history.replaceState(
+          {},
+          '',
+          `${url.pathname}${
+            url.search
+          }${url.hash}`
+        );
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        console.error(error);
+
+        setCheckoutConfirmation({
+          status: 'failed',
+          message:
+            error.message ||
+            'No se pudo confirmar la suscripción. Puedes reintentar sin volver a pagar.',
+        });
+      }
+    }
+
+    confirmarRetornoCheckout();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    checkoutResult,
+    billingResult,
+    session?.user?.id,
+    activeWorkspace?.workspace_id,
+    checkoutConfirmationAttempt,
+  ]);
+
+  useEffect(() => {
+    const checkoutWasCancelled =
+      checkoutResult === 'cancelled' ||
+      billingResult === 'cancelled';
+
     if (
-      !isSubscriptionAccessAllowed(
-        workspaceSubscription
-      )
+      !checkoutWasCancelled ||
+      checkoutCancelNoticeShown.current
     ) {
       return;
     }
 
-    if (
-      checkoutResult === 'success' &&
-      !checkoutNoticeShown.current
-    ) {
-      checkoutNoticeShown.current = true;
+    checkoutCancelNoticeShown.current =
+      true;
 
-      const activePlanLabel =
-        getPlanLabel(
-          workspaceSubscription?.plan_code
-        ) || 'MiBooking';
-
-      toast.success(
-        `Pago confirmado. Tu plan ${activePlanLabel} está activo.`,
-        {
-          id: `checkout-success-${
-            activeWorkspace?.workspace_id ||
-            'workspace'
-          }`,
-          duration: 9000,
-        }
-      );
-
-      setPage('dashboard');
-      setCotizacionId(null);
-      setMoreOpen(false);
-      navigationHistory.current = [];
-    }
-
-    clearStoredSelectedPlan();
-    setSelectedPlan('');
+    toast(
+      'El proceso de suscripción fue cancelado. No se realizó un nuevo cobro.',
+      {
+        id: 'checkout-cancelled',
+        duration: 7000,
+      }
+    );
 
     const url =
-      new URL(window.location.href);
-
-    let changed = false;
+      new URL(
+        window.location.href
+      );
 
     [
+      'billing',
       'checkout',
       'session_id',
-      'plan',
     ].forEach((key) => {
-      if (url.searchParams.has(key)) {
-        url.searchParams.delete(key);
-        changed = true;
-      }
+      url.searchParams.delete(
+        key
+      );
     });
 
-    if (changed) {
-      window.history.replaceState(
-        {},
-        '',
-        `${url.pathname}${
-          url.search
-        }${url.hash}`
-      );
-    }
+    window.history.replaceState(
+      {},
+      '',
+      `${url.pathname}${
+        url.search
+      }${url.hash}`
+    );
   }, [
     checkoutResult,
-    activeWorkspace?.workspace_id,
-    workspaceSubscription?.status,
-    workspaceSubscription?.billing_mode,
-    workspaceSubscription?.plan_code,
+    billingResult,
   ]);
+
+  function reintentarConfirmacionCheckout() {
+    checkoutConfirmationStarted.current =
+      false;
+
+    setCheckoutConfirmation({
+      status: 'idle',
+      message: '',
+    });
+
+    setCheckoutConfirmationAttempt(
+      (current) =>
+        current + 1
+    );
+  }
 
   const esArtista = canEditWorkspaceConfiguration(activeWorkspace);
   const roleLabel = getWorkspaceRoleLabel(activeWorkspace);
@@ -1018,6 +1193,64 @@ export default function App() {
       />
     );
   } else if (
+    checkoutConfirmation.status ===
+    'confirming'
+  ) {
+    contenido = (
+      <div className="workspace-state-card">
+        <h1>
+          Confirmando tu suscripción
+        </h1>
+
+        <p>
+          {
+            checkoutConfirmation
+              .message
+          }
+        </p>
+
+        <p>
+          No cierres esta ventana. Este
+          proceso normalmente tarda solo
+          unos segundos.
+        </p>
+      </div>
+    );
+  } else if (
+    checkoutConfirmation.status ===
+    'failed'
+  ) {
+    contenido = (
+      <div className="workspace-state-card">
+        <h1>
+          La suscripción está pendiente de sincronización
+        </h1>
+
+        <p>
+          {
+            checkoutConfirmation
+              .message
+          }
+        </p>
+
+        <button
+          type="button"
+          onClick={
+            reintentarConfirmacionCheckout
+          }
+        >
+          Reintentar confirmación
+        </button>
+
+        <button
+          type="button"
+          onClick={logout}
+        >
+          Cerrar sesión
+        </button>
+      </div>
+    );
+  } else if (
     !subscriptionAccessAllowed &&
     initialSubscriptionRequired &&
     esArtista
@@ -1030,7 +1263,10 @@ export default function App() {
         error={subscriptionError}
         esArtista={esArtista}
         selectedPlan={selectedPlan}
-        checkoutResult={checkoutResult}
+        checkoutResult={
+          checkoutResult ||
+          billingResult
+        }
         checkoutLoading={checkoutLoading}
         onChoosePlan={
           seleccionarPlanSuscripcion
