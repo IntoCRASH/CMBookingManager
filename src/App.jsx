@@ -24,6 +24,7 @@ import {
   normalizePlanCode,
   planFromLocation,
   storeSelectedPlan,
+  syncWorkspaceSubscriptionFromStripe,
   waitForWorkspaceSubscriptionAccess,
 } from './lib/subscriptionService';
 import SubscriptionGate from './pages/SubscriptionGate';
@@ -106,6 +107,11 @@ export default function App() {
 
   const billingResult =
     currentQuery.get('billing') || '';
+
+  const checkoutSessionId =
+    currentQuery.get(
+      'session_id'
+    ) || '';
 
   const legalSection =
     currentQuery.get('legal') || '';
@@ -362,28 +368,81 @@ export default function App() {
       setSubscriptionError('');
 
       try {
-        const result =
-          await waitForWorkspaceSubscriptionAccess({
-            workspaceId,
-            maxAttempts: 24,
-            intervalMs: 1500,
-          });
+        let recoveredSubscription =
+          null;
 
-        if (cancelled) {
-          return;
-        }
+        let recoveryError =
+          null;
 
-        if (result.subscription) {
-          setWorkspaceSubscription(
-            result.subscription
+        try {
+          const recovery =
+            await syncWorkspaceSubscriptionFromStripe({
+              workspaceId,
+
+              checkoutSessionId,
+            });
+
+          recoveredSubscription =
+            recovery
+              ?.subscription ||
+            null;
+
+          if (
+            recoveredSubscription
+          ) {
+            setWorkspaceSubscription(
+              recoveredSubscription
+            );
+          }
+        } catch (error) {
+          recoveryError =
+            error;
+
+          console.warn(
+            'La recuperación directa desde Stripe no se completó; se esperará al webhook:',
+            error
           );
         }
 
-        if (!result.confirmed) {
+        let confirmedSubscription =
+          recoveredSubscription;
+
+        if (
+          !isSubscriptionAccessAllowed(
+            confirmedSubscription
+          )
+        ) {
+          const result =
+            await waitForWorkspaceSubscriptionAccess({
+              workspaceId,
+              maxAttempts: 24,
+              intervalMs: 1500,
+            });
+
+          if (cancelled) {
+            return;
+          }
+
+          if (result.subscription) {
+            setWorkspaceSubscription(
+              result.subscription
+            );
+
+            confirmedSubscription =
+              result.subscription;
+          }
+        }
+
+        if (
+          !isSubscriptionAccessAllowed(
+            confirmedSubscription
+          )
+        ) {
           setCheckoutConfirmation({
             status: 'failed',
             message:
-              'Stripe completó el proceso, pero MiBooking todavía no ha recibido la confirmación del webhook. Puedes reintentar sin volver a pagar.',
+              recoveryError?.message ||
+              'Stripe completó el proceso, pero MiBooking todavía no pudo recuperar la suscripción. Puedes reintentar sin volver a pagar.',
           });
 
           return;
@@ -403,12 +462,12 @@ export default function App() {
 
           const activePlanLabel =
             getPlanLabel(
-              result.subscription
+              confirmedSubscription
                 ?.plan_code
             ) || 'MiBooking';
 
           toast.success(
-            result.subscription
+            confirmedSubscription
               ?.status === 'trialing'
               ? `Tu plan ${activePlanLabel} está activo. Comenzaron tus 3 días de prueba gratis.`
               : `Pago confirmado. Tu plan ${activePlanLabel} está activo.`,
@@ -479,6 +538,7 @@ export default function App() {
     billingResult,
     session?.user?.id,
     activeWorkspace?.workspace_id,
+    checkoutSessionId,
     checkoutConfirmationAttempt,
   ]);
 

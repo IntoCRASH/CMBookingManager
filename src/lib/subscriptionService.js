@@ -307,6 +307,60 @@ function delay(milliseconds) {
   );
 }
 
+export async function syncWorkspaceSubscriptionFromStripe({
+  workspaceId,
+  checkoutSessionId = '',
+}) {
+  const parsedWorkspaceId =
+    Number(workspaceId);
+
+  if (
+    !Number.isInteger(
+      parsedWorkspaceId
+    ) ||
+    parsedWorkspaceId <= 0
+  ) {
+    throw new Error(
+      'El proyecto del Artista no es válido.'
+    );
+  }
+
+  const { data, error } =
+    await supabase.functions.invoke(
+      'sync-checkout-subscription',
+      {
+        body: {
+          workspaceId:
+            parsedWorkspaceId,
+
+          checkoutSessionId:
+            String(
+              checkoutSessionId ||
+              ''
+            ).trim(),
+        },
+      }
+    );
+
+  if (error) {
+    throw new Error(
+      await functionErrorMessage(error)
+    );
+  }
+
+  if (
+    !data?.ok ||
+    !data?.subscription
+  ) {
+    throw new Error(
+      data?.error ||
+      'No se pudo recuperar la suscripción desde Stripe.'
+    );
+  }
+
+  return data;
+}
+
 export async function waitForWorkspaceSubscriptionAccess({
   workspaceId,
   maxAttempts = 20,
