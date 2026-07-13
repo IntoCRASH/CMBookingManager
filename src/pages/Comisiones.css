@@ -158,3 +158,76 @@
     align-items: flex-start;
   }
 }
+
+/* =========================================================
+   FLUJO DE CONFIRMACIÓN ENTRE ARTISTA Y GESTOR
+========================================================= */
+
+.commission-flow-note {
+  margin-bottom: 18px;
+  padding: 17px 19px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 16px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(59, 130, 246, 0.08),
+      rgba(124, 58, 237, 0.08)
+    );
+}
+
+.commission-flow-note strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.commission-flow-note p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.comision-badge.en-confirmacion {
+  background: rgba(245, 158, 11, 0.13);
+  color: #b45309;
+}
+
+.comision-badge.confirmada {
+  background: rgba(22, 163, 74, 0.13);
+  color: #15803d;
+}
+
+.commission-confirm-btn {
+  border-color: transparent;
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #6d28d9
+    );
+  color: #ffffff;
+  font-weight: 850;
+}
+
+.commission-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.commission-state-note {
+  max-width: 190px;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+@media (max-width: 680px) {
+  .commission-state-note {
+    max-width: none;
+  }
+}

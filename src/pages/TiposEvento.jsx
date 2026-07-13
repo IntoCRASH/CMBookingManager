@@ -341,8 +341,9 @@ export default function TiposEvento({
           </strong>
 
           <p>
-            Estos multiplicadores y costos extra pertenecen
-            exclusivamente al Artista activo.
+            Los multiplicadores ajustan automáticamente cada
+            parte de la tarifa según el tipo de evento. Un valor
+            de 1.00 mantiene el precio original.
           </p>
         </div>
 
@@ -475,6 +476,28 @@ export default function TiposEvento({
             onChange={cambiar}
             placeholder="Ej: Privado, Boda, Festival, Corporativo"
           />
+
+          <div
+            style={{
+              margin: '14px 0 18px',
+              padding: '12px 14px',
+              border: '1px solid rgba(37, 99, 235, 0.2)',
+              borderRadius: 12,
+              background: 'rgba(37, 99, 235, 0.07)',
+              lineHeight: 1.45,
+            }}
+          >
+            <strong>¿Qué son los multiplicadores?</strong>
+
+            <p style={{ margin: '5px 0 0' }}>
+              Sirven para aumentar o reducir automáticamente una
+              parte de la tarifa según las exigencias del evento.
+              <strong> 1.00</strong> mantiene el precio,
+              <strong> 1.20</strong> lo aumenta un 20% y
+              <strong> 0.90</strong> lo reduce un 10%. Estos
+              ajustes se aplican al calcular la cotización.
+            </p>
+          </div>
 
           <label>Multiplicador de honorarios *</label>
 

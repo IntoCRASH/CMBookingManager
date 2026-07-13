@@ -238,7 +238,11 @@ export async function saveCotizacion(
     data: numero,
     error: errorNumero,
   } = await supabase.rpc(
-    'generar_numero_cotizacion'
+    'generar_numero_cotizacion',
+    {
+      p_workspace_id:
+        currentWorkspaceId,
+    }
   );
 
   if (errorNumero) {

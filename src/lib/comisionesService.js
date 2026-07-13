@@ -1,6 +1,13 @@
 import { supabase } from './supabaseClient';
 import { requireWorkspaceId } from './workspaceService';
 
+const VALID_WORKFLOW_STATES = [
+  'pending',
+  'artist_reported',
+  'manager_reported',
+  'settled',
+];
+
 function normalizarLista(data) {
   if (Array.isArray(data)) return data;
 
@@ -9,7 +16,9 @@ function normalizarLista(data) {
   if (typeof data === 'string') {
     try {
       const parsed = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed : [];
+      return Array.isArray(parsed)
+        ? parsed
+        : [];
     } catch {
       return [];
     }
@@ -18,26 +27,57 @@ function normalizarLista(data) {
   return [];
 }
 
+function normalizarEstadoFlujo(row) {
+  const value = String(
+    row?.workflow_status || ''
+  ).trim();
+
+  if (
+    VALID_WORKFLOW_STATES.includes(
+      value
+    )
+  ) {
+    return value;
+  }
+
+  return row?.settlement_status ===
+    'settled'
+    ? 'settled'
+    : 'pending';
+}
+
 function normalizarComision(row) {
+  const workflowStatus =
+    normalizarEstadoFlujo(row);
+
   return {
-    cotizacion_id: String(row?.cotizacion_id || ''),
+    cotizacion_id: String(
+      row?.cotizacion_id || ''
+    ),
+
     numero: row?.numero || '',
-    workspace_id: Number(row?.workspace_id || 0),
+    workspace_id: Number(
+      row?.workspace_id || 0
+    ),
 
     artista_nombre:
-      row?.artista_nombre || 'Artista',
+      row?.artista_nombre ||
+      'Artista',
 
     gestor_user_id:
-      row?.gestor_user_id || null,
+      row?.gestor_user_id ||
+      null,
 
     gestor_nombre:
-      row?.gestor_nombre || 'Gestor no identificado',
+      row?.gestor_nombre ||
+      'Gestor no identificado',
 
     gestor_email:
       row?.gestor_email || '',
 
     cliente_nombre:
-      row?.cliente_nombre || 'Cliente',
+      row?.cliente_nombre ||
+      'Cliente',
 
     nombre_evento:
       row?.nombre_evento || '',
@@ -45,25 +85,51 @@ function normalizarComision(row) {
     tipo_evento:
       row?.tipo_evento || '',
 
-    venue:
-      row?.venue || '',
+    venue: row?.venue || '',
 
     fecha_evento:
       row?.fecha_evento || null,
 
-    total:
-      Number(row?.total || 0),
+    total: Number(
+      row?.total || 0
+    ),
 
-    comision:
-      Number(row?.comision || 0),
+    comision: Number(
+      row?.comision || 0
+    ),
 
     comision_porcentaje:
-      Number(row?.comision_porcentaje || 0),
+      Number(
+        row?.comision_porcentaje || 0
+      ),
+
+    workflow_status:
+      workflowStatus,
 
     settlement_status:
-      row?.settlement_status === 'settled'
+      workflowStatus === 'settled'
         ? 'settled'
         : 'pending',
+
+    initiated_at:
+      row?.initiated_at || null,
+
+    initiated_by:
+      row?.initiated_by || null,
+
+    initiated_by_role:
+      row?.initiated_by_role ||
+      null,
+
+    confirmed_at:
+      row?.confirmed_at || null,
+
+    confirmed_by:
+      row?.confirmed_by || null,
+
+    confirmed_by_role:
+      row?.confirmed_by_role ||
+      null,
 
     settled_at:
       row?.settled_at || null,
@@ -72,7 +138,8 @@ function normalizarComision(row) {
       row?.settled_by || null,
 
     settled_by_role:
-      row?.settled_by_role || null,
+      row?.settled_by_role ||
+      null,
   };
 }
 
@@ -82,12 +149,14 @@ export async function getWorkspaceCommissions(
   const currentWorkspaceId =
     requireWorkspaceId(workspaceId);
 
-  const { data, error } = await supabase.rpc(
-    'get_workspace_commissions',
-    {
-      p_workspace_id: currentWorkspaceId,
-    }
-  );
+  const { data, error } =
+    await supabase.rpc(
+      'get_workspace_commissions',
+      {
+        p_workspace_id:
+          currentWorkspaceId,
+      }
+    );
 
   if (error) throw error;
 
@@ -96,16 +165,17 @@ export async function getWorkspaceCommissions(
   );
 }
 
-export async function setWorkspaceCommissionStatus({
+export async function advanceWorkspaceCommissionStatus({
   workspaceId,
   cotizacionId,
-  settled,
 }) {
   const currentWorkspaceId =
     requireWorkspaceId(workspaceId);
 
   const cleanCotizacionId =
-    String(cotizacionId || '').trim();
+    String(
+      cotizacionId || ''
+    ).trim();
 
   if (!cleanCotizacionId) {
     throw new Error(
@@ -113,14 +183,17 @@ export async function setWorkspaceCommissionStatus({
     );
   }
 
-  const { data, error } = await supabase.rpc(
-    'set_workspace_commission_status',
-    {
-      p_workspace_id: currentWorkspaceId,
-      p_cotizacion_id: cleanCotizacionId,
-      p_settled: Boolean(settled),
-    }
-  );
+  const { data, error } =
+    await supabase.rpc(
+      'advance_workspace_commission_status',
+      {
+        p_workspace_id:
+          currentWorkspaceId,
+
+        p_cotizacion_id:
+          cleanCotizacionId,
+      }
+    );
 
   if (error) throw error;
 

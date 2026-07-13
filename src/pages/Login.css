@@ -291,6 +291,35 @@
   cursor: pointer;
 }
 
+
+
+.auth-inline-action {
+  margin: 9px 0 0 auto;
+  display: block;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #5b45e8;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.auth-inline-action:hover {
+  text-decoration: underline;
+}
+
+.auth-notice {
+  margin: 14px 0 0;
+  padding: 11px 13px;
+  border: 1px solid #dbe4ff;
+  border-radius: 12px;
+  background: #f5f7ff;
+  color: #596579;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 @media (max-width: 560px) {
   .auth-screen {
     padding: 0;

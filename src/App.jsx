@@ -10,6 +10,7 @@ import {
   selectWorkspace,
 } from './lib/workspaceService';
 import Landing from './pages/Landing';
+import Login from './pages/Login';
 import { ensureMyAccountReady } from './lib/authService';
 import Dashboard from './pages/Dashboard';
 import Tarifas from './pages/Tarifas';
@@ -42,6 +43,13 @@ export default function App() {
   const [cotizacionId, setCotizacionId] = useState(null);
   const [moreOpen, setMoreOpen] = useState(false);
 
+  const [passwordRecovery, setPasswordRecovery] =
+    useState(() =>
+      new URLSearchParams(
+        window.location.search
+      ).get('reset_password') === '1'
+    );
+
   const navigationHistory = useRef([]);
 
   useEffect(() => {
@@ -64,8 +72,12 @@ export default function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+    } = supabase.auth.onAuthStateChange((event, currentSession) => {
       setSession(currentSession);
+
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecovery(true);
+      }
 
       if (!currentSession) {
         setProfile(null);
@@ -149,7 +161,6 @@ export default function App() {
 
   function navegarA(nombrePagina, id = null) {
     const paginasSoloArtista = [
-      'perfil',
       'tarifas',
       'formatos',
       'tipos-evento',
@@ -401,6 +412,11 @@ export default function App() {
       return [
         ...base,
         {
+          id: 'perfil',
+          label: 'Mi perfil',
+          action: () => irA('perfil'),
+        },
+        {
           id: 'invitaciones',
           label: 'Invitaciones',
           action: () => irA('invitaciones'),
@@ -465,10 +481,52 @@ export default function App() {
     },
   ];
 
+  function terminarRecuperacionPassword() {
+    const url = new URL(
+      window.location.href
+    );
+
+    url.searchParams.delete(
+      'reset_password'
+    );
+
+    url.searchParams.delete(
+      'code'
+    );
+
+    url.hash = '';
+
+    window.history.replaceState(
+      {},
+      '',
+      `${url.pathname}${url.search}`
+    );
+
+    setPasswordRecovery(false);
+    setPage('dashboard');
+  }
+
   const invitationToken =
     new URLSearchParams(
       window.location.search
     ).get('invitacion_gestor');
+
+  if (passwordRecovery) {
+    return (
+      <>
+        <Login
+          initialMode="reset"
+          onPasswordUpdated={
+            terminarRecuperacionPassword
+          }
+        />
+
+        <Toaster
+          position="bottom-right"
+        />
+      </>
+    );
+  }
 
   if (invitationToken) {
     return (
@@ -503,12 +561,47 @@ export default function App() {
       </div>
     );
   } else if (!activeWorkspace) {
-    contenido = (
-      <InvitacionesPendientes
-        onInvitationAccepted={refreshWorkspaceAccess}
-        onLogout={logout}
-      />
-    );
+    contenido =
+      page === 'perfil' ? (
+        <Perfil
+          workspaceId={null}
+          workspace={null}
+          esArtista={false}
+          readOnly={false}
+          goBack={() => setPage('dashboard')}
+          onProfileUpdated={
+            actualizarPerfilLocal
+          }
+        />
+      ) : (
+        <>
+          <section className="workspace-state-card">
+            <h1>Tu cuenta de Gestor</h1>
+
+            <p>
+              Completa tu perfil personal o acepta
+              una invitación para comenzar a trabajar
+              con un Artista.
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPage('perfil')
+              }
+            >
+              Abrir mi perfil
+            </button>
+          </section>
+
+          <InvitacionesPendientes
+            onInvitationAccepted={
+              refreshWorkspaceAccess
+            }
+            onLogout={logout}
+          />
+        </>
+      );
   } else {
     const sharedProps = {
       workspaceId: activeWorkspace.workspace_id,
@@ -648,22 +741,12 @@ export default function App() {
         break;
 
       case 'perfil':
-        contenido = esArtista ? (
+        contenido = (
           <Perfil
             {...sharedProps}
             goBack={volverAtras}
             goEquipo={() => irA('equipo')}
             onProfileUpdated={actualizarPerfilLocal}
-          />
-        ) : (
-          <Dashboard
-            {...sharedProps}
-            session={session}
-            goCotizaciones={() => irA('cotizaciones')}
-            goCalendario={() => irA('calendario')}
-            goDocumentos={() => irA('documentos')}
-            goTutorial={() => irA('tutorial')}
-            goComisiones={() => irA('comisiones')}
           />
         );
         break;
@@ -884,14 +967,14 @@ export default function App() {
                 ◇ Comisiones
               </button>
 
+              <button type="button" onClick={() => irA('perfil')}>
+                ◉ {esArtista ? 'Perfil del Artista' : 'Mi perfil'}
+              </button>
+
               {esArtista ? (
                 <>
                   <button type="button" onClick={() => irA('equipo')}>
                     ◉ Equipo y Gestores
-                  </button>
-
-                  <button type="button" onClick={() => irA('perfil')}>
-                    ◉ Perfil del Artista
                   </button>
 
                   <button type="button" onClick={() => irA('formatos')}>

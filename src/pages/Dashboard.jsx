@@ -17,7 +17,9 @@ export default function Dashboard({
   goEquipo,
   goInvitaciones,
 }) {
-  const [eventosHoy, setEventosHoy] = useState(0);
+  const [eventosConfirmados, setEventosConfirmados] =
+    useState(0);
+  const [eventosMes, setEventosMes] = useState(0);
   const [proximoEvento, setProximoEvento] = useState(null);
   const [cotizacionesPendientes, setCotizacionesPendientes] =
     useState(0);
@@ -27,6 +29,38 @@ export default function Dashboard({
   useEffect(() => {
     cargarResumen();
   }, [workspaceId]);
+
+  function normalizarEstado(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function esConfirmado(cotizacion) {
+    return normalizarEstado(
+      cotizacion?.estado
+    ).startsWith('confirmad');
+  }
+
+  function esRealizado(cotizacion) {
+    return normalizarEstado(
+      cotizacion?.estado
+    ).startsWith('realizad');
+  }
+
+  function fechaLocalISO(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, '0');
+    const day = String(
+      date.getDate()
+    ).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
 
   function obtenerPagado(cotizacion) {
     return Number(
@@ -58,28 +92,33 @@ export default function Dashboard({
         workspaceId,
       });
 
-      const hoy = new Date().toISOString().slice(0, 10);
+      const hoy = fechaLocalISO();
       const mesActual = hoy.slice(0, 7);
 
-      const eventosConfirmados = cotizaciones
+      const confirmados = cotizaciones
         .filter(
           (cotizacion) =>
             cotizacion.fecha_evento &&
-            cotizacion.estado === 'Confirmada'
+            esConfirmado(cotizacion)
         )
-        .sort(
-          (a, b) =>
-            new Date(a.fecha_evento) -
-            new Date(b.fecha_evento)
+        .sort((a, b) =>
+          String(a.fecha_evento).localeCompare(
+            String(b.fecha_evento)
+          )
         );
 
-      const eventosDeHoy = eventosConfirmados.filter(
-        (cotizacion) => cotizacion.fecha_evento === hoy
+      const eventosEnAgenda = confirmados.filter(
+        (cotizacion) =>
+          String(cotizacion.fecha_evento) >= hoy
       );
 
-      const proximo = eventosConfirmados.find(
-        (cotizacion) => cotizacion.fecha_evento >= hoy
+      const eventosDelMes = confirmados.filter(
+        (cotizacion) =>
+          String(cotizacion.fecha_evento).slice(0, 7) ===
+          mesActual
       );
+
+      const proximo = eventosEnAgenda[0] || null;
 
       const pendientes = cotizaciones.filter((cotizacion) =>
         [
@@ -91,9 +130,9 @@ export default function Dashboard({
 
       const cotizacionesConSaldo = cotizaciones.filter(
         (cotizacion) =>
-          ['Confirmada', 'Realizada'].includes(
-            cotizacion.estado
-          ) && obtenerSaldoPendiente(cotizacion) > 0
+          (esConfirmado(cotizacion) ||
+            esRealizado(cotizacion)) &&
+          obtenerSaldoPendiente(cotizacion) > 0
       );
 
       const totalPendiente = cotizacionesConSaldo.reduce(
@@ -115,8 +154,9 @@ export default function Dashboard({
           0
         );
 
-      setEventosHoy(eventosDeHoy.length);
-      setProximoEvento(proximo || null);
+      setEventosConfirmados(eventosEnAgenda.length);
+      setEventosMes(eventosDelMes.length);
+      setProximoEvento(proximo);
       setCotizacionesPendientes(pendientes.length);
       setBalancePendiente(totalPendiente);
       setCobradoMes(totalCobradoMes);
@@ -171,10 +211,13 @@ export default function Dashboard({
           <h1>Hola, {nombreArtista}!</h1>
 
           <p>
-            Hoy, <strong>{nombreArtista}</strong> tiene{' '}
-            <strong>{eventosHoy}</strong>{' '}
-            evento{eventosHoy !== 1 ? 's' : ''} confirmado
-            {eventosHoy !== 1 ? 's' : ''}.
+            <strong>{nombreArtista}</strong> tiene{' '}
+            <strong>{eventosConfirmados}</strong>{' '}
+            evento
+            {eventosConfirmados !== 1 ? 's' : ''}{' '}
+            confirmado
+            {eventosConfirmados !== 1 ? 's' : ''}{' '}
+            en agenda.
           </p>
         </div>
 
@@ -212,8 +255,8 @@ export default function Dashboard({
           onClick={goCalendario}
         >
           <span>📅</span>
-          <small>Eventos hoy</small>
-          <strong>{eventosHoy}</strong>
+          <small>Eventos este mes</small>
+          <strong>{eventosMes}</strong>
         </button>
 
         <button
@@ -343,12 +386,12 @@ export default function Dashboard({
             </button>
           )}
 
-          {esArtista && (
-            <button type="button" onClick={goPerfil}>
-              👤
-              <span>Perfil</span>
-            </button>
-          )}
+          <button type="button" onClick={goPerfil}>
+            👤
+            <span>
+              {esArtista ? 'Perfil' : 'Mi perfil'}
+            </span>
+          </button>
 
           {esArtista && (
             <button type="button" onClick={goFormatos}>

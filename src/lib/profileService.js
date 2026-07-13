@@ -67,6 +67,7 @@ async function getWorkspace(workspaceId) {
       email_contacto,
       telefono_contacto,
       spotify_url,
+      prefijo_cotizacion,
       activo
     `)
     .eq('id', currentWorkspaceId)
@@ -104,6 +105,8 @@ export async function getWorkspaceArtistProfile(workspaceId) {
     email_artistico: workspace.email_contacto || '',
     telefono_artistico: workspace.telefono_contacto || '',
     spotify_url: workspace.spotify_url || '',
+    prefijo_cotizacion:
+      workspace.prefijo_cotizacion || '',
     activo: Boolean(workspace.activo),
   };
 }
@@ -138,6 +141,12 @@ export async function saveWorkspaceArtistProfile(
     artistProfile.spotify_url || ''
   ).trim();
 
+  const prefijoCotizacion = String(
+    artistProfile.prefijo_cotizacion || ''
+  )
+    .trim()
+    .toUpperCase();
+
   if (!nombreArtistico) {
     throw new Error('El nombre artístico es obligatorio.');
   }
@@ -157,6 +166,16 @@ export async function saveWorkspaceArtistProfile(
     );
   }
 
+  if (
+    !/^[A-Z0-9]{2,8}$/.test(
+      prefijoCotizacion
+    )
+  ) {
+    throw new Error(
+      'El prefijo debe tener entre 2 y 8 letras o números, sin espacios.'
+    );
+  }
+
   const { data, error } = await supabase
     .from('workspaces')
     .update({
@@ -164,6 +183,8 @@ export async function saveWorkspaceArtistProfile(
       email_contacto: emailArtistico || null,
       telefono_contacto: telefonoArtistico || null,
       spotify_url: spotifyUrl || null,
+      prefijo_cotizacion:
+        prefijoCotizacion,
       updated_at: new Date().toISOString(),
     })
     .eq('id', currentWorkspaceId)
@@ -175,11 +196,25 @@ export async function saveWorkspaceArtistProfile(
       email_contacto,
       telefono_contacto,
       spotify_url,
+      prefijo_cotizacion,
       activo
     `)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    if (
+      error.code === '23505' &&
+      String(
+        error.message || ''
+      ).includes('prefijo_cotizacion')
+    ) {
+      throw new Error(
+        'Ese prefijo de cotización ya pertenece a otro Artista. Elige uno diferente.'
+      );
+    }
+
+    throw error;
+  }
 
   return {
     workspace_id: data.id,
@@ -188,6 +223,8 @@ export async function saveWorkspaceArtistProfile(
     email_artistico: data.email_contacto || '',
     telefono_artistico: data.telefono_contacto || '',
     spotify_url: data.spotify_url || '',
+    prefijo_cotizacion:
+      data.prefijo_cotizacion || '',
     activo: Boolean(data.activo),
   };
 }
@@ -229,15 +266,121 @@ async function includeAssetUrls(profile) {
 export async function getMyProfile() {
   const user = await getAuthenticatedUser();
 
+  const [
+    basicResult,
+    personalResult,
+  ] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single(),
+
+    supabase
+      .from('perfiles_personales')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+  ]);
+
+  if (basicResult.error) {
+    throw basicResult.error;
+  }
+
+  if (personalResult.error) {
+    throw personalResult.error;
+  }
+
+  return {
+    ...basicResult.data,
+    ...(personalResult.data || {}),
+    nombre:
+      personalResult.data
+        ?.nombre_completo ||
+      basicResult.data?.nombre ||
+      '',
+    email:
+      user.email ||
+      basicResult.data?.email ||
+      '',
+  };
+}
+
+export async function saveMyPersonalProfile(
+  profile
+) {
+  const user = await getAuthenticatedUser();
+
+  const nombre = String(
+    profile?.nombre_completo ||
+    profile?.nombre ||
+    ''
+  ).trim();
+
+  if (!nombre) {
+    throw new Error(
+      'El nombre completo es obligatorio.'
+    );
+  }
+
+  const payload = {
+    user_id: user.id,
+    nombre_completo: nombre,
+    telefono: String(
+      profile?.telefono || ''
+    ).trim(),
+    direccion: String(
+      profile?.direccion || ''
+    ).trim(),
+    ciudad: String(
+      profile?.ciudad || ''
+    ).trim(),
+    pais: String(
+      profile?.pais || ''
+    ).trim(),
+    codigo_postal: String(
+      profile?.codigo_postal || ''
+    ).trim(),
+    identificacion: String(
+      profile?.identificacion || ''
+    ).trim(),
+    nombre_banco: String(
+      profile?.nombre_banco || ''
+    ).trim(),
+    cuenta_bancaria: String(
+      profile?.cuenta_bancaria || ''
+    ).trim(),
+    updated_at:
+      new Date().toISOString(),
+  };
+
   const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
+    .from('perfiles_personales')
+    .upsert(payload, {
+      onConflict: 'user_id',
+    })
+    .select()
     .single();
 
   if (error) throw error;
 
-  return data;
+  const { error: basicError } =
+    await supabase
+      .from('profiles')
+      .update({
+        nombre,
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq('id', user.id);
+
+  if (basicError) throw basicError;
+
+  return {
+    ...data,
+    nombre,
+    email: user.email || '',
+  };
 }
 
 export async function getMyBusinessProfile(workspaceId) {

@@ -8,10 +8,12 @@ import {
   getMyProfile,
   getWorkspaceArtistProfile,
   saveMyBusinessProfile,
+  saveMyPersonalProfile,
   saveWorkspaceArtistProfile,
   uploadMyBusinessAsset,
 } from '../lib/profileService';
 import { CONTRACT_VARIABLES } from '../lib/contratoTemplate';
+import { updateCurrentPassword } from '../lib/authService';
 
 const MAX_PNG_SIZE = 5 * 1024 * 1024;
 
@@ -20,6 +22,7 @@ const formInicial = {
   email_artistico: '',
   telefono_artistico: '',
   spotify_url: '',
+  prefijo_cotizacion: '',
 
   nombre_completo: '',
   direccion: '',
@@ -119,23 +122,34 @@ export default function Perfil({
   const [firmaPreview, setFirmaPreview] = useState('');
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const [guardandoPassword, setGuardandoPassword] =
+    useState(false);
+  const [nuevaPassword, setNuevaPassword] =
+    useState('');
+  const [confirmarPassword, setConfirmarPassword] =
+    useState('');
   const [error, setError] = useState('');
 
   const logoInputRef = useRef(null);
   const firmaInputRef = useRef(null);
 
-  const puedeEditar = Boolean(
+  const esPerfilArtista = Boolean(
     esArtista || workspace?.member_role === 'owner'
   );
 
+  const puedeEditar = esPerfilArtista;
+
   useEffect(() => {
-    if (!workspaceId) {
+    if (
+      !workspaceId &&
+      esPerfilArtista
+    ) {
       setCargando(false);
       return;
     }
 
     cargar();
-  }, [workspaceId]);
+  }, [workspaceId, esPerfilArtista]);
 
   useEffect(() => {
     return () => {
@@ -157,6 +171,40 @@ export default function Perfil({
     try {
       setCargando(true);
       setError('');
+
+      if (!esPerfilArtista) {
+        const perfilUsuario =
+          await getMyProfile();
+
+        setProfile(perfilUsuario);
+
+        setForm({
+          ...formInicial,
+          nombre_completo:
+            perfilUsuario?.nombre || '',
+          direccion:
+            perfilUsuario?.direccion || '',
+          ciudad:
+            perfilUsuario?.ciudad || '',
+          pais:
+            perfilUsuario?.pais ||
+            'República Dominicana',
+          codigo_postal:
+            perfilUsuario?.codigo_postal || '',
+          telefono:
+            perfilUsuario?.telefono || '',
+          identificacion:
+            perfilUsuario?.identificacion || '',
+          nombre_banco:
+            perfilUsuario?.nombre_banco || '',
+          cuenta_bancaria:
+            perfilUsuario?.cuenta_bancaria || '',
+        });
+
+        setLogoPreview('');
+        setFirmaPreview('');
+        return;
+      }
 
       const [
         perfilUsuario,
@@ -187,6 +235,9 @@ export default function Perfil({
 
         spotify_url:
           perfilArtistico?.spotify_url || '',
+
+        prefijo_cotizacion:
+          perfilArtistico?.prefijo_cotizacion || '',
 
         nombre_completo:
           perfilNegocio?.nombre_completo ||
@@ -288,7 +339,11 @@ export default function Perfil({
 
       const mensaje =
         err.message ||
-        'No se pudo cargar el perfil del Artista.';
+        `No se pudo cargar el perfil ${
+          esPerfilArtista
+            ? 'del Artista'
+            : 'de la cuenta'
+        }.`;
 
       setError(mensaje);
       toast.error(mensaje);
@@ -394,6 +449,18 @@ export default function Perfil({
   }
 
   function validar() {
+    if (!form.nombre_completo.trim()) {
+      toast.error(
+        'El nombre completo es obligatorio.'
+      );
+
+      return false;
+    }
+
+    if (!esPerfilArtista) {
+      return true;
+    }
+
     if (!form.nombre_artistico.trim()) {
       toast.error(
         'El nombre artístico es obligatorio.'
@@ -402,9 +469,17 @@ export default function Perfil({
       return false;
     }
 
-    if (!form.nombre_completo.trim()) {
+    if (
+      !/^[A-Z0-9]{2,8}$/.test(
+        String(
+          form.prefijo_cotizacion || ''
+        )
+          .trim()
+          .toUpperCase()
+      )
+    ) {
       toast.error(
-        'El nombre completo es obligatorio.'
+        'El prefijo debe tener entre 2 y 8 letras o números, sin espacios.'
       );
 
       return false;
@@ -472,14 +547,64 @@ export default function Perfil({
     event.preventDefault();
     setError('');
 
+    if (!validar()) return;
+
+    if (!esPerfilArtista) {
+      try {
+        setGuardando(true);
+
+        const perfilGuardado =
+          await saveMyPersonalProfile({
+            nombre_completo:
+              form.nombre_completo,
+            telefono: form.telefono,
+            direccion: form.direccion,
+            ciudad: form.ciudad,
+            pais: form.pais,
+            codigo_postal:
+              form.codigo_postal,
+            identificacion:
+              form.identificacion,
+            nombre_banco:
+              form.nombre_banco,
+            cuenta_bancaria:
+              form.cuenta_bancaria,
+          });
+
+        setProfile(perfilGuardado);
+
+        if (onProfileUpdated) {
+          onProfileUpdated({
+            nombre_completo:
+              perfilGuardado.nombre,
+          });
+        }
+
+        toast.success(
+          'Perfil personal actualizado correctamente.'
+        );
+      } catch (err) {
+        console.error(err);
+
+        const mensaje =
+          err.message ||
+          'No se pudo guardar el perfil personal.';
+
+        setError(mensaje);
+        toast.error(mensaje);
+      } finally {
+        setGuardando(false);
+      }
+
+      return;
+    }
+
     if (!puedeEditar) {
       toast.error(
         'Solo el Artista puede modificar este perfil.'
       );
       return;
     }
-
-    if (!validar()) return;
 
     try {
       setGuardando(true);
@@ -495,6 +620,12 @@ export default function Perfil({
               form.telefono_artistico,
             spotify_url:
               form.spotify_url,
+            prefijo_cotizacion:
+              String(
+                form.prefijo_cotizacion || ''
+              )
+                .trim()
+                .toUpperCase(),
           },
           workspaceId
         );
@@ -615,6 +746,313 @@ export default function Perfil({
     }
   }
 
+  async function guardarPassword() {
+    setError('');
+
+    if (nuevaPassword.length < 8) {
+      toast.error(
+        'La contraseña debe tener al menos 8 caracteres.'
+      );
+      return;
+    }
+
+    if (
+      nuevaPassword !==
+      confirmarPassword
+    ) {
+      toast.error(
+        'Las contraseñas no coinciden.'
+      );
+      return;
+    }
+
+    try {
+      setGuardandoPassword(true);
+
+      await updateCurrentPassword(
+        nuevaPassword
+      );
+
+      setNuevaPassword('');
+      setConfirmarPassword('');
+
+      toast.success(
+        'Contraseña actualizada correctamente.'
+      );
+    } catch (err) {
+      console.error(err);
+
+      const mensaje =
+        err.message ||
+        'No se pudo actualizar la contraseña.';
+
+      setError(mensaje);
+      toast.error(mensaje);
+    } finally {
+      setGuardandoPassword(false);
+    }
+  }
+
+  if (!esPerfilArtista) {
+    return (
+      <div className="dashboard perfil-page">
+        <div className="top-bar">
+          <div>
+            <h1>Mi perfil</h1>
+
+            <p>
+              Información personal, contacto,
+              pagos y seguridad de tu cuenta
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={goBack}
+          >
+            ← Atrás
+          </button>
+        </div>
+
+        {cargando ? (
+          <div className="form-section">
+            Cargando perfil...
+          </div>
+        ) : (
+          <form
+            className="form-cotizacion"
+            onSubmit={guardar}
+          >
+            <div className="form-grid">
+              <section className="form-section">
+                <h2>Información personal</h2>
+
+                <label htmlFor="gestor-nombre">
+                  Nombre completo *
+                </label>
+
+                <input
+                  id="gestor-nombre"
+                  type="text"
+                  name="nombre_completo"
+                  value={form.nombre_completo}
+                  onChange={cambiar}
+                  autoComplete="name"
+                />
+
+                <label htmlFor="gestor-email">
+                  Correo de la cuenta
+                </label>
+
+                <input
+                  id="gestor-email"
+                  type="email"
+                  value={profile?.email || ''}
+                  readOnly
+                  autoComplete="email"
+                />
+
+                <small>
+                  El correo de acceso no se cambia
+                  desde esta sección.
+                </small>
+
+                <label htmlFor="gestor-telefono">
+                  Teléfono
+                </label>
+
+                <input
+                  id="gestor-telefono"
+                  type="tel"
+                  name="telefono"
+                  value={form.telefono}
+                  onChange={cambiar}
+                  autoComplete="tel"
+                />
+
+                <label htmlFor="gestor-identificacion">
+                  Cédula o ID
+                </label>
+
+                <input
+                  id="gestor-identificacion"
+                  type="text"
+                  name="identificacion"
+                  value={form.identificacion}
+                  onChange={cambiar}
+                  autoComplete="off"
+                />
+              </section>
+
+              <section className="form-section">
+                <h2>Ubicación</h2>
+
+                <label htmlFor="gestor-direccion">
+                  Dirección
+                </label>
+
+                <input
+                  id="gestor-direccion"
+                  type="text"
+                  name="direccion"
+                  value={form.direccion}
+                  onChange={cambiar}
+                  autoComplete="street-address"
+                />
+
+                <label htmlFor="gestor-ciudad">
+                  Ciudad
+                </label>
+
+                <input
+                  id="gestor-ciudad"
+                  type="text"
+                  name="ciudad"
+                  value={form.ciudad}
+                  onChange={cambiar}
+                  autoComplete="address-level2"
+                />
+
+                <label htmlFor="gestor-pais">
+                  País
+                </label>
+
+                <input
+                  id="gestor-pais"
+                  type="text"
+                  name="pais"
+                  value={form.pais}
+                  onChange={cambiar}
+                  autoComplete="country-name"
+                />
+
+                <label htmlFor="gestor-codigo-postal">
+                  Código postal
+                </label>
+
+                <input
+                  id="gestor-codigo-postal"
+                  type="text"
+                  name="codigo_postal"
+                  value={form.codigo_postal}
+                  onChange={cambiar}
+                  autoComplete="postal-code"
+                />
+              </section>
+
+              <section className="form-section">
+                <h2>Información para pagos</h2>
+
+                <p>
+                  Estos datos pertenecen al Gestor
+                  y pueden servir como referencia
+                  para el pago de sus comisiones.
+                </p>
+
+                <label htmlFor="gestor-banco">
+                  Nombre del banco
+                </label>
+
+                <input
+                  id="gestor-banco"
+                  type="text"
+                  name="nombre_banco"
+                  value={form.nombre_banco}
+                  onChange={cambiar}
+                  autoComplete="off"
+                />
+
+                <label htmlFor="gestor-cuenta">
+                  Cuenta bancaria
+                </label>
+
+                <input
+                  id="gestor-cuenta"
+                  type="text"
+                  name="cuenta_bancaria"
+                  value={form.cuenta_bancaria}
+                  onChange={cambiar}
+                  autoComplete="off"
+                />
+              </section>
+
+              <section className="form-section">
+                <h2>Seguridad</h2>
+
+                <p>
+                  Puedes cambiar tu contraseña
+                  mientras tengas la sesión abierta.
+                </p>
+
+                <label htmlFor="gestor-password">
+                  Nueva contraseña
+                </label>
+
+                <input
+                  id="gestor-password"
+                  type="password"
+                  value={nuevaPassword}
+                  onChange={(event) =>
+                    setNuevaPassword(
+                      event.target.value
+                    )
+                  }
+                  minLength="8"
+                  autoComplete="new-password"
+                />
+
+                <label htmlFor="gestor-password-confirm">
+                  Confirmar nueva contraseña
+                </label>
+
+                <input
+                  id="gestor-password-confirm"
+                  type="password"
+                  value={confirmarPassword}
+                  onChange={(event) =>
+                    setConfirmarPassword(
+                      event.target.value
+                    )
+                  }
+                  minLength="8"
+                  autoComplete="new-password"
+                />
+
+                <button
+                  type="button"
+                  onClick={guardarPassword}
+                  disabled={guardandoPassword}
+                  style={{ marginTop: 16 }}
+                >
+                  {guardandoPassword
+                    ? 'Actualizando...'
+                    : 'Cambiar contraseña'}
+                </button>
+              </section>
+            </div>
+
+            {error && (
+              <p className="error">
+                {error}
+              </p>
+            )}
+
+            <div className="form-actions">
+              <button
+                type="submit"
+                disabled={guardando}
+              >
+                {guardando
+                  ? 'Guardando...'
+                  : 'Guardar mi perfil'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard perfil-page">
       <div className="top-bar">
@@ -670,6 +1108,41 @@ export default function Perfil({
                 placeholder="Ej: Cruzmonty"
                 autoComplete="organization"
               />
+
+              <label htmlFor="perfil-prefijo-cotizacion">
+                Prefijo de cotizaciones *
+              </label>
+
+              <input
+                id="perfil-prefijo-cotizacion"
+                type="text"
+                name="prefijo_cotizacion"
+                value={form.prefijo_cotizacion}
+                onChange={(event) =>
+                  setForm((actual) => ({
+                    ...actual,
+                    prefijo_cotizacion:
+                      event.target.value
+                        .toUpperCase()
+                        .replace(
+                          /[^A-Z0-9]/g,
+                          ''
+                        )
+                        .slice(0, 8),
+                  }))
+                }
+                placeholder="Ej: CM, RM, CP"
+                maxLength="8"
+                autoComplete="off"
+              />
+
+              <small>
+                Se usará en números como{' '}
+                <strong>
+                  {form.prefijo_cotizacion || 'ART'}-0001
+                </strong>.
+                Debe ser exclusivo de este Artista.
+              </small>
 
               <label htmlFor="perfil-artista-email">
                 Correo de contratación
@@ -1287,6 +1760,73 @@ export default function Perfil({
                 Los cambios se aplicarán únicamente a
                 contratos nuevos.
               </p>
+            </section>
+
+            <section className="form-section form-full">
+              <h2>Seguridad de la cuenta</h2>
+
+              <p>
+                Cambia la contraseña de acceso sin
+                modificar los datos del Artista.
+              </p>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns:
+                    'repeat(auto-fit, minmax(240px, 1fr))',
+                  gap: 14,
+                }}
+              >
+                <div>
+                  <label htmlFor="artista-password">
+                    Nueva contraseña
+                  </label>
+
+                  <input
+                    id="artista-password"
+                    type="password"
+                    value={nuevaPassword}
+                    onChange={(event) =>
+                      setNuevaPassword(
+                        event.target.value
+                      )
+                    }
+                    minLength="8"
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="artista-password-confirm">
+                    Confirmar nueva contraseña
+                  </label>
+
+                  <input
+                    id="artista-password-confirm"
+                    type="password"
+                    value={confirmarPassword}
+                    onChange={(event) =>
+                      setConfirmarPassword(
+                        event.target.value
+                      )
+                    }
+                    minLength="8"
+                    autoComplete="new-password"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={guardarPassword}
+                disabled={guardandoPassword}
+                style={{ marginTop: 16 }}
+              >
+                {guardandoPassword
+                  ? 'Actualizando...'
+                  : 'Cambiar contraseña'}
+              </button>
             </section>
           </div>
 

@@ -29,6 +29,21 @@ export function buildAuthRedirectUrl(
   return url.toString();
 }
 
+export function buildPasswordResetRedirectUrl() {
+  const url = new URL(
+    window.location.href
+  );
+
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set(
+    'reset_password',
+    '1'
+  );
+
+  return url.toString();
+}
+
 export async function ensureMyAccountReady({
   accountType = null,
   name = null,
@@ -125,6 +140,55 @@ export async function signUpAccount({
       artistName,
     });
   }
+
+  return data;
+}
+
+export async function requestPasswordReset(
+  email
+) {
+  const cleanEmail =
+    clean(email).toLowerCase();
+
+  if (!cleanEmail) {
+    throw new Error(
+      'El correo es obligatorio.'
+    );
+  }
+
+  const { data, error } =
+    await supabase.auth
+      .resetPasswordForEmail(
+        cleanEmail,
+        {
+          redirectTo:
+            buildPasswordResetRedirectUrl(),
+        }
+      );
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function updateCurrentPassword(
+  newPassword
+) {
+  const password =
+    String(newPassword || '');
+
+  if (password.length < 8) {
+    throw new Error(
+      'La contraseña debe tener al menos 8 caracteres.'
+    );
+  }
+
+  const { data, error } =
+    await supabase.auth.updateUser({
+      password,
+    });
+
+  if (error) throw error;
 
   return data;
 }

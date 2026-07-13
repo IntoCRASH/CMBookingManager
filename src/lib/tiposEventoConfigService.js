@@ -1,6 +1,31 @@
 import { supabase } from './supabaseClient';
 import { requireWorkspaceId } from './workspaceService';
 
+function normalizarNombre(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function throwSaveError(error, nombre) {
+  if (error?.code === '23505') {
+    if (
+      error?.constraint ===
+      'tipos_evento_config_nombre_key'
+    ) {
+      throw new Error(
+        'Supabase todavía conserva la restricción global antigua para los nombres de tipos de evento. Ejecuta la migración SQL incluida y vuelve a intentarlo.'
+      );
+    }
+
+    throw new Error(
+      `Ya existe un tipo de evento llamado "${nombre}" para este Artista.`
+    );
+  }
+
+  throw error;
+}
+
 export async function getTiposEventoConfig(workspaceId) {
   const currentWorkspaceId = requireWorkspaceId(workspaceId);
 
@@ -38,27 +63,27 @@ export async function saveTipoEventoConfig(
 
   const payload = {
     workspace_id: currentWorkspaceId,
-    nombre: String(tipo.nombre || '').trim(),
+    nombre: normalizarNombre(tipo?.nombre),
 
     multiplicador_honorarios: Number(
-      tipo.multiplicador_honorarios || 1
+      tipo?.multiplicador_honorarios || 1
     ),
 
     multiplicador_musicos: Number(
-      tipo.multiplicador_musicos || 1
+      tipo?.multiplicador_musicos || 1
     ),
 
     multiplicador_sonido: Number(
-      tipo.multiplicador_sonido || 1
+      tipo?.multiplicador_sonido || 1
     ),
 
     multiplicador_road_manager: Number(
-      tipo.multiplicador_road_manager || 1
+      tipo?.multiplicador_road_manager || 1
     ),
 
-    ensayo_extra: Number(tipo.ensayo_extra || 0),
-    produccion_extra: Number(tipo.produccion_extra || 0),
-    activo: tipo.activo ?? true,
+    ensayo_extra: Number(tipo?.ensayo_extra || 0),
+    produccion_extra: Number(tipo?.produccion_extra || 0),
+    activo: tipo?.activo ?? true,
     updated_at: new Date().toISOString(),
   };
 
@@ -104,7 +129,7 @@ export async function saveTipoEventoConfig(
     );
   }
 
-  if (tipo.id) {
+  if (tipo?.id) {
     const { data, error } = await supabase
       .from('tipos_evento_config')
       .update(payload)
@@ -113,7 +138,9 @@ export async function saveTipoEventoConfig(
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throwSaveError(error, payload.nombre);
+    }
 
     return data;
   }
@@ -124,7 +151,9 @@ export async function saveTipoEventoConfig(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    throwSaveError(error, payload.nombre);
+  }
 
   return data;
 }

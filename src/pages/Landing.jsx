@@ -183,6 +183,145 @@ export default function Landing() {
         </article>
       </section>
 
+
+      <section className="landing-faq">
+        <div className="landing-faq-heading">
+          <span className="landing-faq-kicker">
+            Preguntas frecuentes
+          </span>
+
+          <h2>
+            Lo que probablemente quieras saber
+            antes de comenzar.
+          </h2>
+
+          <p>
+            MiBooking está pensado para que puedas
+            organizar tu operación sin convertirte
+            en experto en sistemas.
+          </p>
+        </div>
+
+        <div className="landing-faq-list">
+          <details open>
+            <summary>
+              ¿Qué es MiBooking, en palabras simples?
+            </summary>
+
+            <p>
+              Es una plataforma para organizar el
+              trabajo diario de un proyecto artístico:
+              clientes, cotizaciones, tarifas,
+              formatos, agenda, pagos, documentos,
+              equipos y comisiones, todo desde un
+              mismo lugar.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              ¿Puedo usarlo aunque trabaje solo?
+            </summary>
+
+            <p>
+              Claro. No necesitas tener una orquesta
+              completa ni un equipo grande. Puedes
+              crear formatos sin músicos acompañantes,
+              organizar tus propias tarifas y trabajar
+              únicamente con los servicios que
+              realmente ofreces.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              ¿Necesito configurarlo todo el primer día?
+            </summary>
+
+            <p>
+              Para nada. Puedes comenzar con lo
+              esencial y completar tu perfil, tarifas,
+              formatos, tipos de evento y documentos
+              poco a poco. MiBooking incluye un
+              tutorial para ayudarte a preparar cada
+              parte en el orden correcto.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              ¿Cómo funcionan los Artistas y Gestores?
+            </summary>
+
+            <p>
+              El Artista controla la configuración de
+              su proyecto y decide qué Gestores pueden
+              trabajar con él. Un Gestor puede colaborar
+              con uno o varios Artistas, pero solo
+              accede a los espacios para los que ha
+              recibido y aceptado una invitación.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              ¿Mi información se mantiene privada?
+            </summary>
+
+            <p>
+              Sí. La información de cada cuenta
+              permanece vinculada a su propio espacio
+              de trabajo. MiBooking no comercializa
+              tus datos ni los comparte con otros
+              usuarios, Artistas o Gestores ajenos a
+              tu operación. La información se utiliza
+              únicamente para ofrecerte las funciones
+              de la plataforma y mantener tu gestión
+              organizada.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              ¿Puedo adaptar MiBooking a mi forma de cobrar?
+            </summary>
+
+            <p>
+              Sí. Puedes configurar tarifas por zona,
+              formatos, tipos de evento, músicos,
+              sonido, transporte, costos adicionales
+              y multiplicadores. La idea es que la
+              plataforma se ajuste a tu operación, no
+              que tú tengas que cambiar tu manera de
+              trabajar.
+            </p>
+          </details>
+        </div>
+
+        <div className="landing-faq-cta">
+          <div>
+            <strong>
+              ¿Listo para organizar tu booking?
+            </strong>
+
+            <span>
+              Crea tu cuenta y configura tu operación
+              a tu ritmo.
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="primary"
+            onClick={() =>
+              setPortal('signup')
+            }
+          >
+            Comenzar con MiBooking
+          </button>
+        </div>
+      </section>
+
       <footer className="landing-footer">
         <img
           src="/mibooking-icon.png"
