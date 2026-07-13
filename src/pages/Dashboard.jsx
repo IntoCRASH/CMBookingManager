@@ -23,6 +23,7 @@ export default function Dashboard({
   goInvitaciones,
   goSuscripcion,
   goNuevaCotizacion,
+  goIndustriaMusical,
   subscription,
 }) {
   const [eventosConfirmados, setEventosConfirmados] =
@@ -467,6 +468,14 @@ export default function Dashboard({
           <button type="button" onClick={goDocumentos}>
             🗂️
             <span>Documentos</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={goIndustriaMusical}
+          >
+            🎓
+            <span>Aprende</span>
           </button>
 
         </div>

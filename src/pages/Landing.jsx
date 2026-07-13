@@ -190,7 +190,7 @@ export default function Landing() {
       <section className="landing-hero">
         <div className="landing-copy">
           <span className="landing-kicker">
-            Música · Eventos · Negocio
+            Menos administración, ¡Más música!
           </span>
 
           <h1>
@@ -799,8 +799,8 @@ export default function Landing() {
           />
 
           <span>
-            MiBooking · Música, eventos y
-            negocio.
+            MiBooking · Menos administración,
+            ¡Más música!
           </span>
         </div>
 

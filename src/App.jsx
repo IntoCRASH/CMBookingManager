@@ -42,6 +42,7 @@ import PagosCotizacion from './pages/PagosCotizacion';
 import Comisiones from './pages/Comisiones';
 import Documentos from './pages/Documentos';
 import Tutorial from './pages/Tutorial';
+import IndustriaMusical from './pages/IndustriaMusical';
 import Formatos from './pages/Formatos';
 import TiposEvento from './pages/TiposEvento';
 import Perfil from './pages/Perfil';
@@ -1173,36 +1174,43 @@ export default function App() {
     {
       id: 'dashboard',
       label: 'Inicio',
+      icon: '⌂',
       action: volverDashboard,
     },
     {
       id: 'tutorial',
       label: 'Tutorial',
+      icon: '◈',
       action: () => irA('tutorial'),
     },
     {
       id: 'cotizaciones',
       label: 'Cotizaciones',
+      icon: '▦',
       action: () => irA('cotizaciones'),
     },
     {
       id: 'clientes',
       label: 'Clientes',
+      icon: '◉',
       action: () => irA('clientes'),
     },
     {
       id: 'calendario',
       label: 'Calendario',
+      icon: '◷',
       action: () => irA('calendario'),
     },
     {
       id: 'documentos',
       label: 'Documentos',
+      icon: '▤',
       action: () => irA('documentos'),
     },
     {
       id: 'comisiones',
       label: 'Comisiones',
+      icon: '◇',
       action: () => irA('comisiones'),
     },
     ...(
@@ -1211,6 +1219,7 @@ export default function App() {
             {
               id: 'equipo',
               label: 'Equipo',
+              icon: '♟',
               action: () => irA('equipo'),
             },
           ]
@@ -1218,11 +1227,18 @@ export default function App() {
             {
               id: 'invitaciones',
               label: 'Invitaciones',
+              icon: '✉',
               action: () =>
                 irA('invitaciones'),
             },
           ]
     ),
+    {
+      id: 'industria-musical',
+      label: 'Aprende',
+      icon: '🎓',
+      action: () => irA('industria-musical'),
+    },
   ];
 
   const settingsNav = esArtista
@@ -1614,6 +1630,15 @@ export default function App() {
         );
         break;
 
+      case 'industria-musical':
+        contenido = (
+          <IndustriaMusical
+            {...sharedProps}
+            goBack={volverAtras}
+          />
+        );
+        break;
+
       case 'documentos':
         contenido = (
           <Documentos
@@ -1669,6 +1694,9 @@ export default function App() {
             goCalendario={() => irA('calendario')}
             goDocumentos={() => irA('documentos')}
             goTutorial={() => irA('tutorial')}
+            goIndustriaMusical={() =>
+              irA('industria-musical')
+            }
             goComisiones={() => irA('comisiones')}
           />
         );
@@ -1688,6 +1716,9 @@ export default function App() {
             goCalendario={() => irA('calendario')}
             goDocumentos={() => irA('documentos')}
             goTutorial={() => irA('tutorial')}
+            goIndustriaMusical={() =>
+              irA('industria-musical')
+            }
             goComisiones={() => irA('comisiones')}
           />
         );
@@ -1724,6 +1755,9 @@ export default function App() {
             goCalendario={() => irA('calendario')}
             goDocumentos={() => irA('documentos')}
             goTutorial={() => irA('tutorial')}
+            goIndustriaMusical={() =>
+              irA('industria-musical')
+            }
             goComisiones={() => irA('comisiones')}
             goFormatos={() => irA('formatos')}
             goTiposEvento={() => irA('tipos-evento')}
@@ -1780,7 +1814,7 @@ export default function App() {
 
             <span>
               <strong>MiBooking</strong>
-              <small>Música · Eventos · Negocio</small>
+              <small>Menos administración, ¡Más música!</small>
             </span>
           </button>
 
@@ -1792,6 +1826,21 @@ export default function App() {
                 className={page === item.id ? 'active' : ''}
                 onClick={item.action}
               >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    marginRight: '5px',
+                    fontSize:
+                      item.id ===
+                      'industria-musical'
+                        ? '12px'
+                        : '11px',
+                    lineHeight: 1,
+                  }}
+                >
+                  {item.icon}
+                </span>
+
                 {item.label}
               </button>
             ))}
@@ -1999,6 +2048,13 @@ export default function App() {
                 <>
               <button type="button" onClick={() => irA('tutorial')}>
                 ◈ Tutorial
+              </button>
+
+              <button
+                type="button"
+                onClick={() => irA('industria-musical')}
+              >
+                🎓 Aprende
               </button>
 
               <button type="button" onClick={() => irA('clientes')}>
