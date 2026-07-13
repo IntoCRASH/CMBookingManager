@@ -146,15 +146,22 @@
   position: relative;
   min-height: 600px;
   margin: 0;
+  overflow: visible;
+  border-radius: 30px;
+}
+
+.landing-live-frame {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 30px;
+  border-radius: inherit;
   background: #101828;
   box-shadow:
     0 34px 90px rgba(30, 41, 59, 0.24);
 }
 
-.landing-live-card > img {
+.landing-live-frame > img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -162,12 +169,12 @@
   display: block;
   object-fit: cover;
   object-position: 50% 48%;
-  transform: scale(1.015);
 }
 
 .landing-photo-shade {
   position: absolute;
   inset: 0;
+  border-radius: inherit;
   background:
     linear-gradient(
       180deg,
@@ -232,12 +239,12 @@
 
 .badge-agenda {
   top: 26px;
-  left: -24px;
+  left: -18px;
 }
 
 .badge-booking {
   top: 124px;
-  right: -24px;
+  right: -18px;
 }
 
 .landing-audiences {

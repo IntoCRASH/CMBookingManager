@@ -234,23 +234,25 @@ export default function Landing() {
 
         <div className="landing-preview">
           <figure className="landing-live-card">
-            <img
-              src="/mibooking-concert.webp"
-              alt="Artista en concierto frente a un público"
-              loading="eager"
-            />
+            <div className="landing-live-frame">
+              <img
+                src="/mibooking-concert.webp"
+                alt="Artista en concierto frente a un público"
+                loading="eager"
+              />
 
-            <div className="landing-photo-shade" />
+              <div className="landing-photo-shade" />
 
-            <figcaption className="landing-photo-caption">
-              <span>
-                Del primer contacto al último aplauso
-              </span>
+              <figcaption className="landing-photo-caption">
+                <span>
+                  Del primer contacto al último aplauso
+                </span>
 
-              <strong>
-                Tu booking, bajo control.
-              </strong>
-            </figcaption>
+                <strong>
+                  Tu booking, bajo control.
+                </strong>
+              </figcaption>
+            </div>
 
             <div className="landing-photo-badge badge-agenda">
               <small>Agenda</small>
