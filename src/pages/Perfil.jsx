@@ -1980,13 +1980,10 @@ export default function Perfil({
                     onClick={
                       abrirPortalFacturacion
                     }
-                    disabled={
-                      portalLoading ||
-                      !subscription
-                        ?.stripe_customer_id
-                    }
+                    disabled={portalLoading}
                     style={{
                       marginTop: 8,
+                      marginBottom: 30,
                     }}
                   >
                     {portalLoading
