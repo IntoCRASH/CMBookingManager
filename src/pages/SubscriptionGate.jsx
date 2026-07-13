@@ -17,7 +17,7 @@ const plans = [
   {
     code: 'professional',
     name: 'Profesional',
-    price: 'US$30',
+    price: 'US$35',
     description:
       'Para equipos de booking, representantes y varios colaboradores.',
     managerLimit: 'Gestores ilimitados',
@@ -68,6 +68,22 @@ export default function SubscriptionGate({
 
   const selectedPrice =
     getPlanPrice(normalizedPlan);
+
+  const hasPreviousCheckout =
+    [
+      'pending_payment',
+      'incomplete',
+      'trialing',
+      'active',
+    ].includes(
+      String(
+        subscription?.status || ''
+      )
+    ) ||
+    Boolean(
+      subscription
+        ?.stripe_customer_id
+    );
 
   if (loading) {
     return (
@@ -264,8 +280,12 @@ export default function SubscriptionGate({
           }
         >
           {checkoutLoading
-            ? 'Abriendo Stripe...'
-            : 'Continuar al pago seguro'}
+            ? hasPreviousCheckout
+              ? 'Verificando Stripe...'
+              : 'Abriendo Stripe...'
+            : hasPreviousCheckout
+              ? 'Recuperar suscripción existente'
+              : 'Continuar al pago seguro'}
         </button>
 
         <p className="subscription-promotion-note">
@@ -278,8 +298,16 @@ export default function SubscriptionGate({
           <button
             type="button"
             onClick={onReload}
+            disabled={
+              loading ||
+              checkoutLoading
+            }
           >
-            Ya pagué, revisar estado
+            {subscription
+              ?.status ===
+              'pending_payment'
+              ? 'Recuperar pago o trial'
+              : 'Ya pagué, revisar estado'}
           </button>
 
           <button

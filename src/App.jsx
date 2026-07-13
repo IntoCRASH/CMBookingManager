@@ -885,6 +885,98 @@ export default function App() {
     setSubscriptionError('');
   }
 
+  function subscriptionRecoveryNotFound(
+    error
+  ) {
+    const message =
+      String(
+        error?.message || ''
+      ).toLowerCase();
+
+    return (
+      message.includes(
+        'no tiene una suscripción recuperable'
+      ) ||
+      message.includes(
+        'todavía no tiene una suscripción recuperable'
+      ) ||
+      message.includes(
+        'subscription_not_found'
+      )
+    );
+  }
+
+  function activateRecoveredSubscription(
+    recoveredSubscription
+  ) {
+    if (
+      !isSubscriptionAccessAllowed(
+        recoveredSubscription
+      )
+    ) {
+      return false;
+    }
+
+    setWorkspaceSubscription(
+      recoveredSubscription
+    );
+
+    clearStoredSelectedPlan();
+    clearStoredSelectedBillingCycle();
+    setSelectedPlan('');
+
+    setPage('dashboard');
+    setCotizacionId(null);
+    setMoreOpen(false);
+    navigationHistory.current = [];
+
+    const activePlanLabel =
+      getPlanLabel(
+        recoveredSubscription
+          ?.plan_code
+      ) || 'MiBooking';
+
+    toast.success(
+      recoveredSubscription
+        ?.status === 'trialing'
+        ? `Recuperamos tu plan ${activePlanLabel}. Tus 3 días de prueba están activos.`
+        : `Recuperamos tu plan ${activePlanLabel}. La suscripción está activa.`,
+      {
+        id:
+          `subscription-recovered-${
+            activeWorkspace
+              ?.workspace_id ||
+            'workspace'
+          }`,
+        duration: 9000,
+      }
+    );
+
+    return true;
+  }
+
+  async function recoverExistingStripeSubscription() {
+    if (
+      !activeWorkspace
+        ?.workspace_id
+    ) {
+      return null;
+    }
+
+    const result =
+      await syncWorkspaceSubscriptionFromStripe({
+        workspaceId:
+          activeWorkspace
+            .workspace_id,
+      });
+
+    return (
+      result
+        ?.subscription ||
+      null
+    );
+  }
+
   async function recargarSuscripcion() {
     if (!activeWorkspace?.workspace_id) {
       return;
@@ -894,6 +986,27 @@ export default function App() {
       setSubscriptionLoading(true);
       setSubscriptionError('');
 
+      try {
+        const recovered =
+          await recoverExistingStripeSubscription();
+
+        if (
+          activateRecoveredSubscription(
+            recovered
+          )
+        ) {
+          return;
+        }
+      } catch (recoveryError) {
+        if (
+          !subscriptionRecoveryNotFound(
+            recoveryError
+          )
+        ) {
+          throw recoveryError;
+        }
+      }
+
       const currentSubscription =
         await getWorkspaceSubscription(
           activeWorkspace.workspace_id
@@ -902,11 +1015,22 @@ export default function App() {
       setWorkspaceSubscription(
         currentSubscription
       );
+
+      if (
+        !isSubscriptionAccessAllowed(
+          currentSubscription
+        )
+      ) {
+        setSubscriptionError(
+          'Stripe todavía no confirmó una suscripción activa para este proyecto.'
+        );
+      }
     } catch (error) {
       console.error(error);
+
       setSubscriptionError(
         error.message ||
-          'No se pudo actualizar la suscripción.'
+          'No se pudo recuperar la suscripción desde Stripe.'
       );
     } finally {
       setSubscriptionLoading(false);
@@ -942,6 +1066,34 @@ export default function App() {
     try {
       setCheckoutLoading(true);
       setSubscriptionError('');
+
+      /*
+       * Protección contra cobros duplicados:
+       * antes de crear otro Checkout, buscamos
+       * cualquier trial o suscripción existente.
+       */
+      try {
+        const recovered =
+          await recoverExistingStripeSubscription();
+
+        if (
+          activateRecoveredSubscription(
+            recovered
+          )
+        ) {
+          setCheckoutLoading(false);
+          return;
+        }
+      } catch (recoveryError) {
+        if (
+          !subscriptionRecoveryNotFound(
+            recoveryError
+          )
+        ) {
+          throw recoveryError;
+        }
+      }
+
       storeSelectedPlan(plan);
       setSelectedPlan(plan);
 
@@ -957,10 +1109,12 @@ export default function App() {
       );
     } catch (error) {
       console.error(error);
+
       setSubscriptionError(
         error.message ||
-          'No se pudo abrir Stripe Checkout.'
+          'No se pudo verificar ni abrir Stripe Checkout.'
       );
+
       setCheckoutLoading(false);
     }
   }
