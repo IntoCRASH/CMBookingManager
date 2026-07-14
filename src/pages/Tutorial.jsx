@@ -408,9 +408,14 @@ export default function Tutorial({
           </span>
 
           <h2>
-            {esArtista
-              ? 'Deja MiBooking listo antes de enviar tu primera cotización.'
-              : 'Sigue estos pasos para cotizar y operar sin mezclar Artistas.'}
+            {esArtista ? (
+              <>
+                Deja <span style={{ color: 'var(--accent)' }}>Mi</span>Booking
+                {' '}listo antes de enviar tu primera cotización.
+              </>
+            ) : (
+              'Sigue estos pasos para cotizar y operar sin mezclar Artistas.'
+            )}
           </h2>
 
           <p>

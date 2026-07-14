@@ -286,3 +286,618 @@
     display: none;
   }
 }
+
+/* =========================================================
+   MIBOOKING — DASHBOARD: TIPOGRAFÍA RESPONSIVE Y LEGIBLE
+========================================================= */
+
+body.mibooking-dark-premium .premium-dashboard {
+  font-size: 15px;
+}
+
+body.mibooking-dark-premium .premium-eyebrow {
+  font-size: clamp(10.5px, 0.16vw + 9px, 12px);
+  line-height: 1.4;
+  letter-spacing: 0.13em;
+}
+
+body.mibooking-dark-premium .premium-dashboard-welcome h1 {
+  font-size: clamp(32px, 2.15vw, 42px);
+  line-height: 1.08;
+}
+
+body.mibooking-dark-premium .premium-dashboard-welcome p {
+  font-size: clamp(13.5px, 0.18vw + 12px, 15px);
+  line-height: 1.55;
+}
+
+body.mibooking-dark-premium .premium-tutorial-link small {
+  font-size: clamp(10px, 0.12vw + 9px, 11px);
+  line-height: 1.35;
+}
+
+body.mibooking-dark-premium .premium-tutorial-link strong {
+  font-size: clamp(12.5px, 0.18vw + 11px, 14px);
+  line-height: 1.3;
+}
+
+body.mibooking-dark-premium .premium-card-topline > span:first-child {
+  font-size: clamp(10.5px, 0.18vw + 9px, 12px);
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+}
+
+body.mibooking-dark-premium .premium-event-copy h2 {
+  font-size: clamp(19px, 0.75vw + 13px, 23px);
+  line-height: 1.2;
+}
+
+body.mibooking-dark-premium .premium-event-copy p {
+  font-size: clamp(12.5px, 0.16vw + 11px, 14px);
+  line-height: 1.45;
+}
+
+body.mibooking-dark-premium .premium-event-copy small {
+  font-size: clamp(11.5px, 0.15vw + 10px, 13px);
+  line-height: 1.45;
+}
+
+body.mibooking-dark-premium .premium-summary-number {
+  font-size: clamp(34px, 2.25vw, 44px);
+  line-height: 1;
+}
+
+body.mibooking-dark-premium .premium-summary-amount {
+  font-size: clamp(26px, 1.7vw, 34px);
+  line-height: 1.08;
+}
+
+body.mibooking-dark-premium .premium-summary-card > p {
+  font-size: clamp(12px, 0.16vw + 10.5px, 13.5px);
+  line-height: 1.5;
+}
+
+body.mibooking-dark-premium .premium-summary-card > b {
+  font-size: clamp(13px, 0.18vw + 11.5px, 14.5px);
+  line-height: 1.35;
+}
+
+body.mibooking-dark-premium .premium-card-link {
+  font-size: clamp(12px, 0.16vw + 10.5px, 13.5px);
+  line-height: 1.3;
+}
+
+body.mibooking-dark-premium .premium-panel-heading h2,
+body.mibooking-dark-premium .premium-section-heading-inline h2 {
+  font-size: clamp(17px, 0.45vw + 13px, 20px);
+  line-height: 1.25;
+}
+
+body.mibooking-dark-premium .premium-panel-heading > button {
+  font-size: clamp(11.5px, 0.14vw + 10px, 12.5px);
+  line-height: 1.3;
+}
+
+body.mibooking-dark-premium .premium-quotes-head {
+  font-size: clamp(10px, 0.12vw + 9px, 11px);
+  line-height: 1.35;
+  letter-spacing: 0.08em;
+}
+
+body.mibooking-dark-premium .premium-quote-row {
+  font-size: clamp(12.5px, 0.16vw + 11px, 13.5px);
+  line-height: 1.4;
+}
+
+body.mibooking-dark-premium .premium-quote-number,
+body.mibooking-dark-premium .premium-quote-total {
+  font-size: clamp(12.5px, 0.16vw + 11px, 13.5px);
+}
+
+body.mibooking-dark-premium .premium-quote-client strong {
+  font-size: clamp(13px, 0.18vw + 11.5px, 14px);
+  line-height: 1.35;
+}
+
+body.mibooking-dark-premium .premium-quote-client small {
+  font-size: clamp(11px, 0.14vw + 9.8px, 12px);
+  line-height: 1.4;
+}
+
+body.mibooking-dark-premium .premium-status {
+  font-size: clamp(10.5px, 0.12vw + 9.5px, 11.5px);
+  line-height: 1.2;
+}
+
+body.mibooking-dark-premium .premium-action-item strong {
+  font-size: clamp(12.5px, 0.18vw + 11px, 14px);
+  line-height: 1.3;
+}
+
+body.mibooking-dark-premium .premium-action-item small {
+  font-size: clamp(11px, 0.14vw + 9.8px, 12px);
+  line-height: 1.4;
+}
+
+body.mibooking-dark-premium .premium-operation-copy h2 {
+  font-size: clamp(18px, 0.5vw + 14px, 21px);
+  line-height: 1.25;
+}
+
+body.mibooking-dark-premium .premium-operation-copy p {
+  font-size: clamp(12.5px, 0.16vw + 11px, 14px);
+  line-height: 1.55;
+}
+
+body.mibooking-dark-premium .premium-metric-row > span,
+body.mibooking-dark-premium .premium-metric-row > strong {
+  font-size: clamp(12px, 0.16vw + 10.5px, 13.5px);
+  line-height: 1.35;
+}
+
+body.mibooking-dark-premium .premium-account-card > span,
+body.mibooking-dark-premium .premium-account-card > small {
+  font-size: clamp(11px, 0.14vw + 9.8px, 12px);
+  line-height: 1.4;
+}
+
+body.mibooking-dark-premium .premium-account-card > strong {
+  font-size: clamp(15px, 0.24vw + 13px, 17px);
+  line-height: 1.3;
+}
+
+body.mibooking-dark-premium .premium-tools-grid button strong {
+  font-size: clamp(12.5px, 0.18vw + 11px, 14px);
+  line-height: 1.3;
+}
+
+body.mibooking-dark-premium .premium-empty-state strong {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+body.mibooking-dark-premium .premium-empty-state span {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+body.mibooking-dark-premium .premium-summary-card,
+body.mibooking-dark-premium .premium-panel,
+body.mibooking-dark-premium .premium-action-item,
+body.mibooking-dark-premium .premium-quote-row {
+  min-width: 0;
+}
+
+body.mibooking-dark-premium .premium-dashboard strong,
+body.mibooking-dark-premium .premium-dashboard small,
+body.mibooking-dark-premium .premium-dashboard p,
+body.mibooking-dark-premium .premium-dashboard span {
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 1100px) {
+  body.mibooking-dark-premium .premium-dashboard-welcome h1 {
+    font-size: clamp(30px, 3vw, 38px);
+  }
+
+  body.mibooking-dark-premium .premium-summary-amount {
+    font-size: clamp(24px, 2.4vw, 30px);
+  }
+}
+
+@media (max-width: 768px) {
+  body.mibooking-dark-premium .premium-dashboard {
+    font-size: 15px;
+  }
+
+  body.mibooking-dark-premium .premium-dashboard-welcome h1 {
+    font-size: clamp(28px, 8vw, 36px);
+  }
+
+  body.mibooking-dark-premium .premium-dashboard-welcome p {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  body.mibooking-dark-premium .premium-card-topline > span:first-child,
+  body.mibooking-dark-premium .premium-eyebrow {
+    font-size: 11px;
+  }
+
+  body.mibooking-dark-premium .premium-event-copy h2 {
+    font-size: 20px;
+  }
+
+  body.mibooking-dark-premium .premium-event-copy p,
+  body.mibooking-dark-premium .premium-event-copy small,
+  body.mibooking-dark-premium .premium-summary-card > p,
+  body.mibooking-dark-premium .premium-card-link {
+    font-size: 13px;
+  }
+
+  body.mibooking-dark-premium .premium-panel-heading h2,
+  body.mibooking-dark-premium .premium-section-heading-inline h2 {
+    font-size: 18px;
+  }
+
+  body.mibooking-dark-premium .premium-action-item strong,
+  body.mibooking-dark-premium .premium-tools-grid button strong {
+    font-size: 14px;
+  }
+
+  body.mibooking-dark-premium .premium-action-item small,
+  body.mibooking-dark-premium .premium-quote-client small {
+    font-size: 12px;
+  }
+
+  body.mibooking-dark-premium .premium-quote-row {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  body.mibooking-dark-premium .premium-dashboard-welcome h1 {
+    font-size: 29px;
+  }
+
+  body.mibooking-dark-premium .premium-summary-number {
+    font-size: 36px;
+  }
+
+  body.mibooking-dark-premium .premium-summary-amount {
+    font-size: 25px;
+  }
+
+  body.mibooking-dark-premium .premium-tutorial-link strong,
+  body.mibooking-dark-premium .premium-action-item strong,
+  body.mibooking-dark-premium .premium-tools-grid button strong {
+    font-size: 13.5px;
+  }
+}
+
+/* =========================================================
+   MIBOOKING — TARJETAS PRINCIPALES FOTOGRÁFICAS
+   Las imágenes llenan completamente cada tarjeta.
+========================================================= */
+
+body.mibooking-dark-premium .premium-overview-grid {
+  align-items: stretch;
+}
+
+body.mibooking-dark-premium .premium-summary-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 246px;
+  transform: translateZ(0);
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+body.mibooking-dark-premium .premium-summary-card > * {
+  position: relative;
+  z-index: 3;
+}
+
+/* La foto llena toda la tarjeta. */
+body.mibooking-dark-premium .premium-summary-card::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.52;
+  filter:
+    saturate(0.96)
+    contrast(1.08)
+    brightness(0.78);
+  transform: scale(1.02);
+  transition:
+    opacity 260ms ease,
+    filter 260ms ease,
+    transform 260ms ease;
+  pointer-events: none;
+}
+
+/* Capa de lectura */
+body.mibooking-dark-premium .premium-summary-card::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------
+   PRÓXIMO EVENTO
+--------------------------------------------------------- */
+
+body.mibooking-dark-premium .premium-event-summary {
+  border-color: rgba(59, 130, 246, 0.48) !important;
+  background:
+    linear-gradient(
+      145deg,
+      #071426 0%,
+      #0a1a31 58%,
+      #0b1830 100%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 16px 40px rgba(2, 8, 23, 0.18);
+}
+
+body.mibooking-dark-premium .premium-event-summary::before {
+  background-image: url('/mibooking-artist2.webp');
+  background-position: 70% center;
+  opacity: 0.58;
+}
+
+body.mibooking-dark-premium .premium-event-summary::after {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(5, 18, 37, 0.995) 0%,
+      rgba(5, 18, 37, 0.95) 28%,
+      rgba(5, 18, 37, 0.74) 50%,
+      rgba(5, 18, 37, 0.32) 76%,
+      rgba(5, 18, 37, 0.16) 100%
+    ),
+    radial-gradient(
+      circle at 88% 20%,
+      rgba(59, 130, 246, 0.18),
+      transparent 40%
+    );
+}
+
+/* ---------------------------------------------------------
+   COTIZACIONES PENDIENTES
+--------------------------------------------------------- */
+
+body.mibooking-dark-premium .premium-quotes-summary {
+  border-color: rgba(236, 72, 153, 0.48) !important;
+  background:
+    linear-gradient(
+      145deg,
+      #231126 0%,
+      #2d1231 58%,
+      #201126 100%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 16px 40px rgba(18, 4, 24, 0.2);
+}
+
+body.mibooking-dark-premium .premium-quotes-summary::before {
+  background-image: url('/mibooking-image4.webp');
+  background-position: 72% center;
+  opacity: 0.54;
+  filter:
+    saturate(0.9)
+    contrast(1.06)
+    brightness(0.72);
+}
+
+body.mibooking-dark-premium .premium-quotes-summary::after {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(35, 12, 38, 0.995) 0%,
+      rgba(35, 12, 38, 0.96) 30%,
+      rgba(39, 12, 43, 0.74) 54%,
+      rgba(39, 12, 43, 0.32) 78%,
+      rgba(39, 12, 43, 0.16) 100%
+    ),
+    radial-gradient(
+      circle at 88% 18%,
+      rgba(236, 72, 153, 0.22),
+      transparent 42%
+    );
+}
+
+/* ---------------------------------------------------------
+   BALANCE PENDIENTE
+--------------------------------------------------------- */
+
+body.mibooking-dark-premium .premium-balance-summary {
+  border-color: rgba(99, 102, 241, 0.52) !important;
+  background:
+    linear-gradient(
+      145deg,
+      #101731 0%,
+      #151b3d 58%,
+      #10172d 100%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 16px 40px rgba(3, 7, 28, 0.22);
+}
+
+body.mibooking-dark-premium .premium-balance-summary::before {
+  background-image: url('/mibooking-image3.webp');
+  background-position: 68% center;
+  opacity: 0.54;
+  filter:
+    saturate(0.98)
+    contrast(1.08)
+    brightness(0.76);
+}
+
+body.mibooking-dark-premium .premium-balance-summary::after {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(13, 20, 47, 0.995) 0%,
+      rgba(13, 20, 47, 0.96) 28%,
+      rgba(16, 24, 58, 0.74) 52%,
+      rgba(16, 24, 58, 0.32) 78%,
+      rgba(16, 24, 58, 0.16) 100%
+    ),
+    radial-gradient(
+      circle at 88% 18%,
+      rgba(99, 102, 241, 0.22),
+      transparent 44%
+    );
+}
+
+body.mibooking-dark-premium .premium-mini-chart {
+  z-index: 4;
+  filter:
+    drop-shadow(0 8px 15px rgba(37, 32, 120, 0.22));
+}
+
+/* ---------------------------------------------------------
+   ROLLOVER
+--------------------------------------------------------- */
+
+@media (hover: hover) and (pointer: fine) {
+  body.mibooking-dark-premium .premium-summary-card:hover {
+    transform: translateY(-4px);
+  }
+
+  body.mibooking-dark-premium .premium-summary-card:hover::before {
+    opacity: 0.64;
+    filter:
+      saturate(1)
+      contrast(1.1)
+      brightness(0.84);
+    transform: scale(1.04);
+  }
+
+  body.mibooking-dark-premium .premium-event-summary:hover {
+    border-color: rgba(96, 165, 250, 0.78) !important;
+    box-shadow:
+      0 22px 52px rgba(3, 24, 57, 0.38),
+      0 0 0 1px rgba(96, 165, 250, 0.12);
+  }
+
+  body.mibooking-dark-premium .premium-quotes-summary:hover {
+    border-color: rgba(244, 114, 182, 0.78) !important;
+    box-shadow:
+      0 22px 52px rgba(64, 10, 61, 0.36),
+      0 0 0 1px rgba(244, 114, 182, 0.12);
+  }
+
+  body.mibooking-dark-premium .premium-balance-summary:hover {
+    border-color: rgba(129, 140, 248, 0.8) !important;
+    box-shadow:
+      0 22px 52px rgba(20, 22, 82, 0.38),
+      0 0 0 1px rgba(129, 140, 248, 0.13);
+  }
+
+  body.mibooking-dark-premium
+    .premium-summary-card:hover
+    .premium-card-link {
+    transform: translateX(2px);
+  }
+}
+
+body.mibooking-dark-premium .premium-card-link {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+body.mibooking-dark-premium .premium-summary-card:focus-visible {
+  outline: 3px solid rgba(96, 165, 250, 0.42);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+--------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+  body.mibooking-dark-premium .premium-summary-card {
+    min-height: 232px;
+  }
+
+  body.mibooking-dark-premium .premium-event-summary::before {
+    background-position: 72% center;
+  }
+
+  body.mibooking-dark-premium .premium-quotes-summary::before {
+    background-position: 74% center;
+  }
+
+  body.mibooking-dark-premium .premium-balance-summary::before {
+    background-position: 70% center;
+  }
+}
+
+@media (max-width: 768px) {
+  body.mibooking-dark-premium .premium-summary-card {
+    min-height: 218px;
+  }
+
+  body.mibooking-dark-premium .premium-summary-card::before {
+    opacity: 0.46;
+  }
+
+  body.mibooking-dark-premium .premium-event-summary::before {
+    background-position: 74% center;
+    opacity: 0.52;
+  }
+
+  body.mibooking-dark-premium .premium-quotes-summary::before {
+    background-position: 76% center;
+  }
+
+  body.mibooking-dark-premium .premium-balance-summary::before {
+    background-position: 72% center;
+  }
+}
+
+@media (max-width: 480px) {
+  body.mibooking-dark-premium .premium-summary-card {
+    min-height: 210px;
+  }
+
+  body.mibooking-dark-premium .premium-event-summary::after {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(5, 18, 37, 0.995) 0%,
+        rgba(5, 18, 37, 0.94) 48%,
+        rgba(5, 18, 37, 0.46) 100%
+      );
+  }
+
+  body.mibooking-dark-premium .premium-quotes-summary::after {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(35, 12, 38, 0.995) 0%,
+        rgba(35, 12, 38, 0.94) 48%,
+        rgba(35, 12, 38, 0.46) 100%
+      );
+  }
+
+  body.mibooking-dark-premium .premium-balance-summary::after {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(13, 20, 47, 0.995) 0%,
+        rgba(13, 20, 47, 0.94) 48%,
+        rgba(13, 20, 47, 0.46) 100%
+      );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.mibooking-dark-premium .premium-summary-card,
+  body.mibooking-dark-premium .premium-summary-card::before,
+  body.mibooking-dark-premium .premium-card-link {
+    transition: none;
+  }
+
+  body.mibooking-dark-premium .premium-summary-card:hover,
+  body.mibooking-dark-premium .premium-summary-card:hover::before {
+    transform: none;
+  }
+}
+

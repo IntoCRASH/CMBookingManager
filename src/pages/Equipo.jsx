@@ -768,6 +768,10 @@ export default function Equipo({
                       <button
                         type="button"
                         className="team-commission-value"
+                        style={{
+                          color: '#f8fafc',
+                          WebkitTextFillColor: '#f8fafc',
+                        }}
                         onClick={() =>
                           beginCommissionEdit(
                             manager
@@ -781,7 +785,12 @@ export default function Equipo({
                         )}
                         %
 
-                        <small>
+                        <small
+                          style={{
+                            color: '#cbd5e1',
+                            WebkitTextFillColor: '#cbd5e1',
+                          }}
+                        >
                           Editar
                         </small>
                       </button>
@@ -950,12 +959,37 @@ export default function Equipo({
         )}
       </section>
 
-      <InvitacionesPendientes
-        compact
-        onInvitationAccepted={
-          onInvitationAccepted
+      <div className="team-incoming-contrast-fix">
+        <InvitacionesPendientes
+          compact
+          onInvitationAccepted={
+            onInvitationAccepted
+          }
+        />
+      </div>
+
+      <style>{`
+        body.mibooking-dark-premium
+          .team-incoming-contrast-fix
+          .team-empty-state {
+          color: #cbd5e1 !important;
+          -webkit-text-fill-color: #cbd5e1 !important;
         }
-      />
+
+        body.mibooking-dark-premium
+          .team-incoming-contrast-fix
+          .team-empty-state strong {
+          color: #f8fafc !important;
+          -webkit-text-fill-color: #f8fafc !important;
+        }
+
+        body.mibooking-dark-premium
+          .team-incoming-contrast-fix
+          .team-empty-state span {
+          color: #cbd5e1 !important;
+          -webkit-text-fill-color: #cbd5e1 !important;
+        }
+      `}</style>
     </div>
   );
 }

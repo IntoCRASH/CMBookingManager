@@ -302,7 +302,13 @@ export default function Dashboard({
       <header className="premium-dashboard-welcome">
         <div>
           <span className="premium-eyebrow">Panel de control</span>
-          <h1>¡Bienvenido, {nombreArtista}! <span aria-hidden="true">👋</span></h1>
+          <h1>
+            ¡Bienvenido,{' '}
+            <span style={{ color: 'var(--accent)' }}>
+              {nombreArtista}
+            </span>
+            ! <span aria-hidden="true">👋</span>
+          </h1>
           <p>
             Aquí tienes el resumen de tu operación musical y lo que requiere
             atención hoy.

@@ -179,3 +179,125 @@ body.mibooking-dark-premium .industry-empty button {
     ) !important;
   color: #ffffff !important;
 }
+
+/* =========================================================
+   MIBOOKING — APRENDE: TIPOGRAFÍA RESPONSIVE Y LEGIBLE
+========================================================= */
+
+.industry-eyebrow {
+  font-size: clamp(11px, 0.16vw + 9.5px, 12px);
+  line-height: 1.4;
+}
+
+.industry-heading p {
+  font-size: clamp(14px, 0.2vw + 12.5px, 16px);
+  line-height: 1.7;
+}
+
+.industry-back {
+  font-size: clamp(12.5px, 0.16vw + 11px, 14px);
+}
+
+.industry-intro span,
+.industry-coming span {
+  font-size: clamp(10.5px, 0.14vw + 9px, 11.5px);
+  line-height: 1.4;
+}
+
+.industry-intro h2,
+.industry-coming h2 {
+  font-size: clamp(22px, 0.75vw + 16px, 26px);
+  line-height: 1.25;
+}
+
+.industry-intro p,
+.industry-coming p {
+  font-size: clamp(13.5px, 0.18vw + 12px, 15px);
+  line-height: 1.7;
+}
+
+.industry-search span {
+  font-size: clamp(12.5px, 0.16vw + 11px, 13.5px);
+  line-height: 1.4;
+}
+
+.industry-search input {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.industry-categories button {
+  font-size: clamp(11.5px, 0.14vw + 10px, 12.5px);
+  line-height: 1.25;
+}
+
+.industry-results-bar {
+  font-size: clamp(12.5px, 0.16vw + 11px, 13.5px);
+  line-height: 1.4;
+}
+
+.industry-results-bar strong {
+  font-size: clamp(17px, 0.35vw + 14px, 19px);
+}
+
+.industry-question summary span {
+  font-size: clamp(10px, 0.13vw + 9px, 11px);
+  line-height: 1.4;
+}
+
+.industry-question summary strong {
+  font-size: clamp(15px, 0.22vw + 13px, 16.5px);
+  line-height: 1.5;
+}
+
+.industry-answer p {
+  font-size: clamp(13.5px, 0.18vw + 12px, 15px);
+  line-height: 1.75;
+}
+
+.industry-empty h2 {
+  font-size: clamp(21px, 0.55vw + 17px, 24px);
+  line-height: 1.3;
+}
+
+.industry-empty p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.industry-empty button {
+  font-size: 14px;
+}
+
+.industry-coming > strong {
+  font-size: clamp(11px, 0.14vw + 9.8px, 12px);
+  line-height: 1.3;
+}
+
+@media (max-width: 620px) {
+  .industry-heading h1 {
+    font-size: clamp(31px, 9vw, 38px);
+  }
+
+  .industry-heading p,
+  .industry-intro p,
+  .industry-coming p,
+  .industry-answer p {
+    font-size: 14px;
+  }
+
+  .industry-question summary strong {
+    font-size: 15.5px;
+  }
+
+  .industry-categories button {
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  .industry-search input {
+    min-height: 52px;
+    font-size: 16px;
+  }
+}
+
