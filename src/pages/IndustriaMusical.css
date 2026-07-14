@@ -66,3 +66,116 @@ body.mibooking-dark-premium .industry-categories button {
   background: rgba(139, 92, 246, 0.1);
   color: #c4b5fd;
 }
+
+/* =========================================================
+   MIBOOKING — APRENDE: CONTRASTE OSCURO DEFINITIVO
+   Solo propiedades cromáticas.
+========================================================= */
+
+body.mibooking-dark-premium .industry-heading h1,
+body.mibooking-dark-premium .industry-intro h2,
+body.mibooking-dark-premium .industry-results-bar strong,
+body.mibooking-dark-premium .industry-question summary strong,
+body.mibooking-dark-premium .industry-empty h2,
+body.mibooking-dark-premium .industry-coming h2 {
+  color: #f8fafc !important;
+}
+
+body.mibooking-dark-premium .industry-heading p,
+body.mibooking-dark-premium .industry-intro p,
+body.mibooking-dark-premium .industry-results-bar,
+body.mibooking-dark-premium .industry-answer p,
+body.mibooking-dark-premium .industry-empty p,
+body.mibooking-dark-premium .industry-coming p {
+  color: #aeb9ca !important;
+}
+
+body.mibooking-dark-premium .industry-search span {
+  color: #e2e8f0 !important;
+}
+
+body.mibooking-dark-premium .industry-search input {
+  border-color: rgba(96, 165, 250, 0.2) !important;
+  background: rgba(5, 11, 23, 0.78) !important;
+  color: #f8fafc !important;
+  caret-color: #f8fafc !important;
+}
+
+body.mibooking-dark-premium .industry-search input::placeholder {
+  color: #8491a6 !important;
+}
+
+body.mibooking-dark-premium .industry-intro,
+body.mibooking-dark-premium .industry-tools,
+body.mibooking-dark-premium .industry-question,
+body.mibooking-dark-premium .industry-empty,
+body.mibooking-dark-premium .industry-coming {
+  border-color: rgba(96, 165, 250, 0.2) !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(20, 39, 66, 0.96),
+      rgba(27, 24, 59, 0.94)
+    ) !important;
+}
+
+body.mibooking-dark-premium .industry-question[open] {
+  border-color: rgba(139, 92, 246, 0.42) !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(23, 42, 70, 0.98),
+      rgba(34, 27, 72, 0.96)
+    ) !important;
+}
+
+body.mibooking-dark-premium .industry-question summary span,
+body.mibooking-dark-premium .industry-eyebrow,
+body.mibooking-dark-premium .industry-intro span,
+body.mibooking-dark-premium .industry-coming span {
+  color: #8b5cf6 !important;
+}
+
+body.mibooking-dark-premium .industry-question summary::after {
+  background: #f5f3ff !important;
+  color: #6d4ae8 !important;
+}
+
+body.mibooking-dark-premium .industry-categories button {
+  border-color: rgba(139, 92, 246, 0.28) !important;
+  background: rgba(139, 92, 246, 0.12) !important;
+  color: #d8ccff !important;
+}
+
+body.mibooking-dark-premium .industry-categories button:hover:not(:disabled) {
+  border-color: rgba(167, 139, 250, 0.44) !important;
+  background: rgba(139, 92, 246, 0.2) !important;
+  color: #ffffff !important;
+}
+
+body.mibooking-dark-premium .industry-categories button.active {
+  border-color: rgba(129, 140, 248, 0.34) !important;
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    ) !important;
+  color: #ffffff !important;
+}
+
+body.mibooking-dark-premium .industry-back {
+  border-color: rgba(96, 165, 250, 0.2) !important;
+  background: rgba(20, 29, 48, 0.9) !important;
+  color: #e2e8f0 !important;
+}
+
+body.mibooking-dark-premium .industry-empty button {
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    ) !important;
+  color: #ffffff !important;
+}
