@@ -383,3 +383,159 @@
     width: 100%;
   }
 }
+
+/* =========================================================
+   MIBOOKING — RIDERS TÉCNICOS EN MODO OSCURO
+   Solo cambios cromáticos. Sin alterar estructura ni medidas.
+========================================================= */
+
+body.mibooking-dark-premium .riders-document-tabs {
+  border-color: rgba(96, 165, 250, 0.22);
+  background: rgba(10, 19, 35, 0.92);
+}
+
+body.mibooking-dark-premium .riders-document-tabs button,
+body.mibooking-dark-premium .riders-toolbar button {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(20, 29, 48, 0.9);
+  color: #dbe4f0;
+}
+
+body.mibooking-dark-premium .riders-document-tabs button {
+  border-color: transparent;
+  background: transparent;
+}
+
+body.mibooking-dark-premium .riders-document-tabs button:hover:not(:disabled),
+body.mibooking-dark-premium .riders-toolbar button:hover:not(:disabled) {
+  color: #ffffff;
+  border-color: rgba(139, 92, 246, 0.28);
+  background: rgba(139, 92, 246, 0.13);
+}
+
+body.mibooking-dark-premium .riders-document-tabs button.active,
+body.mibooking-dark-premium .riders-toolbar button.active {
+  color: #ffffff;
+  border-color: rgba(129, 140, 248, 0.28);
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    );
+}
+
+body.mibooking-dark-premium .rider-card,
+body.mibooking-dark-premium .riders-empty,
+body.mibooking-dark-premium .rider-modal,
+body.mibooking-dark-premium .rider-generator-form .form-section {
+  border-color: rgba(96, 165, 250, 0.2);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(20, 39, 66, 0.96),
+      rgba(27, 24, 59, 0.94)
+    );
+}
+
+body.mibooking-dark-premium .rider-card-main span,
+body.mibooking-dark-premium .rider-number span,
+body.mibooking-dark-premium .rider-identity small,
+body.mibooking-dark-premium .riders-empty p,
+body.mibooking-dark-premium .rider-modal p {
+  color: #94a3b8;
+}
+
+body.mibooking-dark-premium .rider-card-main strong,
+body.mibooking-dark-premium .rider-identity span,
+body.mibooking-dark-premium .riders-empty h2,
+body.mibooking-dark-premium .rider-modal h2 {
+  color: #f8fafc;
+}
+
+body.mibooking-dark-premium .rider-number strong {
+  color: #c4b5fd;
+}
+
+body.mibooking-dark-premium .rider-status {
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+}
+
+body.mibooking-dark-premium .rider-status.status-enviado,
+body.mibooking-dark-premium .rider-status.status-confirmado {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+
+body.mibooking-dark-premium .rider-status.status-generado {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+}
+
+body.mibooking-dark-premium .rider-card-actions {
+  border-color: rgba(96, 165, 250, 0.18);
+  background: rgba(10, 19, 35, 0.72);
+}
+
+body.mibooking-dark-premium .rider-card-actions button,
+body.mibooking-dark-premium .riders-empty button,
+body.mibooking-dark-premium .rider-form-actions button,
+body.mibooking-dark-premium .rider-modal .modal-actions button {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(20, 29, 48, 0.9);
+  color: #dbe4f0;
+}
+
+body.mibooking-dark-premium .rider-card-actions button:hover:not(:disabled),
+body.mibooking-dark-premium .riders-empty button:hover:not(:disabled),
+body.mibooking-dark-premium .rider-modal .modal-actions button:hover:not(:disabled) {
+  border-color: rgba(139, 92, 246, 0.28);
+  background: rgba(139, 92, 246, 0.13);
+  color: #ffffff;
+}
+
+body.mibooking-dark-premium .rider-form-actions button,
+body.mibooking-dark-premium .riders-empty button {
+  border-color: rgba(129, 140, 248, 0.28);
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    );
+  color: #ffffff;
+}
+
+body.mibooking-dark-premium .rider-delete-button,
+body.mibooking-dark-premium .rider-delete-confirm {
+  border-color: rgba(251, 113, 133, 0.3) !important;
+  background: rgba(127, 29, 29, 0.34) !important;
+  color: #fecdd3 !important;
+}
+
+body.mibooking-dark-premium .rider-modal input,
+body.mibooking-dark-premium .rider-modal textarea,
+body.mibooking-dark-premium .rider-generator-form input,
+body.mibooking-dark-premium .rider-generator-form select,
+body.mibooking-dark-premium .rider-generator-form textarea {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(8, 16, 31, 0.86);
+  color: #f8fafc;
+  caret-color: #f8fafc;
+}
+
+body.mibooking-dark-premium .rider-delete-word {
+  background: rgba(245, 158, 11, 0.13);
+  color: #fbbf24;
+}
+
+/*
+ * La vista previa representa el PDF final.
+ * Se mantiene blanca intencionalmente.
+ */
+body.mibooking-dark-premium .rider-preview-paper {
+  border-color: rgba(148, 163, 184, 0.28);
+  background: #ffffff;
+  color: #0f172a;
+}

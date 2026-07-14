@@ -621,3 +621,197 @@
     padding-inline: 10px;
   }
 }
+
+/* =========================================================
+   DOCUMENTOS — CORRECCIÓN FINAL DE TARJETAS OSCURAS
+   Solo cromática. La vista previa del PDF permanece blanca.
+========================================================= */
+
+body.mibooking-dark-premium .documentos-section-tabs,
+body.mibooking-dark-premium .documentos-toolbar {
+  border-color: rgba(96, 165, 250, 0.2);
+}
+
+body.mibooking-dark-premium .documentos-section-tabs button,
+body.mibooking-dark-premium .documentos-toolbar button {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(20, 29, 48, 0.88);
+  color: #dbe4f0;
+}
+
+body.mibooking-dark-premium .documentos-section-tabs button.active,
+body.mibooking-dark-premium .documentos-toolbar button.active {
+  border-color: rgba(139, 92, 246, 0.28);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(45, 157, 245, 0.22),
+      rgba(112, 85, 245, 0.28)
+    );
+  color: #ffffff;
+}
+
+body.mibooking-dark-premium .documentos-empty,
+body.mibooking-dark-premium .documento-card,
+body.mibooking-dark-premium .documentos-form .form-section,
+body.mibooking-dark-premium .documentos-email-modal,
+body.mibooking-dark-premium .documentos-delete-modal {
+  border-color: rgba(96, 165, 250, 0.2);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(20, 39, 66, 0.96),
+      rgba(27, 24, 59, 0.94)
+    );
+}
+
+body.mibooking-dark-premium .documento-card-main strong,
+body.mibooking-dark-premium .documento-identidad span,
+body.mibooking-dark-premium .documentos-empty h2,
+body.mibooking-dark-premium .documentos-form .form-section h2,
+body.mibooking-dark-premium .documentos-email-modal h2,
+body.mibooking-dark-premium .documentos-delete-modal h2 {
+  color: #f8fafc;
+}
+
+body.mibooking-dark-premium .documento-card-main span:not(.documento-status),
+body.mibooking-dark-premium .documento-identidad small,
+body.mibooking-dark-premium .documentos-empty p,
+body.mibooking-dark-premium .documentos-help,
+body.mibooking-dark-premium .documentos-email-modal p,
+body.mibooking-dark-premium .documentos-delete-modal p {
+  color: #94a3b8;
+}
+
+body.mibooking-dark-premium .documento-card-actions button {
+  border-color: rgba(96, 165, 250, 0.2);
+}
+
+/*
+ * La hoja de contrato imita un documento impreso.
+ * Se conserva blanca intencionalmente para que la vista previa
+ * represente correctamente el PDF que será descargado.
+ */
+body.mibooking-dark-premium .documento-preview-paper {
+  border-color: rgba(148, 163, 184, 0.28);
+  background: #ffffff;
+  color: #1e293b;
+}
+
+/* =========================================================
+   DOCUMENTOS — BOTONES Y PESTAÑAS EN MODO OSCURO
+   Solo cambios cromáticos. Sin alterar medidas o estructura.
+========================================================= */
+
+/* Contenedor superior Contratos / Riders técnicos */
+body.mibooking-dark-premium .documentos-section-tabs,
+body.mibooking-dark-premium .riders-page .documentos-section-tabs,
+body.mibooking-dark-premium .riders-section-tabs {
+  border-color: rgba(96, 165, 250, 0.22) !important;
+  background: rgba(10, 19, 35, 0.92) !important;
+}
+
+/* Botones inactivos de las pestañas superiores */
+body.mibooking-dark-premium .documentos-section-tabs > button,
+body.mibooking-dark-premium .riders-page .documentos-section-tabs > button,
+body.mibooking-dark-premium .riders-section-tabs > button {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: #aeb9ca !important;
+}
+
+/* Hover de pestañas */
+body.mibooking-dark-premium .documentos-section-tabs > button:hover:not(:disabled),
+body.mibooking-dark-premium .riders-page .documentos-section-tabs > button:hover:not(:disabled),
+body.mibooking-dark-premium .riders-section-tabs > button:hover:not(:disabled) {
+  border-color: rgba(139, 92, 246, 0.2) !important;
+  background: rgba(139, 92, 246, 0.12) !important;
+  color: #e9e5ff !important;
+}
+
+/* Pestaña activa */
+body.mibooking-dark-premium .documentos-section-tabs > button.active,
+body.mibooking-dark-premium .riders-page .documentos-section-tabs > button.active,
+body.mibooking-dark-premium .riders-section-tabs > button.active {
+  border-color: rgba(129, 140, 248, 0.28) !important;
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    ) !important;
+  color: #ffffff !important;
+}
+
+/* Barra secundaria: contratos generados / generar contrato */
+body.mibooking-dark-premium .documentos-toolbar > button,
+body.mibooking-dark-premium .riders-toolbar > button,
+body.mibooking-dark-premium .rider-toolbar > button {
+  border-color: rgba(96, 165, 250, 0.2) !important;
+  background: rgba(20, 29, 48, 0.9) !important;
+  color: #dbe4f0 !important;
+}
+
+body.mibooking-dark-premium .documentos-toolbar > button:hover:not(:disabled),
+body.mibooking-dark-premium .riders-toolbar > button:hover:not(:disabled),
+body.mibooking-dark-premium .rider-toolbar > button:hover:not(:disabled) {
+  border-color: rgba(139, 92, 246, 0.28) !important;
+  background: rgba(139, 92, 246, 0.13) !important;
+  color: #ffffff !important;
+}
+
+body.mibooking-dark-premium .documentos-toolbar > button.active,
+body.mibooking-dark-premium .riders-toolbar > button.active,
+body.mibooking-dark-premium .rider-toolbar > button.active {
+  border-color: rgba(129, 140, 248, 0.28) !important;
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    ) !important;
+  color: #ffffff !important;
+}
+
+/* Botón Generar rider técnico y acciones principales del formulario */
+body.mibooking-dark-premium .riders-page button[type="submit"],
+body.mibooking-dark-premium .riders-form-actions button,
+body.mibooking-dark-premium .rider-form-actions button,
+body.mibooking-dark-premium .riders-empty button,
+body.mibooking-dark-premium .rider-empty button,
+body.mibooking-dark-premium .generar-rider-button,
+body.mibooking-dark-premium .rider-generate-button {
+  border-color: rgba(129, 140, 248, 0.28) !important;
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    ) !important;
+  color: #ffffff !important;
+}
+
+/* Botones secundarios dentro de Riders */
+body.mibooking-dark-premium .riders-page button:not(.danger-btn):not([type="submit"]),
+body.mibooking-dark-premium .rider-page button:not(.danger-btn):not([type="submit"]) {
+  border-color: rgba(96, 165, 250, 0.2) !important;
+  background: rgba(20, 29, 48, 0.9) !important;
+  color: #dbe4f0 !important;
+}
+
+/* Reafirma activos y primarios después de la regla secundaria */
+body.mibooking-dark-premium .riders-page button.active,
+body.mibooking-dark-premium .rider-page button.active,
+body.mibooking-dark-premium .riders-page button.primary,
+body.mibooking-dark-premium .rider-page button.primary,
+body.mibooking-dark-premium .riders-page button[type="submit"],
+body.mibooking-dark-premium .rider-page button[type="submit"] {
+  border-color: rgba(129, 140, 248, 0.28) !important;
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    ) !important;
+  color: #ffffff !important;
+}

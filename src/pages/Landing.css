@@ -1133,3 +1133,207 @@
     justify-content: center;
   }
 }
+
+/* =========================================================
+   MIBOOKING — MODO OSCURO: SOLO AJUSTES CROMÁTICOS
+   El layout original anterior permanece intacto.
+========================================================= */
+
+.landing-page {
+  background:
+    radial-gradient(
+      circle at 8% 12%,
+      rgba(46, 164, 255, 0.18),
+      transparent 31%
+    ),
+    radial-gradient(
+      circle at 92% 6%,
+      rgba(113, 83, 247, 0.18),
+      transparent 34%
+    ),
+    linear-gradient(
+      145deg,
+      #08111f,
+      #0b1020 56%,
+      #050914
+    );
+  color: #f8fafc;
+}
+
+.landing-page button {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(20, 29, 48, 0.9);
+  color: #e2e8f0;
+}
+
+.landing-page button.primary {
+  border-color: transparent;
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    );
+  color: #ffffff;
+}
+
+.landing-kicker,
+.landing-audiences article > span,
+.landing-audience-content > span,
+.landing-pricing-kicker,
+.landing-price-name > span,
+.landing-faq-kicker {
+  color: #a78bfa;
+}
+
+.landing-copy h1,
+.landing-audiences h2,
+.landing-pricing-heading h2,
+.landing-manager-free-note strong,
+.landing-price strong,
+.landing-partner-copy h3,
+.landing-faq-heading h2,
+.landing-faq-cta strong {
+  color: #f8fafc;
+}
+
+.landing-copy > p,
+.landing-audiences p,
+.landing-pricing-heading p,
+.landing-manager-free-note p,
+.landing-price-name h3,
+.landing-price span,
+.landing-price-card li,
+.landing-partner-copy p,
+.landing-partner-prices small,
+.landing-partner-prices span,
+.landing-partner-logos > small,
+.landing-faq-heading p,
+.landing-faq details p,
+.landing-faq-cta span,
+.landing-footer,
+.landing-legal-links a {
+  color: #aeb9ca;
+}
+
+.landing-photo-badge {
+  border-color: rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.landing-photo-badge small {
+  color: #a78bfa;
+}
+
+.landing-photo-badge strong {
+  color: #f8fafc;
+}
+
+.landing-audiences article,
+.landing-price-card,
+.landing-faq details {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.landing-manager-free-note {
+  border-color: rgba(129, 140, 248, 0.28);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(45, 157, 245, 0.08),
+      rgba(112, 85, 245, 0.11)
+    ),
+    rgba(15, 23, 42, 0.9);
+}
+
+.landing-manager-free-icon {
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    );
+  color: #ffffff;
+}
+
+.landing-price-card.featured {
+  border-color: rgba(139, 92, 246, 0.4);
+  background:
+    linear-gradient(
+      155deg,
+      rgba(26, 36, 59, 0.98),
+      rgba(20, 24, 49, 0.96)
+    );
+}
+
+.landing-price-popular {
+  background: rgba(139, 92, 246, 0.18);
+  color: #c4b5fd;
+}
+
+.landing-price-card li::before {
+  background: rgba(16, 185, 129, 0.16);
+  color: #6ee7b7;
+}
+
+.landing-price-card li.landing-plan-highlight {
+  color: #c4b5fd;
+}
+
+.landing-partner-offer {
+  border-color: rgba(244, 114, 182, 0.26);
+  background:
+    radial-gradient(
+      circle at 0 0,
+      rgba(255, 19, 116, 0.1),
+      transparent 42%
+    ),
+    rgba(15, 23, 42, 0.92);
+}
+
+.landing-partner-prices > div {
+  border-color: rgba(244, 114, 182, 0.2);
+  background: rgba(30, 41, 59, 0.84);
+}
+
+.landing-partner-prices strong {
+  color: #f472b6;
+}
+
+.landing-faq details[open] {
+  border-color: rgba(139, 92, 246, 0.38);
+}
+
+.landing-faq summary {
+  color: #f1f5f9;
+}
+
+.landing-faq summary::after {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(45, 157, 245, 0.14),
+      rgba(112, 85, 245, 0.18)
+    );
+  color: #a78bfa;
+}
+
+.landing-faq-cta {
+  border-color: rgba(139, 92, 246, 0.25);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(45, 157, 245, 0.08),
+      rgba(112, 85, 245, 0.11)
+    ),
+    rgba(15, 23, 42, 0.9);
+}
+
+.landing-footer {
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+.landing-legal-links a:hover {
+  color: #c4b5fd;
+}

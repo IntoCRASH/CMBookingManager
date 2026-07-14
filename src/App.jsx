@@ -1197,6 +1197,12 @@ export default function App() {
       action: volverDashboard,
     },
     {
+      id: 'tutorial',
+      label: 'Tutorial',
+      icon: 'tutorial',
+      action: () => irA('tutorial'),
+    },
+    {
       id: 'cotizaciones',
       label: 'Cotizaciones',
       icon: 'quote',
@@ -1225,12 +1231,6 @@ export default function App() {
       label: 'Comisiones',
       icon: 'commissions',
       action: () => irA('comisiones'),
-    },
-    {
-      id: 'tutorial',
-      label: 'Tutorial',
-      icon: 'tutorial',
-      action: () => irA('tutorial'),
     },
     ...(
       esArtista

@@ -155,7 +155,7 @@ export default function Landing() {
     <main className="landing-page">
       <nav className="landing-nav">
         <img
-          src="/mibooking-logo.png"
+          src="/mibooking-logo-dark.png"
           alt="MiBooking"
         />
 

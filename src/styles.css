@@ -3860,3 +3860,484 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   outline: none;
   box-shadow: none;
 }
+
+/* =========================================================
+   MIBOOKING — CORRECCIÓN FINAL DE TARJETAS OSCURAS
+   Solo cromática. No modifica layout, tamaños ni estructura.
+========================================================= */
+
+/* Superficie visual de referencia: módulo Aprende */
+body.mibooking-dark-premium {
+  --module-card-bg:
+    linear-gradient(
+      135deg,
+      rgba(20, 39, 66, 0.96),
+      rgba(27, 24, 59, 0.94)
+    );
+  --module-card-bg-solid: #111c2f;
+  --module-card-bg-soft: #172338;
+  --module-card-line: rgba(96, 165, 250, 0.2);
+  --module-card-line-violet: rgba(139, 92, 246, 0.22);
+  --module-card-text: #f8fafc;
+  --module-card-muted: #94a3b8;
+}
+
+/* =========================================================
+   CONFIGURACIÓN DEL ARTISTA
+========================================================= */
+
+body.mibooking-dark-premium .config-artista-card {
+  border-color: var(--module-card-line);
+  background: var(--module-card-bg);
+}
+
+body.mibooking-dark-premium .config-artista-card strong,
+body.mibooking-dark-premium .config-artista-control strong {
+  color: var(--module-card-text);
+}
+
+body.mibooking-dark-premium .config-artista-card p {
+  color: var(--module-card-muted);
+}
+
+body.mibooking-dark-premium .config-artista-control select {
+  border-color: var(--module-card-line);
+  background-color: rgba(8, 16, 31, 0.86);
+  color: var(--module-card-text);
+}
+
+body.mibooking-dark-premium .config-artista-empty {
+  border-color: var(--module-card-line-violet);
+  background: rgba(17, 28, 47, 0.88);
+}
+
+/* =========================================================
+   TARIFAS, FORMATOS Y TIPOS DE EVENTO
+========================================================= */
+
+body.mibooking-dark-premium .tarifas-lista,
+body.mibooking-dark-premium .formatos-lista,
+body.mibooking-dark-premium .tipos-evento-lista {
+  border-color: var(--module-card-line);
+  background: var(--module-card-bg-solid);
+}
+
+body.mibooking-dark-premium .tarifas-header,
+body.mibooking-dark-premium .formatos-header,
+body.mibooking-dark-premium .tipos-evento-header {
+  color: var(--module-card-muted);
+  border-color: var(--module-card-line);
+  background: rgba(21, 34, 56, 0.96);
+}
+
+body.mibooking-dark-premium .tarifa-row-simple,
+body.mibooking-dark-premium .formato-row,
+body.mibooking-dark-premium .tipo-evento-row {
+  border-color: var(--module-card-line);
+  background: var(--module-card-bg-solid);
+}
+
+body.mibooking-dark-premium .tarifa-row-simple:hover,
+body.mibooking-dark-premium .formato-row:hover,
+body.mibooking-dark-premium .tipo-evento-row:hover {
+  border-color: var(--module-card-line-violet);
+  background: var(--module-card-bg-soft);
+}
+
+body.mibooking-dark-premium .tarifa-nombre strong,
+body.mibooking-dark-premium .formato-nombre strong,
+body.mibooking-dark-premium .tipo-evento-nombre strong {
+  color: var(--module-card-text);
+}
+
+body.mibooking-dark-premium .tarifa-nombre small,
+body.mibooking-dark-premium .formato-nombre small,
+body.mibooking-dark-premium .tipo-evento-nombre small,
+body.mibooking-dark-premium .tarifas-empty,
+body.mibooking-dark-premium .formatos-empty,
+body.mibooking-dark-premium .tipos-evento-empty {
+  color: var(--module-card-muted);
+}
+
+body.mibooking-dark-premium .tarifa-icono,
+body.mibooking-dark-premium .formato-icono,
+body.mibooking-dark-premium .tipo-evento-icono {
+  background: rgba(139, 92, 246, 0.13);
+  color: #c4b5fd;
+}
+
+/* Las reglas móviles originales vuelven a poner las filas blancas. */
+@media (max-width: 680px) {
+  body.mibooking-dark-premium .tarifa-row-simple,
+  body.mibooking-dark-premium .formato-row,
+  body.mibooking-dark-premium .tipo-evento-row {
+    border-color: var(--module-card-line);
+    background: var(--module-card-bg-solid);
+  }
+}
+
+/* =========================================================
+   EQUIPO
+========================================================= */
+
+body.mibooking-dark-premium .team-invite-panel,
+body.mibooking-dark-premium .team-section,
+body.mibooking-dark-premium .team-incoming-section {
+  border-color: var(--module-card-line);
+  background: var(--module-card-bg);
+}
+
+body.mibooking-dark-premium .team-manager-card,
+body.mibooking-dark-premium .team-pending-card,
+body.mibooking-dark-premium .invitation-received-card {
+  border-color: var(--module-card-line);
+  background: var(--module-card-bg-solid);
+}
+
+body.mibooking-dark-premium .team-page-heading h1,
+body.mibooking-dark-premium .team-section-title h2,
+body.mibooking-dark-premium .team-invite-panel h2,
+body.mibooking-dark-premium .team-manager-info h3,
+body.mibooking-dark-premium .invitation-received-info h2 {
+  color: var(--module-card-text);
+}
+
+body.mibooking-dark-premium .team-page-heading p,
+body.mibooking-dark-premium .team-invite-panel p,
+body.mibooking-dark-premium .team-manager-info p,
+body.mibooking-dark-premium .invitation-received-info p,
+body.mibooking-dark-premium .team-manager-info small,
+body.mibooking-dark-premium .invitation-received-info small,
+body.mibooking-dark-premium .team-pending-card small,
+body.mibooking-dark-premium .team-commission-control > span {
+  color: var(--module-card-muted);
+}
+
+body.mibooking-dark-premium .team-invite-form label {
+  color: #dbe4f0;
+}
+
+body.mibooking-dark-premium .team-invite-form input,
+body.mibooking-dark-premium .team-commission-control input {
+  border-color: var(--module-card-line);
+  background: rgba(8, 16, 31, 0.86);
+  color: var(--module-card-text);
+  caret-color: var(--module-card-text);
+}
+
+body.mibooking-dark-premium .team-count {
+  background: rgba(139, 92, 246, 0.14);
+  color: #c4b5fd;
+}
+
+body.mibooking-dark-premium .team-manager-status span.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+
+body.mibooking-dark-premium .team-manager-status span.suspended {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+/* =========================================================
+   SUSCRIPCIÓN Y FACTURACIÓN
+========================================================= */
+
+body.mibooking-dark-premium .subscription-summary article,
+body.mibooking-dark-premium .subscription-discount,
+body.mibooking-dark-premium .subscription-actions,
+body.mibooking-dark-premium .subscription-portal,
+body.mibooking-dark-premium .subscription-legacy,
+body.mibooking-dark-premium .subscription-loading {
+  border-color: var(--module-card-line);
+  background: var(--module-card-bg);
+}
+
+body.mibooking-dark-premium .subscription-heading h1,
+body.mibooking-dark-premium .subscription-heading strong,
+body.mibooking-dark-premium .subscription-summary strong,
+body.mibooking-dark-premium .subscription-discount h2,
+body.mibooking-dark-premium .subscription-discount > strong,
+body.mibooking-dark-premium .subscription-action-copy h2,
+body.mibooking-dark-premium .subscription-portal h2,
+body.mibooking-dark-premium .subscription-legacy h2 {
+  color: var(--module-card-text);
+}
+
+body.mibooking-dark-premium .subscription-heading p,
+body.mibooking-dark-premium .subscription-summary span,
+body.mibooking-dark-premium .subscription-summary small,
+body.mibooking-dark-premium .subscription-discount p,
+body.mibooking-dark-premium .subscription-action-copy p,
+body.mibooking-dark-premium .subscription-portal p,
+body.mibooking-dark-premium .subscription-legacy p,
+body.mibooking-dark-premium .subscription-cancel-note,
+body.mibooking-dark-premium .subscription-legal-links a {
+  color: var(--module-card-muted);
+}
+
+body.mibooking-dark-premium .subscription-eyebrow,
+body.mibooking-dark-premium .subscription-discount span,
+body.mibooking-dark-premium .subscription-action-copy > span,
+body.mibooking-dark-premium .subscription-portal span,
+body.mibooking-dark-premium .subscription-legacy span {
+  color: #b794f6;
+}
+
+body.mibooking-dark-premium .subscription-back,
+body.mibooking-dark-premium .subscription-secondary {
+  border-color: var(--module-card-line);
+  background: rgba(20, 29, 48, 0.88);
+  color: #e2e8f0;
+}
+
+body.mibooking-dark-premium .subscription-error {
+  border-color: rgba(251, 113, 133, 0.28);
+  background: rgba(127, 29, 29, 0.3);
+  color: #fecdd3;
+}
+
+/* =========================================================
+   MODALES UTILIZADOS POR CONFIGURACIÓN
+========================================================= */
+
+body.mibooking-dark-premium .modal-card {
+  border-color: var(--module-card-line);
+  background: #111c2f;
+  color: var(--module-card-text);
+}
+
+body.mibooking-dark-premium .modal-card h2,
+body.mibooking-dark-premium .modal-card strong {
+  color: var(--module-card-text);
+}
+
+body.mibooking-dark-premium .modal-card p {
+  color: var(--module-card-muted);
+}
+
+body.mibooking-dark-premium .config-modal-context {
+  border-color: var(--module-card-line-violet);
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--module-card-muted);
+}
+
+/* =========================================================
+   MIBOOKING — CALENDARIO EN MODO OSCURO
+   Solo cambios cromáticos. Sin alterar estructura ni medidas.
+========================================================= */
+
+body.mibooking-dark-premium .calendario-mes-titulo {
+  color: #94a3b8;
+}
+
+body.mibooking-dark-premium .calendario-controles {
+  border-color: rgba(96, 165, 250, 0.2);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(20, 39, 66, 0.96),
+      rgba(27, 24, 59, 0.94)
+    );
+}
+
+body.mibooking-dark-premium .calendario-controles button {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(20, 29, 48, 0.9);
+  color: #dbe4f0;
+}
+
+body.mibooking-dark-premium .calendario-controles button:hover:not(:disabled) {
+  border-color: rgba(139, 92, 246, 0.28);
+  background: rgba(139, 92, 246, 0.13);
+  color: #ffffff;
+}
+
+body.mibooking-dark-premium .calendario-controles .calendario-hoy-btn {
+  border-color: rgba(129, 140, 248, 0.28);
+  background:
+    linear-gradient(
+      135deg,
+      #2d9df5,
+      #7055f5
+    );
+  color: #ffffff;
+}
+
+body.mibooking-dark-premium .calendario-scroll {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: #111c2f;
+}
+
+body.mibooking-dark-premium .calendario-grid {
+  background: #111c2f;
+}
+
+body.mibooking-dark-premium .calendario-dia-header {
+  border-color: rgba(96, 165, 250, 0.18);
+  background: rgba(21, 34, 56, 0.96);
+  color: #a78bfa;
+}
+
+body.mibooking-dark-premium .calendario-dia {
+  border-color: rgba(96, 165, 250, 0.18);
+  background: #111c2f;
+  color: #f8fafc;
+}
+
+body.mibooking-dark-premium .calendario-dia-vacio {
+  border-color: rgba(96, 165, 250, 0.1);
+  background: rgba(8, 16, 31, 0.5);
+}
+
+body.mibooking-dark-premium .calendario-dia.es-hoy {
+  border-color: rgba(139, 92, 246, 0.45);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(30, 41, 72, 0.96),
+      rgba(32, 24, 69, 0.94)
+    );
+}
+
+body.mibooking-dark-premium .calendario-numero {
+  color: #e2e8f0;
+}
+
+body.mibooking-dark-premium .calendario-dia.es-hoy .calendario-numero {
+  color: #c4b5fd;
+}
+
+body.mibooking-dark-premium .calendario-eventos-count {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(59, 130, 246, 0.13);
+  color: #93c5fd;
+}
+
+body.mibooking-dark-premium .calendario-eventos-count.multiple {
+  border-color: rgba(139, 92, 246, 0.25);
+  background: rgba(139, 92, 246, 0.14);
+  color: #c4b5fd;
+}
+
+body.mibooking-dark-premium .calendario-evento {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(20, 29, 48, 0.92);
+  color: #f8fafc;
+}
+
+body.mibooking-dark-premium .calendario-evento strong {
+  color: #f8fafc;
+}
+
+body.mibooking-dark-premium .calendario-evento-venue,
+body.mibooking-dark-premium .calendario-evento-cliente {
+  color: #94a3b8;
+}
+
+body.mibooking-dark-premium .calendario-evento-hora {
+  background: rgba(139, 92, 246, 0.14);
+  color: #c4b5fd;
+}
+
+body.mibooking-dark-premium .calendario-evento.artista-color-0 {
+  border-color: rgba(59, 130, 246, 0.34);
+  background: rgba(30, 64, 175, 0.16);
+}
+
+body.mibooking-dark-premium .calendario-evento.artista-color-1 {
+  border-color: rgba(139, 92, 246, 0.34);
+  background: rgba(109, 40, 217, 0.16);
+}
+
+body.mibooking-dark-premium .calendario-evento.artista-color-2 {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(5, 150, 105, 0.14);
+}
+
+body.mibooking-dark-premium .calendario-evento.artista-color-3 {
+  border-color: rgba(244, 114, 182, 0.3);
+  background: rgba(190, 24, 93, 0.14);
+}
+
+body.mibooking-dark-premium .calendario-evento.artista-color-4 {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(180, 83, 9, 0.14);
+}
+
+body.mibooking-dark-premium .calendario-evento.artista-color-5 {
+  border-color: rgba(34, 211, 238, 0.3);
+  background: rgba(8, 145, 178, 0.14);
+}
+
+body.mibooking-dark-premium .calendario-acciones button {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(20, 29, 48, 0.92);
+  color: #dbe4f0;
+}
+
+body.mibooking-dark-premium .calendario-acciones button:hover:not(:disabled) {
+  border-color: rgba(139, 92, 246, 0.28);
+  background: rgba(139, 92, 246, 0.14);
+  color: #ffffff;
+}
+
+body.mibooking-dark-premium .calendario-estado {
+  border-color: rgba(96, 165, 250, 0.2);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(20, 39, 66, 0.96),
+      rgba(27, 24, 59, 0.94)
+    );
+  color: #94a3b8;
+}
+
+/* =========================================================
+   MIBOOKING — FONDO CINEMATOGRÁFICO GLOBAL
+   Aplica a todas las páginas del entorno autenticado.
+========================================================= */
+
+body.mibooking-dark-premium {
+  background:
+    linear-gradient(
+      rgba(2, 6, 16, 0.69),
+      rgba(3, 7, 18, 0.84)
+    ),
+    url('/mibooking-dashboard-bg.webp')
+      center center / cover fixed no-repeat;
+}
+
+body.mibooking-dark-premium::before {
+  background:
+    radial-gradient(
+      circle at 4% 76%,
+      rgba(0, 128, 255, 0.25),
+      transparent 31%
+    ),
+    radial-gradient(
+      circle at 96% 73%,
+      rgba(236, 0, 140, 0.20),
+      transparent 34%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(1, 5, 14, 0.10),
+      rgba(1, 4, 12, 0.64)
+    );
+}
+
+body.mibooking-dark-premium::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(2, 6, 18, 0.04) 24%,
+      rgba(1, 4, 12, 0.52) 100%
+    );
+}

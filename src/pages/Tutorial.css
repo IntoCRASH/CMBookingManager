@@ -387,3 +387,76 @@
     width: 100%;
   }
 }
+
+/* =========================================================
+   TUTORIAL — SOLO AJUSTE CROMÁTICO OSCURO
+========================================================= */
+
+body.mibooking-dark-premium .tutorial-hero-copy,
+body.mibooking-dark-premium .tutorial-progress-card,
+body.mibooking-dark-premium .tutorial-alert,
+body.mibooking-dark-premium .tutorial-step-card,
+body.mibooking-dark-premium .tutorial-final-card {
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+body.mibooking-dark-premium .tutorial-hero-copy {
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(115, 87, 255, 0.14),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at 0% 100%,
+      rgba(33, 167, 255, 0.11),
+      transparent 40%
+    ),
+    rgba(15, 23, 42, 0.9);
+}
+
+body.mibooking-dark-premium .tutorial-role-badge {
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.13);
+}
+
+body.mibooking-dark-premium .tutorial-hero-copy h2,
+body.mibooking-dark-premium .tutorial-progress-number,
+body.mibooking-dark-premium .tutorial-step-card h3,
+body.mibooking-dark-premium .tutorial-final-card h2 {
+  color: var(--text);
+}
+
+body.mibooking-dark-premium .tutorial-hero-copy p,
+body.mibooking-dark-premium .tutorial-progress-card > span,
+body.mibooking-dark-premium .tutorial-group-heading span,
+body.mibooking-dark-premium .tutorial-step-card p,
+body.mibooking-dark-premium .tutorial-step-card li,
+body.mibooking-dark-premium .tutorial-final-card p {
+  color: var(--muted);
+}
+
+body.mibooking-dark-premium .tutorial-progress-track {
+  background: rgba(148, 163, 184, 0.14);
+}
+
+body.mibooking-dark-premium .tutorial-reset-button {
+  color: var(--text-soft);
+  border-color: var(--line);
+  background: rgba(20, 29, 48, 0.82);
+}
+
+body.mibooking-dark-premium .tutorial-alert {
+  border-color: rgba(245, 158, 11, 0.25);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(245, 158, 11, 0.12),
+      rgba(31, 29, 42, 0.92)
+    );
+}
+
+body.mibooking-dark-premium .tutorial-alert strong {
+  color: #fbbf24;
+}

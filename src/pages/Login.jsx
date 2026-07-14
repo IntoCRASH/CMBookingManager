@@ -231,7 +231,7 @@ export default function Login({
       >
         <div className="auth-card auth-confirmation">
           <img
-            src="/mibooking-logo.png"
+            src="/mibooking-logo-dark.png"
             alt="MiBooking"
           />
 
@@ -289,7 +289,7 @@ export default function Login({
         {!embedded && (
           <img
             className="auth-logo"
-            src="/mibooking-logo.png"
+            src="/mibooking-logo-dark.png"
             alt="MiBooking"
           />
         )}
