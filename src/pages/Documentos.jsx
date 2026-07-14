@@ -1142,6 +1142,16 @@ export default function Documentos({
         >
           Riders técnicos
         </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setRiderInitialMode('stage-plot');
+            setDocumentSection('riders');
+          }}
+        >
+          Stage Plot
+        </button>
       </div>
 
       <div className="documentos-toolbar">

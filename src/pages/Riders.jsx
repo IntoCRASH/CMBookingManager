@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getCotizacionById } from '../lib/cotizacionesService';
-import { getFormatoById } from '../lib/formatosService';
+import {
+  getFormatoById,
+  getFormatos,
+} from '../lib/formatosService';
 import { getMyBusinessProfile } from '../lib/profileService';
 import {
   createRider,
@@ -14,6 +17,7 @@ import {
   uploadRiderPdf,
 } from '../lib/ridersService';
 import { generateRiderPdfBlob } from '../lib/riderPdf';
+import StagePlotEditor from './StagePlotEditor';
 import './Riders.css';
 
 const DELETE_WORDS = [
@@ -121,6 +125,8 @@ export default function Riders({
 }) {
   const [quotes, setQuotes] = useState([]);
   const [riders, setRiders] = useState([]);
+  const [formats, setFormats] = useState([]);
+  const [stagePlotFormato, setStagePlotFormato] = useState(null);
   const [businessProfile, setBusinessProfile] = useState(null);
   const [quote, setQuote] = useState(null);
   const [formato, setFormato] = useState(null);
@@ -164,17 +170,20 @@ export default function Riders({
       setError('');
       setQuote(null);
       setFormato(null);
+      setStagePlotFormato(null);
       setForm(EMPTY_FORM);
 
-      const [quotesData, ridersData, profileData] =
+      const [quotesData, ridersData, profileData, formatsData] =
         await Promise.all([
           getEligibleRiderQuotes(workspaceId),
           getWorkspaceRiders(workspaceId),
           getMyBusinessProfile(workspaceId),
+          getFormatos(workspaceId),
         ]);
 
       setQuotes(quotesData);
       setRiders(ridersData);
+      setFormats(Array.isArray(formatsData) ? formatsData : []);
       setBusinessProfile(profileData);
     } catch (err) {
       console.error(err);
@@ -384,6 +393,104 @@ export default function Riders({
     workspaceId,
   ]);
 
+  const riderConfiguredFormats = useMemo(
+    () => formats.filter((item) => hasRiderConfig(item)),
+    [formats]
+  );
+
+  useEffect(() => {
+    if (mode !== 'stage-plot') return;
+
+    setStagePlotFormato((current) => {
+      if (
+        current &&
+        riderConfiguredFormats.some((item) => item.id === current.id)
+      ) {
+        return current;
+      }
+
+      return riderConfiguredFormats[0] || null;
+    });
+  }, [mode, riderConfiguredFormats]);
+
+  function openStagePlots() {
+    setMode('stage-plot');
+    setError('');
+
+    setStagePlotFormato((current) => {
+      if (
+        current &&
+        riderConfiguredFormats.some((item) => item.id === current.id)
+      ) {
+        return current;
+      }
+
+      return riderConfiguredFormats[0] || null;
+    });
+  }
+
+  function selectStagePlotFormato(event) {
+    const selected = riderConfiguredFormats.find(
+      (item) => String(item.id) === String(event.target.value)
+    );
+
+    setStagePlotFormato(selected || null);
+  }
+
+  async function openRiderGeneratorFromStagePlot(selectedFormato) {
+    const targetFormato = selectedFormato || stagePlotFormato;
+    const targetFormatoId = targetFormato?.id;
+
+    setMode('generar');
+    setQuote(null);
+    setFormato(null);
+    setForm(EMPTY_FORM);
+    setError('');
+
+    if (!targetFormatoId) {
+      toast('Selecciona una cotización para generar el Rider PDF.');
+      return;
+    }
+
+    const matchingQuote = quotes.find((item) =>
+      String(item.formato_id || item.formatos?.id || '') ===
+      String(targetFormatoId)
+    );
+
+    if (!matchingQuote) {
+      toast(
+        `No hay una cotización Confirmada o Aprobada con el Formato “${targetFormato?.nombre || 'seleccionado'}”. Selecciona una cotización en el formulario.`,
+        { duration: 7000 }
+      );
+      return;
+    }
+
+    await selectQuote({
+      target: {
+        value: String(matchingQuote.id),
+      },
+    });
+
+    toast.success(
+      'Cotización cargada. Completa los datos del evento y genera el Rider PDF.'
+    );
+  }
+
+  function handleStagePlotSaved(savedFormato) {
+    if (!savedFormato?.id) return;
+
+    setFormats((current) =>
+      current.map((item) =>
+        item.id === savedFormato.id ? savedFormato : item
+      )
+    );
+    setStagePlotFormato(savedFormato);
+
+    if (formato?.id === savedFormato.id) {
+      setFormato(savedFormato);
+    }
+  }
+
   function validateRider() {
     if (!quote || !formato || !preview) {
       toast.error(
@@ -473,6 +580,7 @@ export default function Riders({
       setMode('lista');
       setQuote(null);
       setFormato(null);
+      setStagePlotFormato(null);
       setForm(EMPTY_FORM);
 
       toast.success(
@@ -621,8 +729,10 @@ export default function Riders({
         <div>
           <h1>Documentos</h1>
           <p>
-            Riders técnicos de{' '}
-            {workspace?.workspace_name || 'Artista'}
+            {mode === 'stage-plot'
+              ? 'Stage Plots'
+              : 'Riders técnicos'}{' '}
+            de {workspace?.workspace_name || 'Artista'}
             {' · '}
             {esArtista ? 'Cuenta de Artista' : 'Cuenta de Gestor'}
           </p>
@@ -637,37 +747,55 @@ export default function Riders({
         <button type="button" onClick={goContracts}>
           Contratos
         </button>
-        <button type="button" className="active">
-          Riders técnicos
-        </button>
-      </div>
-
-      <div className="riders-toolbar">
-        <button
-          type="button"
-          className={mode === 'lista' ? 'active' : ''}
-          onClick={() => setMode('lista')}
-        >
-          Riders generados
-        </button>
 
         <button
           type="button"
-          className={mode === 'generar' ? 'active' : ''}
+          className={mode !== 'stage-plot' ? 'active' : ''}
           onClick={() => {
-            setMode('generar');
-            setQuote(null);
-            setFormato(null);
-            setForm(EMPTY_FORM);
+            setMode('lista');
+            setError('');
           }}
         >
-          + Generar rider técnico
+          Riders técnicos
+        </button>
+
+        <button
+          type="button"
+          className={mode === 'stage-plot' ? 'active' : ''}
+          onClick={openStagePlots}
+        >
+          Stage Plot
         </button>
       </div>
+
+      {mode !== 'stage-plot' && (
+        <div className="riders-toolbar">
+          <button
+            type="button"
+            className={mode === 'lista' ? 'active' : ''}
+            onClick={() => setMode('lista')}
+          >
+            Riders generados
+          </button>
+
+          <button
+            type="button"
+            className={mode === 'generar' ? 'active' : ''}
+            onClick={() => {
+              setMode('generar');
+              setQuote(null);
+              setFormato(null);
+              setForm(EMPTY_FORM);
+            }}
+          >
+            + Generar rider técnico
+          </button>
+        </div>
+      )}
 
       {error && <p className="error">{error}</p>}
 
-      {mode === 'lista' ? (
+      {mode === 'lista' && (
         <section className="riders-list">
           {riders.length === 0 ? (
             <div className="riders-empty">
@@ -776,7 +904,9 @@ export default function Riders({
             })
           )}
         </section>
-      ) : (
+      )}
+
+      {mode === 'generar' && (
         <div className="rider-generator-grid">
           <form
             className="form-cotizacion rider-generator-form"
@@ -976,6 +1106,61 @@ export default function Riders({
             </div>
           </aside>
         </div>
+      )}
+
+      {mode === 'stage-plot' && (
+        <section className="rider-stage-plot-mode">
+          <div className="stage-plot-mode-intro">
+            <div>
+              <h2>Stage Plot por Formato</h2>
+              <p>
+                MiBooking genera una distribución inicial usando los
+                integrantes, posiciones, monitores, conexiones y
+                requerimientos guardados en el Rider técnico del Formato.
+                Puedes descargar el plano solo en PDF o abrir directamente
+                el generador del Rider PDF completo para una cotización.
+              </p>
+            </div>
+
+            <label className="stage-plot-format-select">
+              Formato con Rider configurado
+              <select
+                value={stagePlotFormato?.id || ''}
+                onChange={selectStagePlotFormato}
+              >
+                <option value="">Seleccionar Formato</option>
+                {riderConfiguredFormats.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {riderConfiguredFormats.length === 0 ? (
+            <div className="stage-plot-empty">
+              <h2>No hay Formatos con Rider técnico</h2>
+              <p>
+                Configura primero los integrantes y requerimientos desde
+                Formatos → Configurar Rider. Después podrás generar aquí el
+                Stage Plot real de cada formación.
+              </p>
+            </div>
+          ) : stagePlotFormato ? (
+            <StagePlotEditor
+              formato={stagePlotFormato}
+              workspaceId={workspaceId}
+              readOnly={!esArtista}
+              onSaved={handleStagePlotSaved}
+              onGenerateRider={openRiderGeneratorFromStagePlot}
+            />
+          ) : (
+            <div className="stage-plot-empty">
+              Selecciona un Formato para abrir su Stage Plot.
+            </div>
+          )}
+        </section>
       )}
 
       {riderToEmail && (

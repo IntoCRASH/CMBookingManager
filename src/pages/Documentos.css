@@ -571,8 +571,8 @@
 /* Navegación principal entre Contratos y Riders. */
 .documentos-section-tabs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: min(430px, 100%);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(650px, 100%);
   gap: 6px;
   margin: 18px 0 2px;
   padding: 5px;
@@ -614,6 +614,7 @@
 @media (max-width: 680px) {
   .documentos-section-tabs {
     width: 100%;
+    grid-template-columns: 1fr;
   }
 
   .documentos-section-tabs button {

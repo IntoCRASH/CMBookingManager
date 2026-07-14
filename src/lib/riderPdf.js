@@ -1,4 +1,9 @@
 import { jsPDF } from 'jspdf';
+import {
+  getStagePlotTypeMeta,
+  normalizeStagePlot,
+  sortStagePlotItems,
+} from './stagePlot';
 
 const PAGE_WIDTH = 210;
 const PAGE_HEIGHT = 297;
@@ -63,22 +68,6 @@ function splitRequirementLines(value) {
     .split(/\r?\n/)
     .map((item) => item.trim())
     .filter(Boolean);
-}
-
-function getStageCoordinates(position) {
-  const positions = {
-    'Fondo izquierda': [0, 0],
-    'Fondo centro': [1, 0],
-    'Fondo derecha': [2, 0],
-    'Centro izquierda': [0, 1],
-    Centro: [1, 1],
-    'Centro derecha': [2, 1],
-    'Frente izquierda': [0, 2],
-    'Frente centro': [1, 2],
-    'Frente derecha': [2, 2],
-  };
-
-  return positions[position] || [1, 1];
 }
 
 export async function generateRiderPdfBlob({
@@ -302,81 +291,224 @@ export async function generateRiderPdfBlob({
   }
 
   function drawStagePlot() {
-    ensureSpace(78);
+    const stagePlot = normalizeStagePlot(config.stage_plot, config);
+    const plotItems = sortStagePlotItems(stagePlot.items || []);
+    const plotHeight = 104;
 
-    const plotX = MARGIN_X + 7;
-    const plotY = y + 3;
-    const plotWidth = CONTENT_WIDTH - 14;
-    const plotHeight = 58;
-    const cellWidth = plotWidth / 3;
-    const cellHeight = plotHeight / 3;
+    ensureSpace(plotHeight + 27);
 
-    doc.setDrawColor(100, 116, 139);
-    doc.setFillColor(248, 250, 252);
-    doc.roundedRect(plotX, plotY, plotWidth, plotHeight, 2, 2, 'FD');
+    const plotX = MARGIN_X;
+    const plotY = y + 7;
+    const plotWidth = CONTENT_WIDTH;
+    const innerX = plotX + 4;
+    const innerY = plotY + 6;
+    const innerWidth = plotWidth - 8;
+    const innerHeight = plotHeight - 13;
+
+    function itemPalette(type) {
+      const palettes = {
+        vocal: [[29, 78, 216], [239, 246, 255]],
+        drums: [[124, 58, 237], [245, 243, 255]],
+        percussion: [[162, 28, 175], [253, 244, 255]],
+        keyboard: [[15, 118, 110], [240, 253, 250]],
+        guitar: [[180, 83, 9], [255, 251, 235]],
+        bass: [[194, 65, 12], [255, 247, 237]],
+        brass: [[202, 138, 4], [254, 252, 232]],
+        sax: [[161, 98, 7], [255, 251, 235]],
+        strings: [[190, 18, 60], [255, 241, 242]],
+        dj: [[67, 56, 202], [238, 242, 255]],
+        performer: [[51, 65, 85], [248, 250, 252]],
+        microphone: [[71, 85, 105], [248, 250, 252]],
+        monitor: [[3, 105, 161], [240, 249, 255]],
+        di: [[4, 120, 87], [236, 253, 245]],
+        amp: [[55, 65, 81], [249, 250, 251]],
+        power: [[190, 18, 60], [255, 241, 242]],
+        riser: [[100, 116, 139], [248, 250, 252]],
+        custom: [[109, 40, 217], [245, 243, 255]],
+      };
+
+      return palettes[type] || palettes.custom;
+    }
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
+    doc.setFontSize(7.3);
     doc.setTextColor(71, 85, 105);
-    doc.text('FONDO DE TARIMA', PAGE_WIDTH / 2, plotY - 2, {
-      align: 'center',
-    });
-    doc.text('FRENTE / PÚBLICO', PAGE_WIDTH / 2, plotY + plotHeight + 5, {
-      align: 'center',
-    });
+    doc.text(
+      `FONDO / BACKSTAGE · TARIMA ${safe(stagePlot.width_m, 6)} m × ${safe(stagePlot.depth_m, 4)} m`,
+      PAGE_WIDTH / 2,
+      plotY + 2,
+      { align: 'center' }
+    );
 
-    doc.setDrawColor(226, 232, 240);
-    for (let column = 1; column < 3; column += 1) {
+    doc.setFillColor(13, 20, 34);
+    doc.setDrawColor(71, 85, 105);
+    doc.roundedRect(
+      innerX,
+      innerY,
+      innerWidth,
+      innerHeight,
+      2.5,
+      2.5,
+      'FD'
+    );
+
+    doc.setDrawColor(51, 65, 85);
+    doc.setLineWidth(0.18);
+
+    for (let column = 1; column < 10; column += 1) {
       doc.line(
-        plotX + cellWidth * column,
-        plotY,
-        plotX + cellWidth * column,
-        plotY + plotHeight
+        innerX + (innerWidth / 10) * column,
+        innerY,
+        innerX + (innerWidth / 10) * column,
+        innerY + innerHeight
       );
     }
-    for (let row = 1; row < 3; row += 1) {
+
+    for (let row = 1; row < 6; row += 1) {
       doc.line(
-        plotX,
-        plotY + cellHeight * row,
-        plotX + plotWidth,
-        plotY + cellHeight * row
+        innerX,
+        innerY + (innerHeight / 6) * row,
+        innerX + innerWidth,
+        innerY + (innerHeight / 6) * row
       );
     }
 
-    const grouped = new Map();
-    integrantes.forEach((item) => {
-      const key = safe(item.posicion, 'Centro');
-      grouped.set(key, [...(grouped.get(key) || []), item]);
-    });
+    plotItems.forEach((item) => {
+      const x = innerX + (Number(item.x || 50) / 100) * innerWidth;
+      const itemY = innerY + (Number(item.y || 50) / 100) * innerHeight;
+      const width = Math.max(
+        6,
+        (Number(item.width || 12) / 100) * innerWidth
+      );
+      const height = Math.max(
+        5,
+        (Number(item.height || 8) / 100) * innerHeight
+      );
+      const left = x - width / 2;
+      const top = itemY - height / 2;
+      const [fill, textColor] = itemPalette(item.type);
+      const meta = getStagePlotTypeMeta(item.type);
 
-    grouped.forEach((items, position) => {
-      const [column, row] = getStageCoordinates(position);
-      const boxX = plotX + column * cellWidth + 3;
-      const boxY = plotY + row * cellHeight + 3;
-      const boxWidth = cellWidth - 6;
-      const boxHeight = cellHeight - 6;
-      const label = items
-        .map(
-          (item) =>
-            `${safe(item.funcion, '')}\n${safe(item.monitor, '')}`
-        )
-        .join('\n');
-      const lines = doc.splitTextToSize(label, boxWidth - 4);
+      doc.setFillColor(...fill);
+      doc.setDrawColor(
+        ...(item.orphaned ? [245, 158, 11] : [226, 232, 240])
+      );
+      doc.setLineWidth(item.orphaned ? 0.7 : 0.28);
 
-      doc.setFillColor(227, 238, 252);
-      doc.setDrawColor(147, 197, 253);
-      doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 2, 2, 'FD');
+      if (item.type === 'riser') {
+        doc.setLineDashPattern([1.8, 1.2], 0);
+        doc.setFillColor(30, 41, 59);
+        doc.roundedRect(left, top, width, height, 1.5, 1.5, 'FD');
+        doc.setLineDashPattern([], 0);
+      } else if (item.type === 'monitor') {
+        doc.triangle(
+          left + width * 0.18,
+          top,
+          left + width * 0.82,
+          top,
+          left + width,
+          top + height,
+          'F'
+        );
+        doc.triangle(
+          left + width * 0.18,
+          top,
+          left,
+          top + height,
+          left + width,
+          top + height,
+          'F'
+        );
+      } else if (item.type === 'microphone') {
+        doc.circle(x, top + 1.8, 1.7, 'F');
+        doc.setDrawColor(...fill);
+        doc.setLineWidth(0.9);
+        doc.line(x, top + 3.4, x, top + height - 1.2);
+        doc.line(x, top + height - 1.2, x + 2.2, top + height);
+      } else {
+        doc.roundedRect(left, top, width, height, 1.4, 1.4, 'FD');
+
+        if (item.type === 'amp') {
+          doc.setFillColor(15, 23, 42);
+          doc.circle(left + width * 0.32, itemY, Math.min(width, height) * 0.15, 'F');
+          doc.circle(left + width * 0.68, itemY, Math.min(width, height) * 0.15, 'F');
+        }
+      }
+
+      if (item.type === 'microphone') {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(4.6);
+        doc.setTextColor(226, 232, 240);
+        doc.text(
+          safe(item.label, 'MIC'),
+          x,
+          top + height + 2.8,
+          { align: 'center', maxWidth: width + 5 }
+        );
+        return;
+      }
+
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6.8);
-      doc.setTextColor(30, 64, 110);
-      doc.text(lines, boxX + boxWidth / 2, boxY + 4.5, {
+      doc.setFontSize(Math.max(4.2, Math.min(6.1, width / 2.8)));
+      doc.setTextColor(...textColor);
+      doc.text(meta.code, x, itemY - (item.detail ? 1.1 : 0), {
         align: 'center',
-        maxWidth: boxWidth - 4,
-        lineHeightFactor: 1.08,
       });
+
+      const label = safe(item.label, meta.label);
+      const labelLines = doc.splitTextToSize(label, Math.max(7, width - 2));
+      doc.setFontSize(Math.max(3.7, Math.min(5.1, width / 3.7)));
+      doc.text(
+        labelLines.slice(0, 2),
+        x,
+        itemY + 2.7,
+        {
+          align: 'center',
+          lineHeightFactor: 1.02,
+        }
+      );
     });
 
-    y = plotY + plotHeight + 10;
+    doc.setDrawColor(59, 130, 246);
+    doc.setLineWidth(0.8);
+    doc.line(
+      PAGE_WIDTH / 2 - 28,
+      innerY + innerHeight + 4,
+      PAGE_WIDTH / 2 + 28,
+      innerY + innerHeight + 4
+    );
+    doc.line(
+      PAGE_WIDTH / 2 + 28,
+      innerY + innerHeight + 4,
+      PAGE_WIDTH / 2 + 24,
+      innerY + innerHeight + 2
+    );
+    doc.line(
+      PAGE_WIDTH / 2 + 28,
+      innerY + innerHeight + 4,
+      PAGE_WIDTH / 2 + 24,
+      innerY + innerHeight + 6
+    );
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.3);
+    doc.setTextColor(30, 64, 110);
+    doc.text(
+      'FRENTE / PÚBLICO',
+      PAGE_WIDTH / 2,
+      innerY + innerHeight + 10,
+      { align: 'center' }
+    );
+
+    y = plotY + plotHeight + 16;
+
+    if (stagePlot.notes) {
+      paragraph(stagePlot.notes, {
+        size: 7.6,
+        lineHeight: 3.8,
+        spacing: 2,
+        align: 'left',
+      });
+    }
   }
 
   // ----------------------------------------------------------
@@ -516,6 +648,7 @@ export async function generateRiderPdfBlob({
     [30, 52, 92]
   );
 
+  ensureSpace(145);
   sectionTitle('5. Distribución en tarima');
   drawStagePlot();
 

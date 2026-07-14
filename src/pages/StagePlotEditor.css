@@ -1,0 +1,478 @@
+/* =========================================================
+   MIBOOKING — STAGE PLOT EDITOR
+========================================================= */
+
+.stage-plot-editor {
+  display: grid;
+  gap: 18px;
+}
+
+.stage-plot-editor-header {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 0 0, rgba(45, 157, 245, 0.12), transparent 40%),
+    linear-gradient(135deg, rgba(20, 39, 66, 0.96), rgba(27, 24, 59, 0.94));
+}
+
+.stage-plot-editor-header > div:first-child {
+  min-width: 0;
+}
+
+.stage-plot-editor-header span {
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stage-plot-editor-header h2 {
+  margin: 5px 0 4px;
+  color: #f8fafc;
+  font-size: clamp(21px, 2vw, 28px);
+}
+
+.stage-plot-editor-header p {
+  margin: 0;
+  color: #aeb9ca;
+}
+
+.stage-plot-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.stage-plot-editor-actions button,
+.stage-plot-add-control button,
+.stage-plot-item-actions button {
+  min-height: 40px;
+  padding: 9px 13px;
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  border-radius: 11px;
+  background: rgba(8, 16, 31, 0.84);
+  color: #dbe4f0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.stage-plot-editor-actions button:hover:not(:disabled),
+.stage-plot-add-control button:hover:not(:disabled),
+.stage-plot-item-actions button:hover:not(:disabled) {
+  border-color: rgba(139, 92, 246, 0.42);
+  background: rgba(139, 92, 246, 0.16);
+  color: #ffffff;
+}
+
+.stage-plot-editor-actions button:disabled {
+  cursor: default;
+  opacity: 0.62;
+}
+
+.stage-plot-editor-actions .stage-plot-save-button {
+  border-color: rgba(129, 140, 248, 0.34);
+  background: linear-gradient(135deg, #2d9df5, #7055f5);
+  color: #ffffff;
+}
+
+.stage-plot-editor-actions .stage-plot-rider-button {
+  border-color: rgba(34, 197, 94, 0.34);
+  background: linear-gradient(135deg, #0f9f6e, #22c55e);
+  color: #ffffff;
+}
+
+.stage-plot-editor-actions .stage-plot-pdf-button {
+  border-color: rgba(139, 92, 246, 0.38);
+  background: rgba(109, 40, 217, 0.2);
+  color: #ede9fe;
+}
+
+.stage-plot-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(285px, 0.48fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.stage-plot-canvas-panel,
+.stage-plot-inspector > section {
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(16, 28, 48, 0.98),
+      rgba(20, 21, 48, 0.96)
+    );
+  box-shadow: 0 18px 48px rgba(2, 8, 23, 0.16);
+}
+
+.stage-plot-canvas-panel {
+  overflow: hidden;
+}
+
+.stage-plot-canvas-toolbar {
+  padding: 15px 17px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.16);
+}
+
+.stage-plot-canvas-toolbar strong,
+.stage-plot-canvas-toolbar span {
+  display: block;
+}
+
+.stage-plot-canvas-toolbar strong {
+  color: #f8fafc;
+  font-size: 14px;
+}
+
+.stage-plot-canvas-toolbar span {
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.stage-plot-add-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stage-plot-add-control select,
+.stage-plot-inspector input,
+.stage-plot-inspector select,
+.stage-plot-inspector textarea {
+  min-height: 40px;
+  box-sizing: border-box;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 11px;
+  background: rgba(5, 11, 23, 0.76);
+  color: #f8fafc;
+  font: inherit;
+  outline: none;
+}
+
+.stage-plot-add-control select {
+  min-width: 190px;
+  padding: 0 11px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.stage-plot-svg-wrap {
+  padding: 12px;
+  overflow: auto;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.08), transparent 48%),
+    #050a13;
+}
+
+.stage-plot-svg {
+  display: block;
+  width: 100%;
+  min-width: 700px;
+  height: auto;
+  aspect-ratio: 1000 / 620;
+  touch-action: none;
+  user-select: none;
+}
+
+.stage-plot-item {
+  cursor: grab;
+  outline: none;
+}
+
+.stage-plot-item:active {
+  cursor: grabbing;
+}
+
+.stage-plot-item:focus-visible {
+  filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.85));
+}
+
+.stage-plot-svg-code,
+.stage-plot-svg-label,
+.stage-plot-svg-detail,
+.stage-plot-svg-mini {
+  font-family: Inter, Arial, sans-serif;
+  pointer-events: none;
+}
+
+.stage-plot-svg-code {
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.stage-plot-svg-label {
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.stage-plot-svg-detail {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+.stage-plot-svg-mini {
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.stage-plot-legend {
+  padding: 13px 16px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  border-top: 1px solid rgba(96, 165, 250, 0.14);
+}
+
+.stage-plot-legend span {
+  padding: 6px 9px;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 999px;
+  background: rgba(5, 11, 23, 0.42);
+  color: #aeb9ca;
+  font-size: 10px;
+}
+
+.stage-plot-legend b {
+  margin-right: 4px;
+  color: #bfdbfe;
+}
+
+.stage-plot-inspector {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 13px;
+}
+
+.stage-plot-inspector > section {
+  padding: 17px;
+}
+
+.stage-plot-inspector-eyebrow {
+  color: #a78bfa;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stage-plot-inspector h3 {
+  margin: 5px 0 14px;
+  color: #f8fafc;
+  font-size: 16px;
+}
+
+.stage-plot-inspector label {
+  display: grid;
+  gap: 6px;
+  margin-top: 11px;
+  color: #dbe4f0;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.stage-plot-inspector input,
+.stage-plot-inspector select,
+.stage-plot-inspector textarea {
+  width: 100%;
+  padding: 9px 10px;
+  font-size: 12px;
+}
+
+.stage-plot-inspector textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.stage-plot-inspector input[type='range'] {
+  padding: 0;
+}
+
+.stage-plot-inspector input:disabled,
+.stage-plot-inspector select:disabled,
+.stage-plot-inspector textarea:disabled {
+  opacity: 0.74;
+}
+
+.stage-plot-two-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.stage-plot-no-selection {
+  padding: 14px;
+  border: 1px dashed rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.stage-plot-orphan-warning {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 11px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #fcd34d;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.stage-plot-item-actions {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stage-plot-item-actions .danger {
+  border-color: rgba(251, 113, 133, 0.3);
+  background: rgba(127, 29, 29, 0.3);
+  color: #fecdd3;
+}
+
+.stage-plot-help strong {
+  color: #f8fafc;
+}
+
+.stage-plot-help p {
+  margin: 7px 0 0;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.stage-plot-mode-intro {
+  margin-bottom: 14px;
+  padding: 17px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 17px;
+  background: rgba(15, 27, 47, 0.8);
+}
+
+.stage-plot-mode-intro > div:first-child {
+  max-width: 720px;
+}
+
+.stage-plot-mode-intro h2 {
+  margin: 0 0 5px;
+  color: #f8fafc;
+}
+
+.stage-plot-mode-intro p {
+  margin: 0;
+  color: #94a3b8;
+  line-height: 1.55;
+}
+
+.stage-plot-format-select {
+  min-width: min(360px, 100%);
+  display: grid;
+  gap: 6px;
+  color: #dbe4f0;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.stage-plot-format-select select {
+  min-height: 44px;
+  width: 100%;
+  padding: 0 12px;
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  border-radius: 12px;
+  background: rgba(5, 11, 23, 0.8);
+  color: #f8fafc;
+  font: inherit;
+}
+
+.stage-plot-empty {
+  padding: 48px 24px;
+  border: 1px dashed rgba(148, 163, 184, 0.32);
+  border-radius: 18px;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.stage-plot-empty h2 {
+  margin-top: 0;
+  color: #f8fafc;
+}
+
+@media (max-width: 1120px) {
+  .stage-plot-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-plot-inspector {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stage-plot-inspector .stage-plot-help {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .stage-plot-editor-header,
+  .stage-plot-canvas-toolbar,
+  .stage-plot-mode-intro {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .stage-plot-editor-actions,
+  .stage-plot-add-control {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .stage-plot-editor-actions button,
+  .stage-plot-add-control select,
+  .stage-plot-add-control button {
+    width: 100%;
+  }
+
+  .stage-plot-inspector {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-plot-inspector .stage-plot-help {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .stage-plot-two-fields,
+  .stage-plot-item-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-plot-svg-wrap {
+    margin-inline: -1px;
+    padding: 8px;
+  }
+}
