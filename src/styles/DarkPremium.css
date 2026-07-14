@@ -1974,3 +1974,454 @@ body.mibooking-dark-premium ::selection {
     padding: 0 !important;
   }
 }
+
+/* =========================================================
+   MIBOOKING — AUDITORÍA FINAL DE CONTRASTE DARK PREMIUM
+   Corrección transversal para estilos claros residuales.
+   No modifica layout, tamaños, posiciones ni estructura.
+========================================================= */
+
+body.mibooking-dark-premium {
+  --dp-card:
+    linear-gradient(
+      135deg,
+      rgba(20, 39, 66, 0.96),
+      rgba(27, 24, 59, 0.94)
+    );
+  --dp-card-solid: #111c2f;
+  --dp-card-soft: #172338;
+  --dp-input: rgba(7, 14, 28, 0.88);
+  --dp-text: #f8fafc;
+  --dp-text-soft: #dbe4f0;
+  --dp-muted: #9aa8bc;
+  --dp-line: rgba(96, 165, 250, 0.2);
+  --dp-line-violet: rgba(139, 92, 246, 0.26);
+}
+
+/* =========================================================
+   TEXTO GENERAL DENTRO DEL ENTORNO AUTENTICADO
+========================================================= */
+
+body.mibooking-dark-premium .app-shell,
+body.mibooking-dark-premium .app-content,
+body.mibooking-dark-premium .dashboard {
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .dashboard h1,
+body.mibooking-dark-premium .dashboard h2,
+body.mibooking-dark-premium .dashboard h3,
+body.mibooking-dark-premium .dashboard h4,
+body.mibooking-dark-premium .dashboard legend,
+body.mibooking-dark-premium .modal-card h1,
+body.mibooking-dark-premium .modal-card h2,
+body.mibooking-dark-premium .modal-card h3,
+body.mibooking-dark-premium .modal-card h4 {
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .dashboard p,
+body.mibooking-dark-premium .dashboard small,
+body.mibooking-dark-premium .dashboard .helper-text,
+body.mibooking-dark-premium .dashboard .form-help,
+body.mibooking-dark-premium .dashboard .empty-message {
+  color: var(--dp-muted);
+}
+
+body.mibooking-dark-premium .dashboard label,
+body.mibooking-dark-premium .modal-card label {
+  color: var(--dp-text-soft);
+}
+
+/* =========================================================
+   FORMULARIOS, SECCIONES Y TABLAS COMPARTIDAS
+========================================================= */
+
+body.mibooking-dark-premium .form-section,
+body.mibooking-dark-premium .form-card,
+body.mibooking-dark-premium .content-card,
+body.mibooking-dark-premium .settings-card,
+body.mibooking-dark-premium .summary-card,
+body.mibooking-dark-premium .table-card,
+body.mibooking-dark-premium .empty-state,
+body.mibooking-dark-premium .empty-card {
+  border-color: var(--dp-line);
+  background: var(--dp-card);
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium input,
+body.mibooking-dark-premium select,
+body.mibooking-dark-premium textarea,
+body.mibooking-dark-premium .form-section input,
+body.mibooking-dark-premium .form-section select,
+body.mibooking-dark-premium .form-section textarea {
+  border-color: var(--dp-line);
+  background-color: var(--dp-input);
+  color: var(--dp-text);
+  caret-color: var(--dp-text);
+}
+
+body.mibooking-dark-premium input::placeholder,
+body.mibooking-dark-premium textarea::placeholder {
+  color: #718096;
+}
+
+body.mibooking-dark-premium option {
+  background-color: #111c2f;
+  color: var(--dp-text);
+}
+
+/* =========================================================
+   SUSCRIPCIÓN Y FACTURACIÓN
+========================================================= */
+
+body.mibooking-dark-premium .subscription-page,
+body.mibooking-dark-premium .subscription-gate-page,
+body.mibooking-dark-premium .billing-gate-page {
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .subscription-gate-card,
+body.mibooking-dark-premium .billing-gate-card,
+body.mibooking-dark-premium .subscription-summary article,
+body.mibooking-dark-premium .subscription-portal,
+body.mibooking-dark-premium .subscription-legacy,
+body.mibooking-dark-premium .subscription-change,
+body.mibooking-dark-premium .subscription-discount,
+body.mibooking-dark-premium .subscription-plan-card,
+body.mibooking-dark-premium .subscription-selection-summary,
+body.mibooking-dark-premium .subscription-free-manager-note,
+body.mibooking-dark-premium .subscription-promotion-note,
+body.mibooking-dark-premium .subscription-secondary-actions {
+  border-color: var(--dp-line);
+  background: var(--dp-card);
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .subscription-gate-header h1,
+body.mibooking-dark-premium .subscription-plan-name strong,
+body.mibooking-dark-premium .subscription-plan-card h2,
+body.mibooking-dark-premium .subscription-plan-card h3,
+body.mibooking-dark-premium .subscription-selection-summary strong,
+body.mibooking-dark-premium .billing-gate-card h1,
+body.mibooking-dark-premium .billing-gate-card h2,
+body.mibooking-dark-premium .billing-gate-summary strong,
+body.mibooking-dark-premium .subscription-change-heading h2 {
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .subscription-gate-header p,
+body.mibooking-dark-premium .subscription-plan-card p,
+body.mibooking-dark-premium .subscription-plan-card li,
+body.mibooking-dark-premium .subscription-plan-limit,
+body.mibooking-dark-premium .subscription-selection-summary span,
+body.mibooking-dark-premium .subscription-free-manager-note p,
+body.mibooking-dark-premium .subscription-promotion-note p,
+body.mibooking-dark-premium .billing-gate-card p,
+body.mibooking-dark-premium .billing-gate-summary span,
+body.mibooking-dark-premium .subscription-change-heading p {
+  color: var(--dp-muted);
+}
+
+body.mibooking-dark-premium .subscription-plan-card.selected,
+body.mibooking-dark-premium .subscription-plan-card.featured,
+body.mibooking-dark-premium .subscription-plan-card.current {
+  border-color: rgba(139, 92, 246, 0.45);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(27, 42, 70, 0.98),
+      rgba(37, 25, 72, 0.96)
+    );
+}
+
+body.mibooking-dark-premium .subscription-cycle-switch {
+  border-color: var(--dp-line);
+  background: rgba(7, 14, 28, 0.72);
+}
+
+body.mibooking-dark-premium .subscription-cycle-switch button {
+  background: transparent;
+  color: var(--dp-muted);
+}
+
+body.mibooking-dark-premium .subscription-cycle-switch button.active {
+  background: rgba(139, 92, 246, 0.18);
+  color: #ffffff;
+}
+
+/* =========================================================
+   BLOQUEOS Y ESTADOS DE FACTURACIÓN
+========================================================= */
+
+body.mibooking-dark-premium .billing-gate-summary,
+body.mibooking-dark-premium .subscription-checkout-message {
+  border-color: var(--dp-line-violet);
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--dp-text-soft);
+}
+
+body.mibooking-dark-premium .billing-gate-error,
+body.mibooking-dark-premium .subscription-gate-error {
+  border-color: rgba(251, 113, 133, 0.3);
+  background: rgba(127, 29, 29, 0.3);
+  color: #fecdd3;
+}
+
+body.mibooking-dark-premium .subscription-checkout-message.success {
+  border-color: rgba(52, 211, 153, 0.26);
+  background: rgba(6, 78, 59, 0.25);
+  color: #a7f3d0;
+}
+
+/* =========================================================
+   CONFIGURACIÓN DE RIDER POR FORMATO
+========================================================= */
+
+body.mibooking-dark-premium .rider-config-dialog,
+body.mibooking-dark-premium .rider-config-section,
+body.mibooking-dark-premium .rider-member-card,
+body.mibooking-dark-premium .rider-requirement-row,
+body.mibooking-dark-premium .rider-config-footer {
+  border-color: var(--dp-line);
+  background: var(--dp-card-solid);
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .rider-config-header {
+  border-color: var(--dp-line);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(45, 157, 245, 0.12),
+      rgba(112, 85, 245, 0.15)
+    ),
+    #111c2f;
+}
+
+body.mibooking-dark-premium .rider-config-header h2,
+body.mibooking-dark-premium .rider-config-section h3,
+body.mibooking-dark-premium .rider-member-card strong,
+body.mibooking-dark-premium .rider-requirement-row strong {
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .rider-config-header p,
+body.mibooking-dark-premium .rider-config-section p,
+body.mibooking-dark-premium .rider-member-card small,
+body.mibooking-dark-premium .rider-requirement-row small {
+  color: var(--dp-muted);
+}
+
+body.mibooking-dark-premium .rider-member-number {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+}
+
+body.mibooking-dark-premium .rider-remove-button {
+  border-color: rgba(251, 113, 133, 0.3);
+  background: rgba(127, 29, 29, 0.3);
+  color: #fecdd3;
+}
+
+/* =========================================================
+   EQUIPO E INVITACIONES
+========================================================= */
+
+body.mibooking-dark-premium .manager-invite-card,
+body.mibooking-dark-premium .manager-invite-summary,
+body.mibooking-dark-premium .manager-invite-security,
+body.mibooking-dark-premium .manager-invite-account-warning,
+body.mibooking-dark-premium .manager-invite-decision {
+  border-color: var(--dp-line);
+  background: var(--dp-card);
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .manager-invite-card h1,
+body.mibooking-dark-premium .manager-invite-card h2,
+body.mibooking-dark-premium .manager-invite-summary strong,
+body.mibooking-dark-premium .manager-invite-security strong,
+body.mibooking-dark-premium .manager-invite-decision strong {
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .manager-invite-card p,
+body.mibooking-dark-premium .manager-invite-summary span,
+body.mibooking-dark-premium .manager-invite-security p,
+body.mibooking-dark-premium .manager-invite-footer {
+  color: var(--dp-muted);
+}
+
+/* =========================================================
+   COMISIONES
+========================================================= */
+
+body.mibooking-dark-premium .comisiones-table,
+body.mibooking-dark-premium .comision-row,
+body.mibooking-dark-premium .commission-flow-note {
+  border-color: var(--dp-line);
+  background: var(--dp-card-solid);
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .comisiones-table-header {
+  border-color: var(--dp-line);
+  background: rgba(21, 34, 56, 0.96);
+  color: var(--dp-muted);
+}
+
+body.mibooking-dark-premium .comision-numero,
+body.mibooking-dark-premium .comision-monto,
+body.mibooking-dark-premium .comision-cliente,
+body.mibooking-dark-premium .comision-contraparte {
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .comision-fecha,
+body.mibooking-dark-premium .commission-state-note {
+  color: var(--dp-muted);
+}
+
+/* =========================================================
+   DASHBOARD Y NAVEGACIÓN
+========================================================= */
+
+body.mibooking-dark-premium .dashboard-config-card,
+body.mibooking-dark-premium .dashboard-account-summary,
+body.mibooking-dark-premium .dashboard-welcome-tutorial {
+  border-color: var(--dp-line);
+  background: var(--dp-card);
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .dashboard-config-card strong,
+body.mibooking-dark-premium .dashboard-account-summary strong,
+body.mibooking-dark-premium .dashboard-welcome-tutorial strong {
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .dashboard-config-card p,
+body.mibooking-dark-premium .dashboard-account-summary span,
+body.mibooking-dark-premium .dashboard-welcome-tutorial span {
+  color: var(--dp-muted);
+}
+
+body.mibooking-dark-premium .desktop-nav-links button,
+body.mibooking-dark-premium .balanced-settings-trigger,
+body.mibooking-dark-premium .brand-button,
+body.mibooking-dark-premium .logout-button {
+  color: var(--dp-text-soft);
+}
+
+body.mibooking-dark-premium .user-meta strong {
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .user-meta small {
+  color: var(--dp-muted);
+}
+
+body.mibooking-dark-premium .balanced-settings-menu {
+  border-color: var(--dp-line);
+  background: #111c2f;
+}
+
+body.mibooking-dark-premium .balanced-settings-menu button {
+  color: var(--dp-text-soft);
+  background: transparent;
+}
+
+body.mibooking-dark-premium .balanced-settings-menu button:hover {
+  background: rgba(139, 92, 246, 0.12);
+  color: #ffffff;
+}
+
+/* =========================================================
+   BANNER DE ESTADO DE SUSCRIPCIÓN
+========================================================= */
+
+body.mibooking-dark-premium .billing-status-banner {
+  border-color: var(--dp-line);
+  background: var(--dp-card);
+  color: var(--dp-text-soft);
+}
+
+body.mibooking-dark-premium .billing-status-banner strong {
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .billing-status-banner.warning {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(120, 53, 15, 0.28);
+  color: #fde68a;
+}
+
+body.mibooking-dark-premium .billing-status-banner.info {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(30, 64, 175, 0.24);
+  color: #bfdbfe;
+}
+
+/* =========================================================
+   MENÚS, MODALES Y ESTADOS VACÍOS RESIDUALES
+========================================================= */
+
+body.mibooking-dark-premium .menu-popup,
+body.mibooking-dark-premium .cotizaciones-menu-popup,
+body.mibooking-dark-premium .dropdown-menu,
+body.mibooking-dark-premium .popover-menu {
+  border-color: var(--dp-line);
+  background: #111c2f;
+  color: var(--dp-text);
+}
+
+body.mibooking-dark-premium .menu-popup button,
+body.mibooking-dark-premium .cotizaciones-menu-popup button:not(.danger),
+body.mibooking-dark-premium .dropdown-menu button,
+body.mibooking-dark-premium .popover-menu button {
+  background: transparent;
+  color: var(--dp-text-soft);
+}
+
+body.mibooking-dark-premium .menu-popup button:hover,
+body.mibooking-dark-premium .cotizaciones-menu-popup button:not(.danger):hover,
+body.mibooking-dark-premium .dropdown-menu button:hover,
+body.mibooking-dark-premium .popover-menu button:hover {
+  background: rgba(139, 92, 246, 0.12);
+  color: #ffffff;
+}
+
+/* =========================================================
+   ELEMENTOS QUE DEBEN PERMANECER BLANCOS
+   Representan documentos/PDF o previsualizaciones de activos.
+========================================================= */
+
+body.mibooking-dark-premium .documento-preview-paper,
+body.mibooking-dark-premium .rider-preview-paper,
+body.mibooking-dark-premium .cotizacion-documento,
+body.mibooking-dark-premium .ver-cotizacion-document,
+body.mibooking-dark-premium .print-sheet,
+body.mibooking-dark-premium .pdf-preview {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+body.mibooking-dark-premium .documento-preview-paper h1,
+body.mibooking-dark-premium .documento-preview-paper h2,
+body.mibooking-dark-premium .documento-preview-paper h3,
+body.mibooking-dark-premium .documento-preview-paper p,
+body.mibooking-dark-premium .documento-preview-paper strong,
+body.mibooking-dark-premium .rider-preview-paper h1,
+body.mibooking-dark-premium .rider-preview-paper h2,
+body.mibooking-dark-premium .rider-preview-paper h3,
+body.mibooking-dark-premium .rider-preview-paper p,
+body.mibooking-dark-premium .rider-preview-paper strong,
+body.mibooking-dark-premium .cotizacion-documento h1,
+body.mibooking-dark-premium .cotizacion-documento h2,
+body.mibooking-dark-premium .cotizacion-documento h3,
+body.mibooking-dark-premium .cotizacion-documento p,
+body.mibooking-dark-premium .cotizacion-documento strong {
+  color: #0f172a;
+}
