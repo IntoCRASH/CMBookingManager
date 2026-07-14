@@ -1,0 +1,101 @@
+{
+  "package": "MiBooking Dark Premium - Recuperación completa",
+  "purpose": "Restaurar todas las últimas modificaciones visuales acumuladas de la sesión.",
+  "files": [
+    {
+      "path": "LEEME_PRIMERO.txt",
+      "bytes": 1976,
+      "sha256": "bc727565448132a4bc99569951221c73887e5ba146f37b78f186f19126f84c79"
+    },
+    {
+      "path": "public/la-oreja-media-dark.png",
+      "bytes": 13695,
+      "sha256": "6cdc6a8d5bd84923f9a2bb1bd431f4fc04ffa02e51be57d71c02c4608ad96d9f"
+    },
+    {
+      "path": "public/la-oreja-media.png",
+      "bytes": 13695,
+      "sha256": "6cdc6a8d5bd84923f9a2bb1bd431f4fc04ffa02e51be57d71c02c4608ad96d9f"
+    },
+    {
+      "path": "public/mibooking-artist.webp",
+      "bytes": 91394,
+      "sha256": "1ec0932fa49509e8404bab1c502ecf73b1e8ae95ce3f5b183cb2b6749564532e"
+    },
+    {
+      "path": "public/mibooking-concert.webp",
+      "bytes": 272112,
+      "sha256": "49bdfd9cfef26c8384e119b144448fd8f819d399ce48d186a0ef770d1c45cf43"
+    },
+    {
+      "path": "public/mibooking-dashboard-bg.webp",
+      "bytes": 15060,
+      "sha256": "ee2ad63c0dbe34f6549a67eb34b151c6fc0e6b2d8e6f4318e4adc4beb8b9b026"
+    },
+    {
+      "path": "public/mibooking-logo-dark.png",
+      "bytes": 118485,
+      "sha256": "61f93ed8f78f7dcf8f43fa97cdebfec44a022a2b0ccc7bbec87b61546fd4bd05"
+    },
+    {
+      "path": "public/mibooking-logo-stacked-dark.png",
+      "bytes": 114433,
+      "sha256": "0b59e0980cda8ab912d42451a8f670a2b9674cdb9542f4624668ea3374fdac3c"
+    },
+    {
+      "path": "public/mibooking-manager.webp",
+      "bytes": 73224,
+      "sha256": "7c6bf07ac15fd0342f171f989a3ead3c823e7b84054df6f66229c5930df054c7"
+    },
+    {
+      "path": "src/App.jsx",
+      "bytes": 55585,
+      "sha256": "1a7bcfea1070962ec6a2f601477fa87184916e5d74c7f9be69dd93e0633f0999"
+    },
+    {
+      "path": "src/pages/Documentos.css",
+      "bytes": 18778,
+      "sha256": "85ea7bafbb72f8eac9ebce9d868e5eaa738db9212cffa929a9b8d8f10d7931f5"
+    },
+    {
+      "path": "src/pages/IndustriaMusical.css",
+      "bytes": 7341,
+      "sha256": "fd361beb830d3e68266e47db75f2d34b43f477452d94c8f56d36ceb8d844be9e"
+    },
+    {
+      "path": "src/pages/Landing.css",
+      "bytes": 23135,
+      "sha256": "7593ad2c14c2c6303bd025d06abdf004ec3e56ffe6bfff014e0453773feadc8b"
+    },
+    {
+      "path": "src/pages/Landing.jsx",
+      "bytes": 21513,
+      "sha256": "c241fa6a0af0287241cc837fb3e3931ebf3e408c04e467394122f302e6847a88"
+    },
+    {
+      "path": "src/pages/Login.css",
+      "bytes": 7833,
+      "sha256": "701e40fa482ce741f394e71b37a6916e80c1f9903441b344759def902c54737e"
+    },
+    {
+      "path": "src/pages/Login.jsx",
+      "bytes": 11971,
+      "sha256": "3301d5d3933570d75cd8d0b7bc6dc0f1c482e744de7547cbbe19e1cd8a779abf"
+    },
+    {
+      "path": "src/pages/Riders.css",
+      "bytes": 11545,
+      "sha256": "1e7826be44f4ba7ff040d73c99d38bd2001736e2a1c154739f610779fa3bad38"
+    },
+    {
+      "path": "src/pages/Tutorial.css",
+      "bytes": 8965,
+      "sha256": "0bd5ca138dd0a88c0c3c47e7b4561bc8daab857b2be31a970fb9e0e02b78844e"
+    },
+    {
+      "path": "src/styles.css",
+      "bytes": 102115,
+      "sha256": "e7ca6cc84b7350cf51c3a11fd60c86fd655fd60cf1acba0d3f070b224abcadb7"
+    }
+  ]
+}
