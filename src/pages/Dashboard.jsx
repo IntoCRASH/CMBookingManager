@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getCotizaciones } from '../lib/cotizacionesService';
 import {
   getPlanLabel,
   getWorkspaceSubscription,
 } from '../lib/subscriptionService';
+import AppIcon from '../components/AppIcon';
 import './DashboardBalanced.css';
 
 export default function Dashboard({
@@ -12,6 +13,7 @@ export default function Dashboard({
   esArtista,
   goTarifas,
   goCotizaciones,
+  goClientes,
   goCalendario,
   goComisiones,
   goDocumentos,
@@ -26,18 +28,15 @@ export default function Dashboard({
   goIndustriaMusical,
   subscription,
 }) {
-  const [eventosConfirmados, setEventosConfirmados] =
-    useState(0);
+  const [eventosConfirmados, setEventosConfirmados] = useState(0);
   const [eventosMes, setEventosMes] = useState(0);
   const [proximoEvento, setProximoEvento] = useState(null);
-  const [cotizacionesPendientes, setCotizacionesPendientes] =
-    useState(0);
+  const [cotizacionesPendientes, setCotizacionesPendientes] = useState(0);
+  const [valorCotizacionesPendientes, setValorCotizacionesPendientes] = useState(0);
   const [balancePendiente, setBalancePendiente] = useState(0);
   const [cobradoMes, setCobradoMes] = useState(0);
-  const [
-    currentSubscription,
-    setCurrentSubscription,
-  ] = useState(subscription || null);
+  const [cotizacionesRecientes, setCotizacionesRecientes] = useState([]);
+  const [currentSubscription, setCurrentSubscription] = useState(subscription || null);
 
   useEffect(() => {
     cargarResumen();
@@ -45,9 +44,7 @@ export default function Dashboard({
   }, [workspaceId]);
 
   useEffect(() => {
-    setCurrentSubscription(
-      subscription || null
-    );
+    setCurrentSubscription(subscription || null);
   }, [
     subscription?.plan_code,
     subscription?.billing_mode,
@@ -63,26 +60,17 @@ export default function Dashboard({
   }
 
   function esConfirmado(cotizacion) {
-    return normalizarEstado(
-      cotizacion?.estado
-    ).startsWith('confirmad');
+    return normalizarEstado(cotizacion?.estado).startsWith('confirmad');
   }
 
   function esRealizado(cotizacion) {
-    return normalizarEstado(
-      cotizacion?.estado
-    ).startsWith('realizad');
+    return normalizarEstado(cotizacion?.estado).startsWith('realizad');
   }
 
   function fechaLocalISO(date = new Date()) {
     const year = date.getFullYear();
-    const month = String(
-      date.getMonth() + 1
-    ).padStart(2, '0');
-    const day = String(
-      date.getDate()
-    ).padStart(2, '0');
-
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
@@ -104,64 +92,51 @@ export default function Dashboard({
     }
 
     return Math.max(
-      Number(cotizacion.total || 0) -
-        obtenerPagado(cotizacion),
+      Number(cotizacion.total || 0) - obtenerPagado(cotizacion),
       0
     );
   }
 
   async function cargarResumen() {
     try {
-      const cotizaciones = await getCotizaciones({
-        workspaceId,
-      });
-
+      const cotizaciones = await getCotizaciones({ workspaceId });
       const hoy = fechaLocalISO();
       const mesActual = hoy.slice(0, 7);
 
       const confirmados = cotizaciones
         .filter(
           (cotizacion) =>
-            cotizacion.fecha_evento &&
-            esConfirmado(cotizacion)
+            cotizacion.fecha_evento && esConfirmado(cotizacion)
         )
         .sort((a, b) =>
-          String(a.fecha_evento).localeCompare(
-            String(b.fecha_evento)
-          )
+          String(a.fecha_evento).localeCompare(String(b.fecha_evento))
         );
 
       const eventosEnAgenda = confirmados.filter(
-        (cotizacion) =>
-          String(cotizacion.fecha_evento) >= hoy
+        (cotizacion) => String(cotizacion.fecha_evento) >= hoy
       );
 
       const eventosDelMes = confirmados.filter(
         (cotizacion) =>
-          String(cotizacion.fecha_evento).slice(0, 7) ===
-          mesActual
+          String(cotizacion.fecha_evento).slice(0, 7) === mesActual
       );
-
-      const proximo = eventosEnAgenda[0] || null;
 
       const pendientes = cotizaciones.filter((cotizacion) =>
         [
-          'Pendiente',
-          'Pendiente de aprobación',
-          'Pendiente de cobro',
-        ].includes(cotizacion.estado)
+          'pendiente',
+          'pendiente de aprobacion',
+          'pendiente de cobro',
+        ].includes(normalizarEstado(cotizacion.estado))
       );
 
       const cotizacionesConSaldo = cotizaciones.filter(
         (cotizacion) =>
-          (esConfirmado(cotizacion) ||
-            esRealizado(cotizacion)) &&
+          (esConfirmado(cotizacion) || esRealizado(cotizacion)) &&
           obtenerSaldoPendiente(cotizacion) > 0
       );
 
       const totalPendiente = cotizacionesConSaldo.reduce(
-        (sum, cotizacion) =>
-          sum + obtenerSaldoPendiente(cotizacion),
+        (sum, cotizacion) => sum + obtenerSaldoPendiente(cotizacion),
         0
       );
 
@@ -169,379 +144,414 @@ export default function Dashboard({
         .filter(
           (cotizacion) =>
             cotizacion.fecha_evento &&
-            String(cotizacion.fecha_evento).slice(0, 7) ===
-              mesActual
+            String(cotizacion.fecha_evento).slice(0, 7) === mesActual
         )
         .reduce(
-          (sum, cotizacion) =>
-            sum + obtenerPagado(cotizacion),
+          (sum, cotizacion) => sum + obtenerPagado(cotizacion),
           0
         );
 
+      const valorPendientes = pendientes.reduce(
+        (sum, cotizacion) => sum + Number(cotizacion.total || 0),
+        0
+      );
+
+      const recientes = [...cotizaciones]
+        .sort((a, b) => {
+          const fechaA =
+            a.updated_at || a.created_at || a.fecha_evento || '';
+          const fechaB =
+            b.updated_at || b.created_at || b.fecha_evento || '';
+          return String(fechaB).localeCompare(String(fechaA));
+        })
+        .slice(0, 5);
+
       setEventosConfirmados(eventosEnAgenda.length);
       setEventosMes(eventosDelMes.length);
-      setProximoEvento(proximo);
+      setProximoEvento(eventosEnAgenda[0] || null);
       setCotizacionesPendientes(pendientes.length);
+      setValorCotizacionesPendientes(valorPendientes);
       setBalancePendiente(totalPendiente);
       setCobradoMes(totalCobradoMes);
-    } catch (err) {
-      console.error(err);
+      setCotizacionesRecientes(recientes);
+    } catch (error) {
+      console.error(error);
     }
   }
 
-
   async function cargarSuscripcionActual() {
-    if (!workspaceId) {
-      return;
-    }
+    if (!workspaceId) return;
 
     try {
-      const result =
-        await getWorkspaceSubscription(
-          workspaceId
-        );
-
+      const result = await getWorkspaceSubscription(workspaceId);
       setCurrentSubscription(result);
     } catch (error) {
       console.error(error);
     }
   }
 
-  function money(valor) {
-    return `RD$ ${Number(valor || 0).toLocaleString(
-      'es-DO'
-    )}`;
+  function money(value) {
+    return `RD$ ${Number(value || 0).toLocaleString('es-DO')}`;
   }
 
-  function fechaCorta(fecha) {
-    if (!fecha) {
-      return {
-        dia: '--',
-        mes: '---',
-      };
-    }
+  function fechaLarga(value) {
+    if (!value) return 'Fecha pendiente';
 
-    const date = new Date(`${fecha}T00:00:00`);
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return 'Fecha pendiente';
 
-    return {
-      dia: date.toLocaleDateString('es-DO', {
-        day: '2-digit',
-      }),
-
-      mes: date
-        .toLocaleDateString('es-DO', {
-          month: 'short',
-        })
-        .replace('.', '')
-        .toUpperCase(),
-    };
+    return date.toLocaleDateString('es-DO', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
   }
 
-  const fechaProximo = fechaCorta(
-    proximoEvento?.fecha_evento
-  );
+  function estadoClass(value) {
+    const estado = normalizarEstado(value).replace(/\s+/g, '-');
+    return `premium-status premium-status-${estado || 'sin-estado'}`;
+  }
 
-  const nombreArtista =
-    workspace?.workspace_name || 'Artista';
+  const nombreArtista = workspace?.workspace_name || 'Artista';
 
   const planLabel =
-    currentSubscription?.billing_mode ===
-    'legacy'
+    currentSubscription?.billing_mode === 'legacy'
       ? 'Acceso heredado'
-      : getPlanLabel(
-          currentSubscription?.plan_code
-        ) || 'Sin plan';
+      : getPlanLabel(currentSubscription?.plan_code) || 'Sin plan';
 
-  const accountType =
-    esArtista ? 'Artista' : 'Gestor';
+  const accountType = esArtista ? 'Artista' : 'Gestor';
+
+  const metricBars = useMemo(() => {
+    const values = [
+      { label: 'Eventos del mes', value: eventosMes, display: eventosMes },
+      {
+        label: 'Cotizaciones pendientes',
+        value: cotizacionesPendientes,
+        display: cotizacionesPendientes,
+      },
+      {
+        label: 'Cobrado este mes',
+        value: cobradoMes,
+        display: money(cobradoMes),
+      },
+    ];
+
+    const maxValue = Math.max(...values.map((item) => item.value), 1);
+
+    return values.map((item) => ({
+      ...item,
+      width: `${Math.max(12, Math.round((item.value / maxValue) * 100))}%`,
+    }));
+  }, [eventosMes, cotizacionesPendientes, cobradoMes]);
+
+  const quickActions = [
+    {
+      label: 'Nueva cotización',
+      description: 'Crea y envía una propuesta',
+      icon: 'quote',
+      tone: 'blue',
+      action: goNuevaCotizacion || goCotizaciones,
+    },
+    {
+      label: 'Nuevo cliente',
+      description: 'Organiza tus contactos',
+      icon: 'clients',
+      tone: 'violet',
+      action: goClientes,
+    },
+    {
+      label: 'Ver calendario',
+      description: 'Revisa eventos y fechas',
+      icon: 'calendar',
+      tone: 'pink',
+      action: goCalendario,
+    },
+    {
+      label: 'Documentos',
+      description: 'Contratos, riders y archivos',
+      icon: 'upload',
+      tone: 'purple',
+      action: goDocumentos,
+    },
+    {
+      label: 'Comisiones',
+      description: 'Consulta pagos del equipo',
+      icon: 'commissions',
+      tone: 'cyan',
+      action: goComisiones,
+    },
+  ].filter((item) => typeof item.action === 'function');
+
+  const configurationActions = esArtista
+    ? [
+        { label: 'Equipo', icon: 'team', action: goEquipo },
+        { label: 'Perfil', icon: 'profile', action: goPerfil },
+        { label: 'Suscripción', icon: 'billing', action: goSuscripcion },
+        { label: 'Formatos', icon: 'formats', action: goFormatos },
+        { label: 'Tipos de evento', icon: 'eventTypes', action: goTiposEvento },
+        { label: 'Tarifas', icon: 'rates', action: goTarifas },
+      ]
+    : [
+        { label: 'Invitaciones', icon: 'invitations', action: goInvitaciones },
+        { label: 'Tutorial', icon: 'tutorial', action: goTutorial },
+        { label: 'Aprende', icon: 'learn', action: goIndustriaMusical },
+      ];
 
   return (
-    <div className="dashboard dashboard-mobile-first">
-      <section className="mobile-welcome-card dashboard-welcome-integrated">
-        <div className="dashboard-welcome-copy">
-          <span className="eyebrow">MiBooking</span>
-
-          <h1>Hola, {nombreArtista}!</h1>
-
+    <div className="dashboard premium-dashboard">
+      <header className="premium-dashboard-welcome">
+        <div>
+          <span className="premium-eyebrow">Panel de control</span>
+          <h1>¡Bienvenido, {nombreArtista}! <span aria-hidden="true">👋</span></h1>
           <p>
-            Tienes{' '}
-            <strong>{eventosConfirmados}</strong>{' '}
-            evento
-            {eventosConfirmados !== 1 ? 's' : ''}{' '}
-            confirmado
-            {eventosConfirmados !== 1 ? 's' : ''}{' '}
-            en agenda.
+            Aquí tienes el resumen de tu operación musical y lo que requiere
+            atención hoy.
           </p>
-
-          <div className="dashboard-account-summary">
-            <span>{planLabel}</span>
-
-            <i aria-hidden="true" />
-
-            <span>{accountType}</span>
-          </div>
         </div>
 
         <button
           type="button"
-          className="dashboard-welcome-tutorial"
+          className="premium-tutorial-link"
           onClick={goTutorial}
         >
-          <span className="welcome-tutorial-icon">
-            ?
+          <span className="premium-tutorial-icon">
+            <AppIcon name="tutorial" size={20} />
           </span>
-
-          <span className="welcome-tutorial-content">
+          <span>
             <small>Tutorial</small>
-
-            <strong>
-              Primeros pasos
-            </strong>
-
-            <span>
-              Configura tu cuenta
-            </span>
+            <strong>Primeros pasos</strong>
           </span>
-
-          <span
-            className="welcome-tutorial-arrow"
-            aria-hidden="true"
-          >
-            →
-          </span>
+          <AppIcon name="chevron" size={17} />
         </button>
-      </section>
+      </header>
 
-      <section className="dashboard-primary-actions dashboard-primary-balanced">
+      <section className="premium-overview-grid" aria-label="Resumen principal">
         <button
           type="button"
-          className="primary-action"
-          onClick={
-            goNuevaCotizacion ||
-            goCotizaciones
-          }
-        >
-          Nueva cotización
-        </button>
-
-        <button
-          type="button"
-          className="primary-action secondary"
-          onClick={goCotizaciones}
-        >
-          Ver cotizaciones
-        </button>
-      </section>
-
-      <section className="mobile-kpi-grid">
-        <button
-          type="button"
-          className="kpi-tile blue"
+          className="premium-summary-card premium-event-summary"
           onClick={goCalendario}
         >
-          <span>📅</span>
-          <small>Eventos este mes</small>
-          <strong>{eventosMes}</strong>
-        </button>
+          <div className="premium-card-topline">
+            <span>Próximo evento</span>
+            <span className="premium-card-icon">
+              <AppIcon name="event" size={24} />
+            </span>
+          </div>
 
-        <button
-          type="button"
-          className="kpi-tile purple"
-          onClick={goCotizaciones}
-        >
-          <span>💰</span>
-          <small>Balance pendiente</small>
-          <strong>{money(balancePendiente)}</strong>
-        </button>
-
-        <button
-          type="button"
-          className="kpi-tile rose"
-          onClick={goCotizaciones}
-        >
-          <span>📄</span>
-          <small>Cotizaciones pendientes</small>
-          <strong>{cotizacionesPendientes}</strong>
-        </button>
-
-        <button
-          type="button"
-          className="kpi-tile orange"
-          onClick={goComisiones}
-        >
-          <span>💵</span>
-          <small>Cobrado este mes</small>
-          <strong>{money(cobradoMes)}</strong>
-        </button>
-      </section>
-
-      <section className="next-event-card">
-        <div className="section-heading">
-          <span>Próximo evento confirmado</span>
-
-          <button type="button" onClick={goCalendario}>
-            Agenda
-          </button>
-        </div>
-
-        {proximoEvento ? (
-          <div className="next-event-content">
-            <div className="date-badge">
-              <strong>{fechaProximo.dia}</strong>
-              <span>{fechaProximo.mes}</span>
-            </div>
-
-            <div>
+          {proximoEvento ? (
+            <div className="premium-event-copy">
               <h2>
                 {proximoEvento.nombre_evento ||
                   proximoEvento.tipo_evento ||
-                  'Evento'}
+                  'Evento confirmado'}
               </h2>
-
-              <p>
-                {proximoEvento.clientes?.nombre ||
-                  'Cliente sin nombre'}
-              </p>
-
+              <p>{fechaLarga(proximoEvento.fecha_evento)}</p>
               <small>
                 {proximoEvento.venue ||
                   proximoEvento.provincias?.nombre ||
                   'Lugar pendiente'}
-
                 {proximoEvento.hora_inicio
                   ? ` · ${proximoEvento.hora_inicio}`
                   : ''}
               </small>
             </div>
-          </div>
-        ) : (
-          <div className="empty-event-state">
-            <strong>
-              No hay próximos eventos confirmados.
-            </strong>
-
-            <span>
-              Cuando confirmes una cotización con fecha,
-              aparecerá aquí.
-            </span>
-          </div>
-        )}
-      </section>
-
-      <section className="quick-actions-card">
-        <div className="section-heading">
-          <div className="dashboard-section-title">
-            <span>Operación rápida</span>
-            <small>
-              Las acciones que usas en el día a día.
-            </small>
-          </div>
-        </div>
-
-        <div className="quick-actions-grid balanced-actions-grid">
-          <button
-            type="button"
-            onClick={
-              goNuevaCotizacion ||
-              goCotizaciones
-            }
-          >
-            ➕
-            <span>Nueva cotización</span>
-          </button>
-
-          <button type="button" onClick={goCotizaciones}>
-            📄
-            <span>Cotizaciones</span>
-          </button>
-
-          <button type="button" onClick={goCalendario}>
-            📅
-            <span>Calendario</span>
-          </button>
-
-          <button type="button" onClick={goComisiones}>
-            💰
-            <span>Comisiones</span>
-          </button>
-
-          <button type="button" onClick={goDocumentos}>
-            🗂️
-            <span>Documentos</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={goIndustriaMusical}
-          >
-            🎓
-            <span>Aprende</span>
-          </button>
-
-        </div>
-      </section>
-
-      <section className="quick-actions-card dashboard-config-card">
-        <div className="section-heading">
-          <div className="dashboard-section-title">
-            <span>
-              {esArtista
-                ? 'Configuración del Artista'
-                : 'Cuenta y colaboración'}
-            </span>
-
-            <small>
-              Ajustes menos frecuentes, separados de la operación diaria.
-            </small>
-          </div>
-        </div>
-
-        <div className="quick-actions-grid balanced-actions-grid config-actions-grid">
-          {esArtista ? (
-            <>
-              <button type="button" onClick={goEquipo}>
-                👥
-                <span>Equipo</span>
-              </button>
-
-              <button type="button" onClick={goPerfil}>
-                👤
-                <span>Perfil</span>
-              </button>
-
-              <button type="button" onClick={goSuscripcion}>
-                💳
-                <span>Suscripción</span>
-              </button>
-
-              <button type="button" onClick={goFormatos}>
-                🎵
-                <span>Formatos</span>
-              </button>
-
-              <button type="button" onClick={goTiposEvento}>
-                🎤
-                <span>Tipos de evento</span>
-              </button>
-
-              <button type="button" onClick={goTarifas}>
-                ⚙️
-                <span>Tarifas</span>
-              </button>
-            </>
           ) : (
-            <>
-              <button type="button" onClick={goInvitaciones}>
-                ✉
-                <span>Invitaciones</span>
-              </button>
-
-              <button type="button" onClick={goPerfil}>
-                👤
-                <span>Mi perfil</span>
-              </button>
-            </>
+            <div className="premium-event-copy">
+              <h2>Sin eventos próximos</h2>
+              <p>Tu próximo evento confirmado aparecerá aquí.</p>
+            </div>
           )}
+
+          <span className="premium-card-link">
+            Ver agenda <AppIcon name="arrow" size={16} />
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="premium-summary-card premium-quotes-summary"
+          onClick={goCotizaciones}
+        >
+          <div className="premium-card-topline">
+            <span>Cotizaciones pendientes</span>
+            <span className="premium-card-icon">
+              <AppIcon name="quote" size={24} />
+            </span>
+          </div>
+          <strong className="premium-summary-number">{cotizacionesPendientes}</strong>
+          <p>Por un valor de</p>
+          <b>{money(valorCotizacionesPendientes)}</b>
+          <span className="premium-card-link">
+            Ver cotizaciones <AppIcon name="arrow" size={16} />
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="premium-summary-card premium-balance-summary"
+          onClick={goCotizaciones}
+        >
+          <div className="premium-card-topline">
+            <span>Balance pendiente</span>
+            <span className="premium-card-icon round">
+              <AppIcon name="money" size={25} />
+            </span>
+          </div>
+          <strong className="premium-summary-amount">{money(balancePendiente)}</strong>
+          <p>De eventos confirmados o realizados</p>
+          <div className="premium-mini-chart" aria-hidden="true">
+            <i /><i /><i /><i /><i /><i />
+          </div>
+          <span className="premium-card-link">
+            Ver balance <AppIcon name="arrow" size={16} />
+          </span>
+        </button>
+      </section>
+
+      <section className="premium-dashboard-main-grid">
+        <article className="premium-panel premium-recent-panel">
+          <div className="premium-panel-heading">
+            <div>
+              <span className="premium-eyebrow">Actividad</span>
+              <h2>Cotizaciones recientes</h2>
+            </div>
+            <button type="button" onClick={goCotizaciones}>
+              Ver todas <AppIcon name="arrow" size={15} />
+            </button>
+          </div>
+
+          {cotizacionesRecientes.length > 0 ? (
+            <div className="premium-quotes-table" role="table">
+              <div className="premium-quotes-head" role="row">
+                <span>Folio</span>
+                <span>Cliente / evento</span>
+                <span>Fecha</span>
+                <span>Monto</span>
+                <span>Estado</span>
+              </div>
+
+              {cotizacionesRecientes.map((cotizacion) => (
+                <button
+                  type="button"
+                  className="premium-quote-row"
+                  key={cotizacion.id}
+                  onClick={goCotizaciones}
+                  role="row"
+                >
+                  <span className="premium-quote-number">
+                    {cotizacion.numero_cotizacion ||
+                      cotizacion.numero ||
+                      `#${cotizacion.id}`}
+                  </span>
+                  <span className="premium-quote-client">
+                    <strong>{cotizacion.clientes?.nombre || 'Cliente'}</strong>
+                    <small>
+                      {cotizacion.nombre_evento ||
+                        cotizacion.tipo_evento ||
+                        'Evento sin nombre'}
+                    </small>
+                  </span>
+                  <span>{fechaLarga(cotizacion.fecha_evento)}</span>
+                  <span className="premium-quote-total">
+                    {money(cotizacion.total)}
+                  </span>
+                  <span className={estadoClass(cotizacion.estado)}>
+                    {cotizacion.estado || 'Sin estado'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="premium-empty-state">
+              <AppIcon name="quote" size={28} />
+              <strong>Aún no hay cotizaciones</strong>
+              <span>Crea la primera para comenzar a ver actividad aquí.</span>
+            </div>
+          )}
+        </article>
+
+        <aside className="premium-panel premium-actions-panel">
+          <div className="premium-panel-heading">
+            <div>
+              <span className="premium-eyebrow">Atajos</span>
+              <h2>Acciones rápidas</h2>
+            </div>
+          </div>
+
+          <div className="premium-action-list">
+            {quickActions.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                className={`premium-action-item tone-${item.tone}`}
+                onClick={item.action}
+              >
+                <span className="premium-action-icon">
+                  <AppIcon name={item.icon} size={20} />
+                </span>
+                <span>
+                  <strong>{item.label}</strong>
+                  <small>{item.description}</small>
+                </span>
+                <AppIcon name="chevron" size={17} />
+              </button>
+            ))}
+          </div>
+        </aside>
+      </section>
+
+      <section className="premium-panel premium-operation-panel">
+        <div className="premium-operation-copy">
+          <span className="premium-operation-icon">
+            <AppIcon name="chart" size={24} />
+          </span>
+          <div>
+            <span className="premium-eyebrow">Resumen del mes</span>
+            <h2>Tu operación, en tiempo real</h2>
+            <p>
+              Estos indicadores usan los datos reales de tus cotizaciones y
+              eventos en MiBooking.
+            </p>
+          </div>
+        </div>
+
+        <div className="premium-metric-bars">
+          {metricBars.map((metric) => (
+            <div className="premium-metric-row" key={metric.label}>
+              <span>{metric.label}</span>
+              <strong>{metric.display}</strong>
+              <div><i style={{ width: metric.width }} /></div>
+            </div>
+          ))}
+        </div>
+
+        <div className="premium-account-card">
+          <span>{planLabel}</span>
+          <strong>{accountType}</strong>
+          <small>{eventosConfirmados} evento{eventosConfirmados === 1 ? '' : 's'} en agenda</small>
+        </div>
+      </section>
+
+      <section className="premium-tools-section">
+        <div className="premium-section-heading-inline">
+          <div>
+            <span className="premium-eyebrow">
+              {esArtista ? 'Configuración del Artista' : 'Cuenta y colaboración'}
+            </span>
+            <h2>Herramientas de administración</h2>
+          </div>
+        </div>
+
+        <div className="premium-tools-grid">
+          {configurationActions
+            .filter((item) => typeof item.action === 'function')
+            .map((item) => (
+              <button key={item.label} type="button" onClick={item.action}>
+                <span><AppIcon name={item.icon} size={20} /></span>
+                <strong>{item.label}</strong>
+                <AppIcon name="chevron" size={16} />
+              </button>
+            ))}
         </div>
       </section>
     </div>

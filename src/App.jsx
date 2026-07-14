@@ -18,6 +18,7 @@ import {
   getStoredSelectedPlan,
   getWorkspaceSubscription,
   getPlanLabel,
+  formatSubscriptionDate,
   getSubscriptionAccessState,
   isInitialSubscriptionState,
   isSubscriptionAccessAllowed,
@@ -50,6 +51,7 @@ import Suscripcion from './pages/Suscripcion';
 import Equipo from './pages/Equipo';
 import InvitacionesPendientes from './pages/InvitacionesPendientes';
 import AceptarInvitacionGestor from './pages/AceptarInvitacionGestor';
+import AppIcon from './components/AppIcon';
 import './styles/NavigationBalanced.css';
 
 export default function App() {
@@ -217,6 +219,23 @@ export default function App() {
       );
     };
   }, [settingsOpen]);
+
+  useEffect(() => {
+    const darkPremiumActive = Boolean(
+      session && activeWorkspace
+    );
+
+    document.body.classList.toggle(
+      'mibooking-dark-premium',
+      darkPremiumActive
+    );
+
+    return () => {
+      document.body.classList.remove(
+        'mibooking-dark-premium'
+      );
+    };
+  }, [session, activeWorkspace]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1174,44 +1193,44 @@ export default function App() {
     {
       id: 'dashboard',
       label: 'Inicio',
-      icon: '⌂',
+      icon: 'home',
       action: volverDashboard,
-    },
-    {
-      id: 'tutorial',
-      label: 'Tutorial',
-      icon: '◈',
-      action: () => irA('tutorial'),
     },
     {
       id: 'cotizaciones',
       label: 'Cotizaciones',
-      icon: '▦',
+      icon: 'quote',
       action: () => irA('cotizaciones'),
     },
     {
       id: 'clientes',
       label: 'Clientes',
-      icon: '◉',
+      icon: 'clients',
       action: () => irA('clientes'),
     },
     {
       id: 'calendario',
       label: 'Calendario',
-      icon: '◷',
+      icon: 'calendar',
       action: () => irA('calendario'),
     },
     {
       id: 'documentos',
       label: 'Documentos',
-      icon: '▤',
+      icon: 'documents',
       action: () => irA('documentos'),
     },
     {
       id: 'comisiones',
       label: 'Comisiones',
-      icon: '◇',
+      icon: 'commissions',
       action: () => irA('comisiones'),
+    },
+    {
+      id: 'tutorial',
+      label: 'Tutorial',
+      icon: 'tutorial',
+      action: () => irA('tutorial'),
     },
     ...(
       esArtista
@@ -1219,7 +1238,7 @@ export default function App() {
             {
               id: 'equipo',
               label: 'Equipo',
-              icon: '♟',
+              icon: 'team',
               action: () => irA('equipo'),
             },
           ]
@@ -1227,16 +1246,15 @@ export default function App() {
             {
               id: 'invitaciones',
               label: 'Invitaciones',
-              icon: '✉',
-              action: () =>
-                irA('invitaciones'),
+              icon: 'invitations',
+              action: () => irA('invitaciones'),
             },
           ]
     ),
     {
       id: 'industria-musical',
       label: 'Aprende',
-      icon: '🎓',
+      icon: 'learn',
       action: () => irA('industria-musical'),
     },
   ];
@@ -1246,29 +1264,34 @@ export default function App() {
         {
           id: 'perfil',
           label: 'Perfil del Artista',
+          icon: 'profile',
           action: () => irA('perfil'),
         },
         {
           id: 'suscripcion',
           label:
             'Suscripción y facturación',
+          icon: 'billing',
           action: () =>
             irA('suscripcion'),
         },
         {
           id: 'formatos',
           label: 'Formatos',
+          icon: 'formats',
           action: () => irA('formatos'),
         },
         {
           id: 'tipos-evento',
           label: 'Tipos de evento',
+          icon: 'eventTypes',
           action: () =>
             irA('tipos-evento'),
         },
         {
           id: 'tarifas',
           label: 'Tarifas por zona',
+          icon: 'rates',
           action: () => irA('tarifas'),
         },
       ]
@@ -1283,25 +1306,25 @@ export default function App() {
     {
       id: 'dashboard',
       label: 'Inicio',
-      icon: '⌂',
+      icon: 'home',
       action: volverDashboard,
     },
     {
       id: 'cotizaciones',
       label: 'Cotiz.',
-      icon: '▦',
+      icon: 'quote',
       action: () => irA('cotizaciones'),
     },
     {
       id: 'calendario',
       label: 'Agenda',
-      icon: '◷',
+      icon: 'calendar',
       action: () => irA('calendario'),
     },
     {
       id: 'more',
       label: 'Más',
-      icon: '☰',
+      icon: 'menu',
       action: () => setMoreOpen(true),
     },
   ];
@@ -1332,7 +1355,7 @@ export default function App() {
                     'suscripcion',
                   label:
                     'Facturación',
-                  icon: '$',
+                  icon: 'billing',
                   action: () =>
                     irA(
                       'suscripcion'
@@ -1341,7 +1364,7 @@ export default function App() {
                 {
                   id: 'perfil',
                   label: 'Perfil',
-                  icon: '◉',
+                  icon: 'clients',
                   action: () =>
                     irA('perfil'),
                 },
@@ -1691,6 +1714,7 @@ export default function App() {
             {...sharedProps}
             session={session}
             goCotizaciones={() => irA('cotizaciones')}
+            goClientes={() => irA('clientes')}
             goCalendario={() => irA('calendario')}
             goDocumentos={() => irA('documentos')}
             goTutorial={() => irA('tutorial')}
@@ -1713,6 +1737,7 @@ export default function App() {
             {...sharedProps}
             session={session}
             goCotizaciones={() => irA('cotizaciones')}
+            goClientes={() => irA('clientes')}
             goCalendario={() => irA('calendario')}
             goDocumentos={() => irA('documentos')}
             goTutorial={() => irA('tutorial')}
@@ -1752,6 +1777,7 @@ export default function App() {
             }
             goTarifas={() => irA('tarifas')}
             goCotizaciones={() => irA('cotizaciones')}
+            goClientes={() => irA('clientes')}
             goCalendario={() => irA('calendario')}
             goDocumentos={() => irA('documentos')}
             goTutorial={() => irA('tutorial')}
@@ -1777,6 +1803,106 @@ export default function App() {
       )
     );
 
+  const pageMeta = {
+    dashboard: {
+      title: 'Inicio',
+      description: 'Resumen de tu operación musical',
+    },
+    tutorial: {
+      title: 'Tutorial',
+      description: 'Configura y domina MiBooking',
+    },
+    cotizaciones: {
+      title: 'Cotizaciones',
+      description: 'Propuestas, estados y seguimiento',
+    },
+    'nueva-cotizacion': {
+      title: cotizacionId ? 'Editar cotización' : 'Nueva cotización',
+      description: 'Prepara una propuesta profesional',
+    },
+    clientes: {
+      title: 'Clientes',
+      description: 'Contactos y relaciones comerciales',
+    },
+    calendario: {
+      title: 'Calendario',
+      description: 'Eventos y fechas importantes',
+    },
+    documentos: {
+      title: 'Documentos',
+      description: 'Contratos, riders y archivos',
+    },
+    comisiones: {
+      title: 'Comisiones',
+      description: 'Control de pagos del equipo',
+    },
+    equipo: {
+      title: 'Equipo',
+      description: 'Gestores e invitaciones',
+    },
+    invitaciones: {
+      title: 'Invitaciones',
+      description: 'Accesos a Artistas',
+    },
+    'industria-musical': {
+      title: 'Aprende',
+      description: 'Recursos para tu carrera musical',
+    },
+    perfil: {
+      title: 'Perfil del Artista',
+      description: 'Identidad, negocio y documentos',
+    },
+    suscripcion: {
+      title: 'Suscripción',
+      description: 'Plan, pagos y facturación',
+    },
+    formatos: {
+      title: 'Formatos',
+      description: 'Configuración de tus presentaciones',
+    },
+    'tipos-evento': {
+      title: 'Tipos de evento',
+      description: 'Reglas y multiplicadores',
+    },
+    tarifas: {
+      title: 'Tarifas por zona',
+      description: 'Precios y costos operativos',
+    },
+    'pagos-cotizacion': {
+      title: 'Pagos',
+      description: 'Abonos y balance de la cotización',
+    },
+  };
+
+  const currentPageMeta =
+    pageMeta[page] || pageMeta.dashboard;
+
+  const userDisplayName =
+    profile?.nombre ||
+    session?.user?.email?.split('@')[0] ||
+    'Usuario';
+
+  const userInitials = userDisplayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('') || 'MB';
+
+  const subscriptionPlanLabel =
+    workspaceSubscription?.billing_mode === 'legacy'
+      ? 'Acceso heredado'
+      : getPlanLabel(workspaceSubscription?.plan_code) ||
+        'Sin plan';
+
+  const subscriptionRenewalDate =
+    formatSubscriptionDate(
+      workspaceSubscription?.current_period_end
+    );
+
+  const chromeVisible =
+    page !== 'ver-cotizacion';
+
   if (!shouldRenderAppShell) {
     return (
       <>
@@ -1788,172 +1914,222 @@ export default function App() {
 
   return (
     <div
-      className={`app-shell page-${page}`}
+      className={`app-shell dark-premium-shell page-${page} ${
+        chromeVisible ? '' : 'premium-print-view'
+      }`}
       data-workspace-id={activeWorkspace.workspace_id}
     >
-      {page !== 'ver-cotizacion' && (
-        <nav className="desktop-topbar">
+      {chromeVisible && (
+        <aside className="premium-sidebar">
           <button
-            className="brand-button"
+            className="premium-brand-button"
             type="button"
             onClick={volverDashboard}
             aria-label="Ir al inicio de MiBooking"
           >
-            <img
-              src="/mibooking-icon.png"
-              alt=""
-              aria-hidden="true"
-              style={{
-                display: 'block',
-                width: '42px',
-                height: '42px',
-                flex: '0 0 42px',
-                objectFit: 'contain',
-              }}
-            />
-
-            <span>
-              <strong>MiBooking</strong>
-              <small>Menos administración, ¡Más música!</small>
-            </span>
+            <img src="/mibooking-logo-dark.png" alt="MiBooking" />
           </button>
 
-          <div className="desktop-nav-links">
-            {visibleDesktopNav.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={page === item.id ? 'active' : ''}
-                onClick={item.action}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    marginRight: '5px',
-                    fontSize:
-                      item.id ===
-                      'industria-musical'
-                        ? '12px'
-                        : '11px',
-                    lineHeight: 1,
-                  }}
+          <div className="premium-sidebar-scroll">
+            <nav className="premium-sidebar-nav" aria-label="Navegación principal">
+              <span className="premium-nav-heading">Operación</span>
+
+              {visibleDesktopNav.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={page === item.id ? 'active' : ''}
+                  onClick={item.action}
                 >
-                  {item.icon}
-                </span>
-
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="topbar-user">
-            {workspaces.length > 1 && (
-              <select
-                className="topbar-artist-select topbar-workspace-only"
-                value={activeWorkspace.workspace_id}
-                onChange={cambiarWorkspace}
-                aria-label="Cambiar Artista"
-                title="Cambiar Artista"
-              >
-                {workspaces.map((workspaceItem) => (
-                  <option
-                    key={workspaceItem.workspace_id}
-                    value={workspaceItem.workspace_id}
-                  >
-                    {workspaceItem.workspace_name}
-                  </option>
-                ))}
-              </select>
-            )}
+                  <AppIcon name={item.icon} size={19} />
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </nav>
 
             {visibleSettingsNav.length > 0 && (
-              <div
-                className="balanced-settings"
-                ref={settingsRef}
+              <nav className="premium-sidebar-nav premium-sidebar-settings" aria-label="Configuración">
+                <span className="premium-nav-heading">Configuración</span>
+
+                {visibleSettingsNav.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={page === item.id ? 'active' : ''}
+                    onClick={item.action}
+                  >
+                    <AppIcon name={item.icon || 'settings'} size={19} />
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+            )}
+          </div>
+
+          <div className="premium-sidebar-footer">
+            {esArtista && (
+              <button
+                type="button"
+                className="premium-plan-card"
+                onClick={() => irA('suscripcion')}
               >
+                <span className="premium-plan-icon">
+                  <AppIcon name="billing" size={21} />
+                </span>
+                <span className="premium-plan-copy">
+                  <small>Plan actual</small>
+                  <strong>{subscriptionPlanLabel}</strong>
+                  <em>
+                    {subscriptionRenewalDate
+                      ? `Renovación: ${subscriptionRenewalDate}`
+                      : 'Administrar suscripción'}
+                  </em>
+                </span>
+                <AppIcon name="chevron" size={16} />
+              </button>
+            )}
+
+            <div className="premium-sidebar-user">
+              <span className="premium-user-avatar">{userInitials}</span>
+              <span>
+                <strong>{userDisplayName}</strong>
+                <small>{roleLabel}</small>
+              </span>
+              <button type="button" onClick={logout} aria-label="Cerrar sesión" title="Cerrar sesión">
+                <AppIcon name="logout" size={18} />
+              </button>
+            </div>
+          </div>
+        </aside>
+      )}
+
+      <section className="premium-workspace">
+        {chromeVisible && (
+          <header className="premium-topbar">
+            <button
+              type="button"
+              className="premium-mobile-menu"
+              onClick={() => setMoreOpen(true)}
+              aria-label="Abrir menú"
+            >
+              <AppIcon name="menu" size={22} />
+            </button>
+
+            <div className="premium-page-context">
+              <span>{currentPageMeta.description}</span>
+              <h2>{currentPageMeta.title}</h2>
+            </div>
+
+            <div className="premium-topbar-actions">
+              {workspaces.length > 1 ? (
+                <label className="premium-workspace-select">
+                  <span>Artista</span>
+                  <select
+                    value={activeWorkspace.workspace_id}
+                    onChange={cambiarWorkspace}
+                    aria-label="Cambiar Artista"
+                  >
+                    {workspaces.map((workspaceItem) => (
+                      <option
+                        key={workspaceItem.workspace_id}
+                        value={workspaceItem.workspace_id}
+                      >
+                        {workspaceItem.workspace_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <div className="premium-workspace-pill">
+                  <span>Workspace</span>
+                  <strong>{activeWorkspace.workspace_name}</strong>
+                </div>
+              )}
+
+              {!subscriptionRestricted && page !== 'nueva-cotizacion' && (
                 <button
                   type="button"
-                  className={
-                    `balanced-settings-trigger ${
-                      settingsOpen ||
-                      settingsIsActive
-                        ? 'active'
-                        : ''
-                    }`
-                  }
-                  title="Configuración"
-                  aria-label="Abrir configuración"
-                  aria-expanded={settingsOpen}
-                  onClick={() =>
-                    setSettingsOpen(
-                      (current) => !current
-                    )
-                  }
+                  className="premium-new-quote-button"
+                  onClick={nuevaCotizacion}
                 >
-                  ⚙
+                  <AppIcon name="plus" size={18} />
+                  <span>Nueva cotización</span>
+                </button>
+              )}
+
+              <div className="premium-settings-dropdown" ref={settingsRef}>
+                <button
+                  type="button"
+                  className={`premium-icon-button ${settingsOpen || settingsIsActive ? 'active' : ''}`}
+                  onClick={() => setSettingsOpen((current) => !current)}
+                  aria-label="Configuración"
+                  aria-expanded={settingsOpen}
+                >
+                  <AppIcon name="settings" size={19} />
                 </button>
 
-                {settingsOpen && (
-                  <div className="balanced-settings-menu">
-                    <span>
-                      Configuración
-                    </span>
-
-                    {visibleSettingsNav.map(
-                      (item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className={
-                            page === item.id
-                              ? 'active'
-                              : ''
-                          }
-                          onClick={item.action}
-                        >
-                          {item.label}
-                        </button>
-                      )
-                    )}
+                {settingsOpen && visibleSettingsNav.length > 0 && (
+                  <div className="premium-settings-menu">
+                    <span>Configuración</span>
+                    {visibleSettingsNav.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={page === item.id ? 'active' : ''}
+                        onClick={item.action}
+                      >
+                        <AppIcon name={item.icon || 'settings'} size={17} />
+                        {item.label}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
-            )}
 
-            <button
-              type="button"
-              className="logout-button"
-              onClick={logout}
-            >
-              Salir
-            </button>
-          </div>
+              <button
+                type="button"
+                className="premium-notification-button"
+                aria-label="Notificaciones"
+                title="Notificaciones de MiBooking"
+              >
+                <AppIcon name="bell" size={19} />
+                {subscriptionAccessState === 'grace' && <i />}
+              </button>
 
-        </nav>
-      )}
+              <button
+                type="button"
+                className="premium-topbar-profile"
+                onClick={esArtista ? () => irA('perfil') : undefined}
+              >
+                <span className="premium-user-avatar">{userInitials}</span>
+                <span>
+                  <strong>{userDisplayName}</strong>
+                  <small>{activeWorkspace.workspace_name}</small>
+                </span>
+              </button>
+            </div>
+          </header>
+        )}
 
-      {page !== 'ver-cotizacion' && (
-        <BillingStatusBanner
-          subscription={
-            workspaceSubscription
-          }
-          esArtista={esArtista}
-          page={page}
-          onBilling={() =>
-            irA('suscripcion')
-          }
-        />
-      )}
+        {chromeVisible && (
+          <BillingStatusBanner
+            subscription={workspaceSubscription}
+            esArtista={esArtista}
+            page={page}
+            onBilling={() => irA('suscripcion')}
+          />
+        )}
 
-      <main
-        className="app-content"
-        key={`${activeWorkspace.workspace_id}-${workspaceVersion}`}
-      >
-        {contenido}
-      </main>
+        <main
+          className="app-content premium-app-content"
+          key={`${activeWorkspace.workspace_id}-${workspaceVersion}`}
+        >
+          {contenido}
+        </main>
+      </section>
 
-      {page !== 'ver-cotizacion' && (
-        <nav className="mobile-bottom-nav">
+      {chromeVisible && (
+        <nav className="mobile-bottom-nav premium-mobile-nav">
           {visibleMobileNav.map((item) => (
             <button
               key={item.id}
@@ -1966,7 +2142,7 @@ export default function App() {
               }
               onClick={item.action}
             >
-              <span>{item.icon}</span>
+              <AppIcon name={item.icon} size={20} />
               <small>{item.label}</small>
             </button>
           ))}
@@ -1975,153 +2151,73 @@ export default function App() {
 
       {moreOpen && (
         <div
-          className="mobile-more-backdrop"
+          className="mobile-more-backdrop premium-mobile-backdrop"
           onClick={() => setMoreOpen(false)}
         >
           <div
-            className="mobile-more-sheet"
+            className="mobile-more-sheet premium-mobile-sheet"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="sheet-handle" />
+            <div className="premium-mobile-sheet-header">
+              <div>
+                <img src="/mibooking-logo-dark.png" alt="MiBooking" />
+                <span>{activeWorkspace.workspace_name}</span>
+              </div>
+              <button type="button" onClick={() => setMoreOpen(false)} aria-label="Cerrar menú">
+                <AppIcon name="close" size={21} />
+              </button>
+            </div>
 
-            <div className="mobile-workspace-context">
-              <span>Trabajando con</span>
-
-              {workspaces.length > 1 ? (
+            {workspaces.length > 1 && (
+              <label className="premium-mobile-workspace-select">
+                <span>Trabajando con</span>
                 <select
                   value={activeWorkspace.workspace_id}
                   onChange={cambiarWorkspace}
                   aria-label="Seleccionar Artista"
                 >
-                  {workspaces.map((workspace) => (
+                  {workspaces.map((workspaceItem) => (
                     <option
-                      key={workspace.workspace_id}
-                      value={workspace.workspace_id}
+                      key={workspaceItem.workspace_id}
+                      value={workspaceItem.workspace_id}
                     >
-                      {workspace.workspace_name}
+                      {workspaceItem.workspace_name}
                     </option>
                   ))}
                 </select>
-              ) : (
-                <strong>{activeWorkspace.workspace_name}</strong>
-              )}
+              </label>
+            )}
 
-              <small>{roleLabel}</small>
-            </div>
-
-            <h3>Más opciones</h3>
-
-            <div className="sheet-actions">
-              {subscriptionRestricted ? (
-                <>
-                  {esArtista && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          irA('suscripcion')
-                        }
-                      >
-                        $ Suscripción y facturación
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          irA('perfil')
-                        }
-                      >
-                        ◉ Perfil del Artista
-                      </button>
-                    </>
-                  )}
-
-                  <button
-                    type="button"
-                    className="sheet-logout"
-                    onClick={logout}
-                  >
-                    Salir
-                  </button>
-                </>
-              ) : (
-                <>
-              <button type="button" onClick={() => irA('tutorial')}>
-                ◈ Tutorial
-              </button>
-
-              <button
-                type="button"
-                onClick={() => irA('industria-musical')}
-              >
-                🎓 Aprende
-              </button>
-
-              <button type="button" onClick={() => irA('clientes')}>
-                ◉ Clientes
-              </button>
-
-              <button type="button" onClick={() => irA('documentos')}>
-                ▤ Documentos
-              </button>
-
-              <button type="button" onClick={() => irA('comisiones')}>
-                ◇ Comisiones
-              </button>
-
-              {esArtista ? (
-                <>
-                  <button type="button" onClick={() => irA('equipo')}>
-                    ◉ Equipo y Gestores
-                  </button>
-
-                  <button type="button" onClick={() => irA('perfil')}>
-                    ◉ Perfil del Artista
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      irA('suscripcion')
-                    }
-                  >
-                    ⚙ Suscripción y facturación
-                  </button>
-
-                  <button type="button" onClick={() => irA('formatos')}>
-                    ♪ Formatos
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => irA('tipos-evento')}
-                  >
-                    ◆ Tipos de evento
-                  </button>
-
-                  <button type="button" onClick={() => irA('tarifas')}>
-                    ◎ Tarifas por zona
-                  </button>
-                </>
-              ) : (
+            <div className="premium-mobile-menu-grid">
+              {visibleDesktopNav.map((item) => (
                 <button
+                  key={item.id}
                   type="button"
-                  onClick={() => irA('invitaciones')}
+                  className={page === item.id ? 'active' : ''}
+                  onClick={item.action}
                 >
-                  ◉ Invitaciones
+                  <AppIcon name={item.icon} size={20} />
+                  <span>{item.label}</span>
                 </button>
-              )}
+              ))}
 
-              <button
-                type="button"
-                className="sheet-logout"
-                onClick={logout}
-              >
-                Salir
-              </button>
-                </>
-              )}
+              {visibleSettingsNav.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={page === item.id ? 'active' : ''}
+                  onClick={item.action}
+                >
+                  <AppIcon name={item.icon || 'settings'} size={20} />
+                  <span>{item.label}</span>
+                </button>
+              ))}
             </div>
+
+            <button type="button" className="premium-mobile-logout" onClick={logout}>
+              <AppIcon name="logout" size={19} />
+              Cerrar sesión
+            </button>
           </div>
         </div>
       )}
