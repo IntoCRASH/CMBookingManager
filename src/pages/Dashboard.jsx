@@ -27,6 +27,7 @@ export default function Dashboard({
   goNuevaCotizacion,
   goIndustriaMusical,
   subscription,
+  tutorialCompleted = false,
 }) {
   const [eventosConfirmados, setEventosConfirmados] = useState(0);
   const [eventosMes, setEventosMes] = useState(0);
@@ -315,20 +316,22 @@ export default function Dashboard({
           </p>
         </div>
 
-        <button
-          type="button"
-          className="premium-tutorial-link"
-          onClick={goTutorial}
-        >
-          <span className="premium-tutorial-icon">
-            <AppIcon name="tutorial" size={20} />
-          </span>
-          <span>
-            <small>Tutorial</small>
-            <strong>Primeros pasos</strong>
-          </span>
-          <AppIcon name="chevron" size={17} />
-        </button>
+        {!tutorialCompleted && (
+          <button
+            type="button"
+            className="premium-tutorial-link"
+            onClick={goTutorial}
+          >
+            <span className="premium-tutorial-icon">
+              <AppIcon name="tutorial" size={20} />
+            </span>
+            <span>
+              <small>Tutorial</small>
+              <strong>Primeros pasos</strong>
+            </span>
+            <AppIcon name="chevron" size={17} />
+          </button>
+        )}
       </header>
 
       <section className="premium-overview-grid" aria-label="Resumen principal">

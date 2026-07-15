@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import './Tutorial.css';
 
+const TUTORIAL_PROGRESS_EVENT =
+  'mibooking:tutorial-progress';
+
 function readStoredProgress(storageKey) {
   if (typeof window === 'undefined') return [];
 
@@ -29,6 +32,8 @@ export default function Tutorial({
   goNuevaCotizacion,
   goCotizaciones,
   goDocumentos,
+  goRiders,
+  goStagePlot,
   goCalendario,
   goComisiones,
   goInvitaciones,
@@ -66,7 +71,7 @@ export default function Tutorial({
           grupo: 'Configuración inicial',
           titulo: 'Completa el Perfil del Artista',
           descripcion:
-            'Define la identidad artística y legal que aparecerá en cotizaciones, contratos y otros documentos.',
+            'Define la identidad artística y legal que aparecerá en cotizaciones, contratos y demás documentos.',
           detalles: [
             'Nombre artístico y datos de contratación.',
             'Nombre legal, identificación, dirección y teléfono.',
@@ -92,22 +97,6 @@ export default function Tutorial({
           accion: goFormatos,
           accionTexto: 'Abrir Formatos',
           obligatorio: true,
-        },
-        {
-          id: 'riders',
-          grupo: 'Configuración inicial',
-          titulo: 'Configura el rider de cada Formato',
-          descripcion:
-            'Dentro de Formatos, define integrantes, canales, monitores, backline, tarima y requerimientos técnicos.',
-          detalles: [
-            'Instrumento o función de cada integrante.',
-            'Micrófonos, cajas directas y conexiones.',
-            'Mezclas de monitores y posiciones en tarima.',
-            'PA, electricidad, hospitalidad y tiempos de prueba.',
-          ],
-          accion: goFormatos,
-          accionTexto: 'Configurar Riders',
-          obligatorio: false,
         },
         {
           id: 'tipos',
@@ -141,8 +130,40 @@ export default function Tutorial({
           obligatorio: true,
         },
         {
+          id: 'riders',
+          grupo: 'Documentación técnica',
+          titulo: 'Configura el Rider de cada Formato',
+          descripcion:
+            'Dentro de Formatos, define los integrantes y requerimientos técnicos que alimentarán el Rider y el Stage Plot.',
+          detalles: [
+            'Instrumento o función de cada integrante.',
+            'Micrófonos, cajas directas y conexiones.',
+            'Mezclas de monitores, backline y posiciones.',
+            'PA, electricidad, hospitalidad y tiempos de prueba.',
+          ],
+          accion: goFormatos,
+          accionTexto: 'Configurar Riders',
+          obligatorio: false,
+        },
+        {
+          id: 'stage-plot',
+          grupo: 'Documentación técnica',
+          titulo: 'Crea el Stage Plot del Formato',
+          descripcion:
+            'MiBooking genera una distribución inicial a partir del Rider técnico y te permite convertirla en un plano real de tarima.',
+          detalles: [
+            'En Documentos, abre la pestaña Stage Plot y selecciona un Formato.',
+            'Genera o sincroniza músicos, instrumentos, monitores, micrófonos y equipos.',
+            'Arrastra los elementos, ajusta sus datos y guarda la distribución.',
+            'Descarga el Stage Plot en PDF o SVG; la versión guardada puede incluirse en el Rider PDF.',
+          ],
+          accion: goStagePlot || goDocumentos,
+          accionTexto: 'Abrir Stage Plot',
+          obligatorio: false,
+        },
+        {
           id: 'equipo',
-          grupo: 'Acceso y colaboración',
+          grupo: 'Acceso y preparación',
           titulo: 'Invita Gestores a tu Equipo',
           descripcion:
             'Agrega las personas que podrán cotizar, consultar información operativa y generar documentos.',
@@ -158,7 +179,7 @@ export default function Tutorial({
         },
         {
           id: 'clientes',
-          grupo: 'Primera operación',
+          grupo: 'Acceso y preparación',
           titulo: 'Registra o selecciona un Cliente',
           descripcion:
             'Los datos del cliente alimentan cotizaciones, contratos, correos y documentos del evento.',
@@ -190,23 +211,39 @@ export default function Tutorial({
         },
         {
           id: 'confirmar',
-          grupo: 'Flujo operativo',
+          grupo: 'Primera operación',
           titulo: 'Confirma la contratación y genera Documentos',
           descripcion:
-            'Cuando el cliente apruebe, cambia el estado de la cotización y genera los documentos correspondientes.',
+            'Cuando el cliente apruebe, cambia el estado de la cotización y prepara los documentos correspondientes.',
           detalles: [
             'Usa Confirmada o Aprobada según el flujo disponible.',
-            'Genera contrato desde Documentos.',
-            'Genera rider técnico desde el Formato contratado.',
-            'Descarga el PDF o envíalo por correo.',
+            'Documentos está dividido en Contratos, Riders técnicos y Stage Plot.',
+            'Guarda el Stage Plot antes de generar el Rider PDF para incluir esa versión.',
+            'Descarga los PDF o envía Contrato y Rider por correo.',
           ],
           accion: goDocumentos,
           accionTexto: 'Abrir Documentos',
           obligatorio: true,
         },
         {
+          id: 'rider-pdf',
+          grupo: 'Documentos y seguimiento',
+          titulo: 'Genera el Rider PDF de la contratación',
+          descripcion:
+            'El Rider PDF utiliza una cotización confirmada o aprobada y la configuración técnica del Formato contratado.',
+          detalles: [
+            'Abre Riders técnicos y selecciona Generar rider técnico.',
+            'Escoge una cotización compatible con el Formato.',
+            'Revisa datos del evento, horarios y contacto técnico.',
+            'Genera, descarga o envía el Rider; el Stage Plot guardado se incorpora cuando corresponde.',
+          ],
+          accion: goRiders || goDocumentos,
+          accionTexto: 'Abrir Riders técnicos',
+          obligatorio: false,
+        },
+        {
           id: 'seguimiento',
-          grupo: 'Flujo operativo',
+          grupo: 'Documentos y seguimiento',
           titulo: 'Da seguimiento al evento y a los cobros',
           descripcion:
             'Utiliza la agenda, los pagos y las comisiones para controlar el trabajo después de confirmar.',
@@ -304,16 +341,32 @@ export default function Tutorial({
         obligatorio: true,
       },
       {
+        id: 'stage-plot',
+        grupo: 'Documentación técnica',
+        titulo: 'Consulta el Rider y el Stage Plot',
+        descripcion:
+          'Los requerimientos técnicos pertenecen al Formato del Artista. Como Gestor puedes consultarlos y usar las exportaciones disponibles.',
+        detalles: [
+          'En Documentos encontrarás pestañas separadas para Riders técnicos y Stage Plot.',
+          'Selecciona el Formato correcto antes de descargar.',
+          'El Stage Plot muestra posiciones, instrumentos, monitores y equipos.',
+          'La edición permanente del plano corresponde al Artista.',
+        ],
+        accion: goStagePlot || goDocumentos,
+        accionTexto: 'Abrir Stage Plot',
+        obligatorio: false,
+      },
+      {
         id: 'documentos',
-        grupo: 'Flujo operativo',
+        grupo: 'Documentos del evento',
         titulo: 'Genera Contrato y Rider técnico',
         descripcion:
           'Desde una cotización confirmada o aprobada, genera los documentos del evento.',
         detalles: [
+          'Documentos está dividido en Contratos, Riders técnicos y Stage Plot.',
           'Revisa los datos antes de generar.',
-          'Descarga el PDF.',
-          'Envía el documento por correo.',
-          'Crea una nueva versión cuando haya cambios.',
+          'Descarga el PDF o envíalo por correo.',
+          'El Rider puede incorporar el Stage Plot guardado por el Artista.',
         ],
         accion: goDocumentos,
         accionTexto: 'Abrir Documentos',
@@ -321,7 +374,7 @@ export default function Tutorial({
       },
       {
         id: 'seguimiento',
-        grupo: 'Flujo operativo',
+        grupo: 'Seguimiento',
         titulo: 'Controla agenda, cobros y comisión',
         descripcion:
           'Después de confirmar, utiliza los módulos operativos para dar seguimiento.',
@@ -347,6 +400,8 @@ export default function Tutorial({
     goNuevaCotizacion,
     goCotizaciones,
     goDocumentos,
+    goRiders,
+    goStagePlot,
     goCalendario,
     goComisiones,
     goInvitaciones,
@@ -362,6 +417,30 @@ export default function Tutorial({
           (completadosValidos.length / pasos.length) * 100
         )
       : 0;
+
+  const tutorialCompleted =
+    pasos.length > 0 &&
+    completadosValidos.length === pasos.length;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    window.dispatchEvent(
+      new CustomEvent(TUTORIAL_PROGRESS_EVENT, {
+        detail: {
+          storageKey,
+          completed: tutorialCompleted,
+          completedCount: completadosValidos.length,
+          totalSteps: pasos.length,
+        },
+      })
+    );
+  }, [
+    storageKey,
+    tutorialCompleted,
+    completadosValidos.length,
+    pasos.length,
+  ]);
 
   function toggleCompletado(id) {
     setCompletados((actuales) =>
@@ -411,10 +490,10 @@ export default function Tutorial({
             {esArtista ? (
               <>
                 Deja <span style={{ color: 'var(--accent)' }}>Mi</span>Booking
-                {' '}listo antes de enviar tu primera cotización.
+                {' '}listo para cotizar, documentar y producir tus eventos.
               </>
             ) : (
-              'Sigue estos pasos para cotizar y operar sin mezclar Artistas.'
+              'Sigue estos pasos para cotizar, generar documentos y operar sin mezclar Artistas.'
             )}
           </h2>
 
@@ -460,7 +539,7 @@ export default function Tutorial({
 
         <p>
           {esArtista
-            ? 'Completa primero Perfil, Formatos, Tipos de evento y Tarifas. Sin esos datos, el cálculo y los documentos pueden quedar incompletos.'
+            ? 'Completa primero Perfil, Formatos, Tipos de evento y Tarifas. Después configura el Rider y crea el Stage Plot de los Formatos que necesiten documentación técnica.'
             : 'Confirma primero el Artista activo. Los datos y permisos cambian según el workspace seleccionado.'}
         </p>
       </section>
@@ -555,14 +634,15 @@ export default function Tutorial({
           <span>Flujo habitual después de configurar</span>
 
           <h2>
-            Cotización → Confirmación → Contrato y Rider →
-            Cobros → Evento
+            {esArtista
+              ? 'Perfil + Formatos → Rider + Stage Plot → Cotización → Confirmación → Documentos → Cobros → Evento'
+              : 'Artista activo → Cotización → Confirmación → Documentos → Cobros → Evento'}
           </h2>
 
           <p>
-            La configuración permanente pertenece al Artista.
-            Cada cotización y documento queda vinculado al
-            workspace seleccionado.
+            Contratos, Riders técnicos y Stage Plot se organizan en
+            Documentos. Cada archivo queda vinculado al workspace y
+            al Formato correspondiente.
           </p>
         </div>
 

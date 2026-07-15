@@ -54,6 +54,65 @@ import AceptarInvitacionGestor from './pages/AceptarInvitacionGestor';
 import AppIcon from './components/AppIcon';
 import './styles/NavigationBalanced.css';
 
+const TUTORIAL_STEP_IDS = {
+  artista: [
+    'perfil',
+    'formatos',
+    'tipos',
+    'tarifas',
+    'riders',
+    'stage-plot',
+    'equipo',
+    'clientes',
+    'cotizacion',
+    'confirmar',
+    'rider-pdf',
+    'seguimiento',
+  ],
+  gestor: [
+    'invitacion',
+    'seleccionar',
+    'clientes',
+    'cotizacion',
+    'estado',
+    'stage-plot',
+    'documentos',
+    'seguimiento',
+  ],
+};
+
+function getTutorialStorageKey(workspaceId, esArtista) {
+  const roleKey = esArtista ? 'artista' : 'gestor';
+
+  return `mibooking.tutorial.${workspaceId || 'sin-workspace'}.${roleKey}`;
+}
+
+function readTutorialCompleted(workspaceId, esArtista) {
+  if (typeof window === 'undefined' || !workspaceId) {
+    return false;
+  }
+
+  const roleKey = esArtista ? 'artista' : 'gestor';
+  const requiredStepIds = TUTORIAL_STEP_IDS[roleKey];
+  const storageKey = getTutorialStorageKey(workspaceId, esArtista);
+
+  try {
+    const stored = JSON.parse(
+      window.localStorage.getItem(storageKey) || '[]'
+    );
+
+    if (!Array.isArray(stored)) {
+      return false;
+    }
+
+    const completedIds = new Set(stored);
+
+    return requiredStepIds.every((id) => completedIds.has(id));
+  } catch {
+    return false;
+  }
+}
+
 export default function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -65,7 +124,11 @@ export default function App() {
   const [workspaceVersion, setWorkspaceVersion] = useState(0);
   const [page, setPage] = useState('dashboard');
   const [cotizacionId, setCotizacionId] = useState(null);
+  const [documentosInitialSection, setDocumentosInitialSection] =
+    useState('contratos');
   const [moreOpen, setMoreOpen] = useState(false);
+  const [tutorialCompleted, setTutorialCompleted] =
+    useState(false);
   const [settingsOpen, setSettingsOpen] =
     useState(false);
 
@@ -166,7 +229,9 @@ export default function App() {
         setAccountError('');
         setPage('dashboard');
         setCotizacionId(null);
+        setDocumentosInitialSection('contratos');
         setMoreOpen(false);
+        setTutorialCompleted(false);
         setWorkspaceSubscription(null);
         setSubscriptionError('');
         setCheckoutLoading(false);
@@ -630,6 +695,50 @@ export default function App() {
   const esArtista = canEditWorkspaceConfiguration(activeWorkspace);
   const roleLabel = getWorkspaceRoleLabel(activeWorkspace);
 
+  useEffect(() => {
+    const workspaceId = activeWorkspace?.workspace_id;
+    const storageKey = getTutorialStorageKey(workspaceId, esArtista);
+
+    function refreshTutorialCompleted() {
+      setTutorialCompleted(
+        readTutorialCompleted(workspaceId, esArtista)
+      );
+    }
+
+    function handleTutorialProgress(event) {
+      const eventStorageKey = event?.detail?.storageKey;
+
+      if (!eventStorageKey || eventStorageKey === storageKey) {
+        refreshTutorialCompleted();
+      }
+    }
+
+    function handleStorage(event) {
+      if (event.key === storageKey) {
+        refreshTutorialCompleted();
+      }
+    }
+
+    refreshTutorialCompleted();
+
+    window.addEventListener(
+      'mibooking:tutorial-progress',
+      handleTutorialProgress
+    );
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener(
+        'mibooking:tutorial-progress',
+        handleTutorialProgress
+      );
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [
+    activeWorkspace?.workspace_id,
+    esArtista,
+  ]);
+
   const subscriptionAccessState =
     getSubscriptionAccessState(
       workspaceSubscription
@@ -788,6 +897,19 @@ export default function App() {
     }
 
     setMoreOpen(false);
+  }
+
+  function abrirDocumentos(section = 'contratos') {
+    const normalizedSection = [
+      'contratos',
+      'riders',
+      'stage-plot',
+    ].includes(section)
+      ? section
+      : 'contratos';
+
+    setDocumentosInitialSection(normalizedSection);
+    navegarA('documentos');
   }
 
   function irA(nombrePagina) {
@@ -1189,6 +1311,13 @@ export default function App() {
     await supabase.auth.signOut();
   }
 
+  const tutorialNavItem = {
+    id: 'tutorial',
+    label: 'Tutorial',
+    icon: 'tutorial',
+    action: () => irA('tutorial'),
+  };
+
   const navDesktop = [
     {
       id: 'dashboard',
@@ -1196,12 +1325,11 @@ export default function App() {
       icon: 'home',
       action: volverDashboard,
     },
-    {
-      id: 'tutorial',
-      label: 'Tutorial',
-      icon: 'tutorial',
-      action: () => irA('tutorial'),
-    },
+    ...(
+      tutorialCompleted
+        ? []
+        : [tutorialNavItem]
+    ),
     {
       id: 'cotizaciones',
       label: 'Cotizaciones',
@@ -1224,7 +1352,7 @@ export default function App() {
       id: 'documentos',
       label: 'Documentos',
       icon: 'documents',
-      action: () => irA('documentos'),
+      action: () => abrirDocumentos('contratos'),
     },
     {
       id: 'comisiones',
@@ -1257,6 +1385,11 @@ export default function App() {
       icon: 'learn',
       action: () => irA('industria-musical'),
     },
+    ...(
+      tutorialCompleted
+        ? [tutorialNavItem]
+        : []
+    ),
   ];
 
   const settingsNav = esArtista
@@ -1266,14 +1399,6 @@ export default function App() {
           label: 'Perfil del Artista',
           icon: 'profile',
           action: () => irA('perfil'),
-        },
-        {
-          id: 'suscripcion',
-          label:
-            'Suscripción y facturación',
-          icon: 'billing',
-          action: () =>
-            irA('suscripcion'),
         },
         {
           id: 'formatos',
@@ -1293,6 +1418,13 @@ export default function App() {
           label: 'Tarifas por zona',
           icon: 'rates',
           action: () => irA('tarifas'),
+        },
+        {
+          id: 'suscripcion',
+          label: 'Suscripción',
+          icon: 'billing',
+          action: () =>
+            irA('suscripcion'),
         },
       ]
     : [];
@@ -1645,7 +1777,9 @@ export default function App() {
             goClientes={() => irA('clientes')}
             goNuevaCotizacion={() => irA('nueva-cotizacion')}
             goCotizaciones={() => irA('cotizaciones')}
-            goDocumentos={() => irA('documentos')}
+            goDocumentos={() => abrirDocumentos('contratos')}
+            goRiders={() => abrirDocumentos('riders')}
+            goStagePlot={() => abrirDocumentos('stage-plot')}
             goCalendario={() => irA('calendario')}
             goComisiones={() => irA('comisiones')}
             goInvitaciones={() => irA('invitaciones')}
@@ -1666,6 +1800,7 @@ export default function App() {
         contenido = (
           <Documentos
             {...sharedProps}
+            initialSection={documentosInitialSection}
             goBack={volverAtras}
           />
         );
@@ -1713,10 +1848,11 @@ export default function App() {
           <Dashboard
             {...sharedProps}
             session={session}
+            tutorialCompleted={tutorialCompleted}
             goCotizaciones={() => irA('cotizaciones')}
             goClientes={() => irA('clientes')}
             goCalendario={() => irA('calendario')}
-            goDocumentos={() => irA('documentos')}
+            goDocumentos={() => abrirDocumentos('contratos')}
             goTutorial={() => irA('tutorial')}
             goIndustriaMusical={() =>
               irA('industria-musical')
@@ -1736,10 +1872,11 @@ export default function App() {
           <Dashboard
             {...sharedProps}
             session={session}
+            tutorialCompleted={tutorialCompleted}
             goCotizaciones={() => irA('cotizaciones')}
             goClientes={() => irA('clientes')}
             goCalendario={() => irA('calendario')}
-            goDocumentos={() => irA('documentos')}
+            goDocumentos={() => abrirDocumentos('contratos')}
             goTutorial={() => irA('tutorial')}
             goIndustriaMusical={() =>
               irA('industria-musical')
@@ -1766,6 +1903,7 @@ export default function App() {
           <Dashboard
             {...sharedProps}
             session={session}
+            tutorialCompleted={tutorialCompleted}
             goPerfil={() => irA('perfil')}
             goEquipo={() => irA('equipo')}
             goInvitaciones={() => irA('invitaciones')}
@@ -1779,7 +1917,7 @@ export default function App() {
             goCotizaciones={() => irA('cotizaciones')}
             goClientes={() => irA('clientes')}
             goCalendario={() => irA('calendario')}
-            goDocumentos={() => irA('documentos')}
+            goDocumentos={() => abrirDocumentos('contratos')}
             goTutorial={() => irA('tutorial')}
             goIndustriaMusical={() =>
               irA('industria-musical')

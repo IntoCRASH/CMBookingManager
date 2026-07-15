@@ -901,3 +901,45 @@ body.mibooking-dark-premium .premium-summary-card:focus-visible {
   }
 }
 
+/* =========================================================
+   MIBOOKING — BALANCE: GRÁFICA INFERIOR Y MÁS DISCRETA
+========================================================= */
+
+body.mibooking-dark-premium
+  .premium-balance-summary
+  .premium-mini-chart {
+  right: 16px;
+  bottom: 14px;
+  width: 104px;
+  height: 36px;
+  gap: 4px;
+  opacity: 0.42;
+  z-index: 3;
+  filter:
+    drop-shadow(0 6px 12px rgba(37, 32, 120, 0.16));
+}
+
+body.mibooking-dark-premium
+  .premium-balance-summary
+  .premium-mini-chart i {
+  border-radius: 3px 3px 1px 1px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(112, 102, 255, 0.92),
+      rgba(64, 81, 211, 0.04)
+    );
+}
+
+@media (max-width: 768px) {
+  body.mibooking-dark-premium
+    .premium-balance-summary
+    .premium-mini-chart {
+    right: 13px;
+    bottom: 12px;
+    width: 92px;
+    height: 32px;
+    opacity: 0.36;
+  }
+}
+

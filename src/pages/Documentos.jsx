@@ -124,10 +124,17 @@ function statusClass(status) {
     .replace(/[^a-z0-9]+/g, '-');
 }
 
+function normalizeInitialSection(value) {
+  return ['contratos', 'riders', 'stage-plot'].includes(value)
+    ? value
+    : 'contratos';
+}
+
 export default function Documentos({
   workspaceId,
   workspace,
   esArtista,
+  initialSection = 'contratos',
   goBack,
 }) {
   const [cotizaciones, setCotizaciones] = useState([]);
@@ -136,8 +143,16 @@ export default function Documentos({
   const [cotizacion, setCotizacion] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [modo, setModo] = useState('lista');
-  const [documentSection, setDocumentSection] = useState('contratos');
-  const [riderInitialMode, setRiderInitialMode] = useState('lista');
+  const [documentSection, setDocumentSection] = useState(() =>
+    normalizeInitialSection(initialSection) === 'contratos'
+      ? 'contratos'
+      : 'riders'
+  );
+  const [riderInitialMode, setRiderInitialMode] = useState(() =>
+    normalizeInitialSection(initialSection) === 'stage-plot'
+      ? 'stage-plot'
+      : 'lista'
+  );
   const [cargando, setCargando] = useState(true);
   const [cargandoCotizacion, setCargandoCotizacion] =
     useState(false);
@@ -156,6 +171,18 @@ export default function Documentos({
     asunto: '',
     mensaje: '',
   });
+
+  useEffect(() => {
+    const normalized = normalizeInitialSection(initialSection);
+
+    setDocumentSection(
+      normalized === 'contratos' ? 'contratos' : 'riders'
+    );
+
+    setRiderInitialMode(
+      normalized === 'stage-plot' ? 'stage-plot' : 'lista'
+    );
+  }, [initialSection, workspaceId]);
 
   useEffect(() => {
     if (!workspaceId) {
