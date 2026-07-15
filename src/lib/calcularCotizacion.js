@@ -78,6 +78,10 @@ export function calcularCotizacion({
   descuento,
   tipoEventoConfig = null,
   formato = null,
+  incluyeManagerArtistico = false,
+  managerArtisticoPorcentaje = 0,
+  incluyeImpuesto = false,
+  impuestoPorcentaje = 0,
   aplicarComision = true,
   comisionPorcentaje = COMISION_PORCENTAJE_DEFAULT,
 }) {
@@ -167,13 +171,36 @@ export function calcularCotizacion({
 
   const subtotalConDescuento = subtotal - montoDescuento;
 
+  // El manager artístico es independiente del road manager y del Gestor.
+  // Su porcentaje se calcula sobre el subtotal neto después del descuento.
+  const porcentajeManagerArtistico = Math.max(
+    0,
+    Number(managerArtisticoPorcentaje || 0),
+  );
+
+  const managerArtisticoBase = subtotalConDescuento;
+
+  const managerArtisticoMonto = incluyeManagerArtistico
+    ? managerArtisticoBase * porcentajeManagerArtistico
+    : 0;
+
+  // La comisión comercial del Gestor se calcula después de incorporar
+  // el costo del manager artístico, sin generar porcentajes circulares.
+  const baseComision = subtotalConDescuento + managerArtisticoMonto;
   const porcentajeComision = Number(comisionPorcentaje || 0);
 
   const comision = aplicarComision
-    ? subtotalConDescuento * porcentajeComision
+    ? baseComision * porcentajeComision
     : 0;
 
-  const totalSinRedondear = subtotalConDescuento + comision;
+  const baseImpuesto = baseComision + comision;
+  const porcentajeImpuesto = Math.max(0, Number(impuestoPorcentaje || 0));
+
+  const impuestoMonto = incluyeImpuesto
+    ? baseImpuesto * porcentajeImpuesto
+    : 0;
+
+  const totalSinRedondear = baseImpuesto + impuestoMonto;
 
   const total = redondearMonto(totalSinRedondear);
 
@@ -205,8 +232,21 @@ export function calcularCotizacion({
     monto_descuento: redondearMonto(montoDescuento),
     subtotal: redondearMonto(subtotal),
     subtotal_con_descuento: redondearMonto(subtotalConDescuento),
+    incluye_manager_artistico: Boolean(
+      incluyeManagerArtistico && porcentajeManagerArtistico > 0,
+    ),
+    manager_artistico_base: redondearMonto(managerArtisticoBase),
+    manager_artistico_porcentaje: porcentajeManagerArtistico * 100,
+    manager_artistico_monto: redondearMonto(managerArtisticoMonto),
+    comision_base: redondearMonto(baseComision),
     comision_porcentaje: porcentajeComision * 100,
     comision: redondearMonto(comision),
+    incluye_impuesto: Boolean(
+      incluyeImpuesto && porcentajeImpuesto > 0,
+    ),
+    impuesto_base: redondearMonto(baseImpuesto),
+    impuesto_porcentaje: porcentajeImpuesto * 100,
+    impuesto_monto: redondearMonto(impuestoMonto),
     total_sin_redondear: totalSinRedondear,
     total,
   };

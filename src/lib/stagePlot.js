@@ -383,6 +383,8 @@ export function normalizeStagePlot(stagePlot, riderConfig = {}) {
     generated_from_rider_at:
       stagePlot.generated_from_rider_at || null,
     updated_at: stagePlot.updated_at || null,
+    pdf_path: stagePlot.pdf_path || null,
+    pdf_generado_at: stagePlot.pdf_generado_at || null,
     items: stagePlot.items.map(normalizeItem),
   };
 }

@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
-  getCotizaciones,
-  duplicarCotizacion,
   cancelarCotizacion,
+  duplicarCotizacion,
   eliminarCotizacion,
+  ensureCotizacionPdf,
+  getCotizaciones,
+  sendCotizacionByEmail,
 } from '../lib/cotizacionesService';
+import PdfDocumentModal from '../components/PdfDocumentModal';
+import PdfEmailModal from '../components/PdfEmailModal';
 
 export default function Cotizaciones({
   workspaceId,
@@ -20,6 +24,10 @@ export default function Cotizaciones({
   const [buscar, setBuscar] = useState('');
   const [menuAbierto, setMenuAbierto] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [procesandoPdfId, setProcesandoPdfId] = useState(null);
+  const [pdfViewer, setPdfViewer] = useState(null);
+  const [emailDocument, setEmailDocument] = useState(null);
+  const [enviandoPdf, setEnviandoPdf] = useState(false);
 
   useEffect(() => {
     cargar();
@@ -70,6 +78,8 @@ export default function Cotizaciones({
     return cotizaciones.filter((cotizacion) => {
       const texto = [
         cotizacion.numero,
+        cotizacion.ncf,
+        cotizacion.documento_tipo,
         cotizacion.clientes?.nombre,
         cotizacion.nombre_evento,
         cotizacion.tipo_evento,
@@ -114,6 +124,24 @@ export default function Cotizaciones({
       .replace(/\s+/g, '-');
   }
 
+  function etiquetaEstado(valor) {
+    const estadoNormalizado = String(valor || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+    if (
+      ['pendiente', 'pendiente de aprobacion', 'pendiente de cobro'].includes(
+        estadoNormalizado
+      )
+    ) {
+      return 'Pendiente';
+    }
+
+    return valor || 'Sin estado';
+  }
+
   async function duplicar(id) {
     if (!window.confirm('¿Duplicar esta cotización?')) return;
 
@@ -133,7 +161,7 @@ export default function Cotizaciones({
   async function eliminar(id) {
     if (
       !window.confirm(
-        '¿Eliminar definitivamente esta cotización?'
+        '¿Eliminar definitivamente esta cotización? También se eliminarán sus contratos, riders, pagos y PDF relacionados. Esta acción no se puede deshacer.'
       )
     ) {
       return;
@@ -166,6 +194,111 @@ export default function Cotizaciones({
       toast.error(
         err.message || 'No se pudo cancelar la cotización.'
       );
+    }
+  }
+
+  function documentTitle(cotizacion) {
+    const type =
+      cotizacion.documento_tipo === 'factura'
+        ? 'Factura'
+        : 'Cotización';
+
+    return `${type} ${cotizacion.numero || `#${cotizacion.id}`}`;
+  }
+
+  function updateStoredQuote(updated) {
+    setCotizaciones((current) =>
+      current.map((item) =>
+        item.id === updated.id
+          ? { ...item, ...updated }
+          : item
+      )
+    );
+  }
+
+  async function preparePdf(cotizacion, autoPrint = false) {
+    try {
+      setMenuAbierto(null);
+      setProcesandoPdfId(cotizacion.id);
+
+      const result = await ensureCotizacionPdf(
+        cotizacion.id,
+        workspaceId
+      );
+
+      updateStoredQuote(result.cotizacion);
+      setPdfViewer({
+        title: documentTitle(result.cotizacion),
+        url: result.url,
+        autoPrint,
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.message || 'No se pudo preparar el PDF guardado.'
+      );
+    } finally {
+      setProcesandoPdfId(null);
+    }
+  }
+
+  function prepareEmail(cotizacion) {
+    const isInvoice = cotizacion.documento_tipo === 'factura';
+    const clientName = cotizacion.clientes?.nombre || '';
+    const artistName =
+      cotizacion.artista_nombre_snapshot ||
+      cotizacion.perfil_negocio_snapshot?.nombre_artistico ||
+      'MiBooking';
+    const label = isInvoice ? 'factura' : 'cotización';
+
+    setMenuAbierto(null);
+    setEmailDocument({
+      cotizacion,
+      title: `Enviar ${documentTitle(cotizacion)}`,
+      recipient: cotizacion.clientes?.email || '',
+      subject: `${documentTitle(cotizacion)} - ${artistName}`,
+      message:
+        `Hola ${clientName},
+
+` +
+        `Adjuntamos la ${label} correspondiente a ` +
+        `${cotizacion.nombre_evento || cotizacion.tipo_evento || 'su evento'}.
+
+` +
+        `Quedamos atentos a cualquier comentario.
+
+` +
+        `Atentamente,
+${artistName}`,
+    });
+  }
+
+  async function sendPdfEmail(form) {
+    const cotizacion = emailDocument?.cotizacion;
+    if (!cotizacion) return;
+
+    try {
+      setEnviandoPdf(true);
+
+      await sendCotizacionByEmail({
+        cotizacionId: cotizacion.id,
+        workspaceId,
+        recipient: form.recipient,
+        subject: form.subject,
+        message: form.message,
+      });
+
+      setEmailDocument(null);
+      toast.success(
+        `${documentTitle(cotizacion)} enviada por correo.`
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.message || 'No se pudo enviar el PDF por correo.'
+      );
+    } finally {
+      setEnviandoPdf(false);
     }
   }
 
@@ -216,6 +349,7 @@ export default function Cotizaciones({
             Pendiente de cobro
           </option>
           <option value="Confirmada">Confirmada</option>
+          <option value="Aprobada">Aprobada</option>
           <option value="Realizada">Realizada</option>
           <option value="Cancelada">Cancelada</option>
         </select>
@@ -257,6 +391,17 @@ export default function Cotizaciones({
                 data-label="Número"
               >
                 {cotizacion.numero || `#${cotizacion.id}`}
+                <small
+                  className={`cotizacion-documento-tipo ${
+                    cotizacion.documento_tipo === 'factura'
+                      ? 'es-factura'
+                      : 'es-cotizacion'
+                  }`}
+                >
+                  {cotizacion.documento_tipo === 'factura'
+                    ? 'Factura'
+                    : 'Cotización'}
+                </small>
               </div>
 
               <div
@@ -297,7 +442,7 @@ export default function Cotizaciones({
                     cotizacion.estado
                   )}`}
                 >
-                  {cotizacion.estado || 'Sin estado'}
+                  {etiquetaEstado(cotizacion.estado)}
                 </span>
               </div>
 
@@ -305,6 +450,33 @@ export default function Cotizaciones({
                 className="cotizacion-acciones"
                 onClick={(event) => event.stopPropagation()}
               >
+                <div className="cotizacion-pdf-actions">
+                  <button
+                    type="button"
+                    onClick={() => preparePdf(cotizacion, false)}
+                    disabled={procesandoPdfId === cotizacion.id}
+                  >
+                    {procesandoPdfId === cotizacion.id
+                      ? 'Preparando...'
+                      : 'Ver'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => preparePdf(cotizacion, true)}
+                    disabled={procesandoPdfId === cotizacion.id}
+                  >
+                    Imprimir
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => prepareEmail(cotizacion)}
+                  >
+                    Enviar
+                  </button>
+                </div>
+
                 <button
                   type="button"
                   className="cotizacion-menu-button"
@@ -329,18 +501,23 @@ export default function Cotizaciones({
                         abrirCotizacion(cotizacion.id);
                       }}
                     >
-                      👁 Ver
+                      ⚙ Administrar{' '}
+                      {cotizacion.documento_tipo === 'factura'
+                        ? 'factura'
+                        : 'cotización'}
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenuAbierto(null);
-                        editarCotizacion(cotizacion.id);
-                      }}
-                    >
-                      ✏ Editar
-                    </button>
+                    {cotizacion.documento_tipo !== 'factura' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMenuAbierto(null);
+                          editarCotizacion(cotizacion.id);
+                        }}
+                      >
+                        ✏ Editar
+                      </button>
+                    )}
 
                     <button
                       type="button"
@@ -356,23 +533,30 @@ export default function Cotizaciones({
                       type="button"
                       onClick={() => duplicar(cotizacion.id)}
                     >
-                      📋 Duplicar
+                      📋{' '}
+                      {cotizacion.documento_tipo === 'factura'
+                        ? 'Duplicar como cotización'
+                        : 'Duplicar'}
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => cancelar(cotizacion.id)}
-                    >
-                      ❌ Cancelar
-                    </button>
+                    {cotizacion.documento_tipo !== 'factura' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => cancelar(cotizacion.id)}
+                        >
+                          ❌ Cancelar
+                        </button>
 
-                    <button
-                      type="button"
-                      className="danger"
-                      onClick={() => eliminar(cotizacion.id)}
-                    >
-                      🗑 Eliminar
-                    </button>
+                        <button
+                          type="button"
+                          className="danger"
+                          onClick={() => eliminar(cotizacion.id)}
+                        >
+                          🗑 Eliminar
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -380,6 +564,18 @@ export default function Cotizaciones({
           ))
         )}
       </div>
+
+      <PdfDocumentModal
+        document={pdfViewer}
+        onClose={() => setPdfViewer(null)}
+      />
+
+      <PdfEmailModal
+        document={emailDocument}
+        sending={enviandoPdf}
+        onClose={() => setEmailDocument(null)}
+        onSend={sendPdfEmail}
+      />
     </div>
   );
 }

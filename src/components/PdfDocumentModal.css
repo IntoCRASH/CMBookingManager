@@ -1,0 +1,114 @@
+.pdf-document-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 6, 23, 0.82);
+  backdrop-filter: blur(8px);
+}
+
+.pdf-document-modal {
+  width: min(1120px, 100%);
+  height: min(92vh, 900px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 18px;
+  background: #0f172a;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.45);
+}
+
+.pdf-document-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.pdf-document-header span {
+  display: block;
+  margin-bottom: 3px;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pdf-document-header h2 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+}
+
+.pdf-document-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pdf-document-header-actions button {
+  min-height: 40px;
+  padding: 0 16px;
+}
+
+.pdf-document-viewer {
+  position: relative;
+  min-height: 0;
+  background: #334155;
+}
+
+.pdf-document-viewer iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #ffffff;
+}
+
+.pdf-document-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: #e2e8f0;
+  text-align: center;
+}
+
+.pdf-document-status.error strong {
+  color: #fecaca;
+}
+
+.pdf-document-status.error span {
+  color: #cbd5e1;
+}
+
+@media (max-width: 700px) {
+  .pdf-document-backdrop {
+    padding: 0;
+  }
+
+  .pdf-document-modal {
+    width: 100%;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .pdf-document-header {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .pdf-document-header-actions button {
+    min-height: 36px;
+    padding: 0 12px;
+  }
+}

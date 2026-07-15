@@ -9,7 +9,7 @@ import { getMyBusinessProfile } from '../lib/profileService';
 import {
   createRider,
   deleteRider,
-  downloadStoredRider,
+  getRiderPdfSignedUrl,
   getEligibleRiderQuotes,
   getWorkspaceRiders,
   sendRiderByEmail,
@@ -18,6 +18,7 @@ import {
 } from '../lib/ridersService';
 import { generateRiderPdfBlob } from '../lib/riderPdf';
 import StagePlotEditor from './StagePlotEditor';
+import PdfDocumentModal from '../components/PdfDocumentModal';
 import './Riders.css';
 
 const DELETE_WORDS = [
@@ -98,16 +99,6 @@ function statusClass(status) {
     .replace(/[^a-z0-9]+/g, '-');
 }
 
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
-}
 
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
@@ -136,6 +127,7 @@ export default function Riders({
   const [loadingQuote, setLoadingQuote] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [pdfViewer, setPdfViewer] = useState(null);
   const [sendingId, setSendingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState('');
@@ -514,7 +506,7 @@ export default function Riders({
     return true;
   }
 
-  async function generateAndDownload() {
+  async function generateAndSave() {
     setError('');
 
     if (!validateRider()) return;
@@ -571,10 +563,7 @@ export default function Riders({
         workspaceId
       );
 
-      downloadBlob(
-        pdfBlob,
-        `Rider-${savedRider.numero}.pdf`
-      );
+      const signedUrl = await getRiderPdfSignedUrl(pdfPath);
 
       setRiders(await getWorkspaceRiders(workspaceId));
       setMode('lista');
@@ -582,9 +571,13 @@ export default function Riders({
       setFormato(null);
       setStagePlotFormato(null);
       setForm(EMPTY_FORM);
+      setPdfViewer({
+        title: `Rider ${savedRider.numero}`,
+        url: signedUrl,
+      });
 
       toast.success(
-        'Rider técnico generado y descargado correctamente.'
+        'Rider técnico generado y guardado correctamente.'
       );
     } catch (err) {
       console.error(err);
@@ -599,14 +592,25 @@ export default function Riders({
     }
   }
 
-  async function downloadRider(rider) {
+  async function openRiderPdf(rider, autoPrint = false) {
     try {
       setDownloadingId(rider.id);
-      await downloadStoredRider(rider);
+
+      const signedUrl = await getRiderPdfSignedUrl(rider.pdf_path);
+
+      if (!signedUrl) {
+        throw new Error('No se pudo abrir el PDF guardado del rider.');
+      }
+
+      setPdfViewer({
+        title: `Rider ${rider.numero || rider.id}`,
+        url: signedUrl,
+        autoPrint,
+      });
     } catch (err) {
       console.error(err);
       toast.error(
-        err.message || 'No se pudo descargar el rider.'
+        err.message || 'No se pudo preparar el rider.'
       );
     } finally {
       setDownloadingId(null);
@@ -871,11 +875,22 @@ export default function Riders({
                         downloadingId === rider.id ||
                         !rider.pdf_path
                       }
-                      onClick={() => downloadRider(rider)}
+                      onClick={() => openRiderPdf(rider)}
                     >
                       {downloadingId === rider.id
                         ? 'Preparando...'
-                        : 'Descargar PDF'}
+                        : 'Ver'}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={
+                        downloadingId === rider.id ||
+                        !rider.pdf_path
+                      }
+                      onClick={() => openRiderPdf(rider, true)}
+                    >
+                      Imprimir
                     </button>
 
                     <button
@@ -912,7 +927,7 @@ export default function Riders({
             className="form-cotizacion rider-generator-form"
             onSubmit={(event) => {
               event.preventDefault();
-              generateAndDownload();
+              generateAndSave();
             }}
           >
             <section className="form-section form-full">
@@ -1032,7 +1047,7 @@ export default function Riders({
                   <button type="submit" disabled={generating}>
                     {generating
                       ? 'Generando rider...'
-                      : 'Generar y descargar PDF'}
+                      : 'Generar y guardar PDF'}
                   </button>
                 </div>
               </>
@@ -1117,7 +1132,7 @@ export default function Riders({
                 MiBooking genera una distribución inicial usando los
                 integrantes, posiciones, monitores, conexiones y
                 requerimientos guardados en el Rider técnico del Formato.
-                Puedes descargar el plano solo en PDF o abrir directamente
+                Puedes guardar y consultar el plano en PDF o abrir directamente
                 el generador del Rider PDF completo para una cotización.
               </p>
             </div>
@@ -1162,6 +1177,11 @@ export default function Riders({
           )}
         </section>
       )}
+
+      <PdfDocumentModal
+        document={pdfViewer}
+        onClose={() => setPdfViewer(null)}
+      />
 
       {riderToEmail && (
         <div className="rider-modal-backdrop">

@@ -60,6 +60,20 @@ export default function Dashboard({
       .replace(/[\u0300-\u036f]/g, '');
   }
 
+  function etiquetaEstado(value) {
+    const estadoNormalizado = normalizarEstado(value);
+
+    if (
+      ['pendiente', 'pendiente de aprobacion', 'pendiente de cobro'].includes(
+        estadoNormalizado
+      )
+    ) {
+      return 'Pendiente';
+    }
+
+    return value || 'Sin estado';
+  }
+
   function esConfirmado(cotizacion) {
     return normalizarEstado(cotizacion?.estado).startsWith('confirmad');
   }
@@ -465,7 +479,7 @@ export default function Dashboard({
                     {money(cotizacion.total)}
                   </span>
                   <span className={estadoClass(cotizacion.estado)}>
-                    {cotizacion.estado || 'Sin estado'}
+                    {etiquetaEstado(cotizacion.estado)}
                   </span>
                 </button>
               ))}

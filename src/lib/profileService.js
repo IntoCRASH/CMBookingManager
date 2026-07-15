@@ -481,6 +481,26 @@ export async function saveMyBusinessProfile(
     profile.porcentaje_adelanto ?? 0
   );
 
+  const managerArtisticoPorcentaje = Number(
+    profile.manager_artistico_porcentaje ?? 0
+  );
+
+  const managerArtisticoPorcentajeSeguro = Number.isFinite(
+    managerArtisticoPorcentaje
+  )
+    ? Math.min(100, Math.max(0, managerArtisticoPorcentaje))
+    : 0;
+
+  const impuestoPorcentaje = Number(
+    profile.impuesto_porcentaje ?? 0
+  );
+
+  const impuestoPorcentajeSeguro = Number.isFinite(
+    impuestoPorcentaje
+  )
+    ? Math.min(100, Math.max(0, impuestoPorcentaje))
+    : 0;
+
   const payload = {
     workspace_id: currentWorkspaceId,
     user_id: workspace.owner_user_id,
@@ -514,6 +534,25 @@ export async function saveMyBusinessProfile(
     )
       ? porcentajeAdelanto
       : 0,
+
+    manager_artistico_activo: Boolean(
+      profile.manager_artistico_activo &&
+        managerArtisticoPorcentajeSeguro > 0
+    ),
+
+    manager_artistico_nombre: String(
+      profile.manager_artistico_nombre || ''
+    ).trim(),
+
+    manager_artistico_porcentaje:
+      managerArtisticoPorcentajeSeguro,
+
+    impuesto_activo_por_defecto: Boolean(
+      profile.impuesto_activo_por_defecto &&
+        impuestoPorcentajeSeguro > 0
+    ),
+
+    impuesto_porcentaje: impuestoPorcentajeSeguro,
 
     condiciones_pago: String(
       profile.condiciones_pago || ''
@@ -663,6 +702,22 @@ export function buildBusinessProfileSnapshot(profile) {
       profile.porcentaje_adelanto || 0
     ),
 
+    manager_artistico_activo: Boolean(
+      profile.manager_artistico_activo
+    ),
+    manager_artistico_nombre:
+      profile.manager_artistico_nombre || '',
+    manager_artistico_porcentaje: Number(
+      profile.manager_artistico_porcentaje || 0
+    ),
+
+    impuesto_activo_por_defecto: Boolean(
+      profile.impuesto_activo_por_defecto
+    ),
+    impuesto_porcentaje: Number(
+      profile.impuesto_porcentaje || 0
+    ),
+
     condiciones_pago: profile.condiciones_pago || '',
 
     logo_path: profile.logo_path || '',
@@ -672,17 +727,110 @@ export function buildBusinessProfileSnapshot(profile) {
   };
 }
 
+function policyTemplateValues(snapshot = {}) {
+  const advance = Number(
+    snapshot.porcentaje_adelanto || 0
+  );
+
+  const normalizedAdvance = Number.isFinite(advance)
+    ? Math.max(0, Math.min(100, advance))
+    : 0;
+
+  const remaining = Math.max(
+    0,
+    100 - normalizedAdvance
+  );
+
+  return {
+    nombre_completo: String(
+      snapshot.nombre_completo ||
+        snapshot.nombre_legal ||
+        snapshot.nombre_artistico ||
+        ''
+    ).trim(),
+    identificacion: String(
+      snapshot.identificacion || ''
+    ).trim(),
+    nombre_banco: String(
+      snapshot.nombre_banco || ''
+    ).trim(),
+    cuenta_bancaria: String(
+      snapshot.cuenta_bancaria || ''
+    ).trim(),
+    porcentaje_adelanto: String(normalizedAdvance),
+    porcentaje_restante: String(remaining),
+    telefono: String(
+      snapshot.telefono ||
+        snapshot.telefono_artistico ||
+        ''
+    ).trim(),
+    direccion: String(
+      snapshot.direccion || ''
+    ).trim(),
+    ciudad: String(
+      snapshot.ciudad || ''
+    ).trim(),
+    pais: String(
+      snapshot.pais || ''
+    ).trim(),
+    codigo_postal: String(
+      snapshot.codigo_postal || ''
+    ).trim(),
+    nombre_artistico: String(
+      snapshot.nombre_artistico || ''
+    ).trim(),
+    email_artistico: String(
+      snapshot.email_artistico ||
+        snapshot.email ||
+        ''
+    ).trim(),
+  };
+}
+
+export function renderBusinessPolicyTemplate(
+  conditions,
+  snapshot = {}
+) {
+  const template = String(
+    conditions || ''
+  ).trim();
+
+  if (!template) return '';
+
+  const values = policyTemplateValues(snapshot);
+
+  return template.replace(
+    /\{\{\{?\s*([a-zA-Z0-9_]+)\s*\}?\}\}/g,
+    (_match, variableName) =>
+      Object.prototype.hasOwnProperty.call(
+        values,
+        variableName
+      )
+        ? values[variableName]
+        : ''
+  );
+}
+
 export function renderBusinessPolicies(
   conditions,
   snapshot = {}
 ) {
   const parts = [];
 
+  const rawConditions = String(
+    conditions || ''
+  ).trim();
+
   const advance = Number(
     snapshot.porcentaje_adelanto || 0
   );
 
-  if (advance > 0) {
+  const templateIncludesAdvance =
+    /\{\{\{?\s*porcentaje_(?:adelanto|restante)\s*\}?\}\}/i.test(
+      rawConditions
+    );
+
+  if (advance > 0 && !templateIncludesAdvance) {
     parts.push(
       `Se requiere un avance de ${advance}% para reservar la fecha.`
     );
@@ -704,7 +852,12 @@ export function renderBusinessPolicies(
     snapshot.identificacion || ''
   ).trim();
 
-  if (bank || account) {
+  const templateIncludesBankData =
+    /\{\{\{?\s*(?:nombre_banco|cuenta_bancaria)\s*\}?\}\}/i.test(
+      rawConditions
+    );
+
+  if ((bank || account) && !templateIncludesBankData) {
     const bankParts = [
       bank ? `Banco: ${bank}.` : '',
       account ? `Cuenta: ${account}.` : '',
@@ -717,12 +870,14 @@ export function renderBusinessPolicies(
     parts.push(bankParts.join(' '));
   }
 
-  const cleanConditions = String(
-    conditions || ''
-  ).trim();
+  const renderedConditions =
+    renderBusinessPolicyTemplate(
+      rawConditions,
+      snapshot
+    );
 
-  if (cleanConditions) {
-    parts.push(cleanConditions);
+  if (renderedConditions) {
+    parts.push(renderedConditions);
   }
 
   return parts.join('\n\n');

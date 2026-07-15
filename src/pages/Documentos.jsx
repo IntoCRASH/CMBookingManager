@@ -5,7 +5,7 @@ import { getMyBusinessProfile } from '../lib/profileService';
 import {
   createContract,
   deleteContract,
-  downloadStoredContract,
+  getContractPdfSignedUrl,
   getEligibleContractQuotes,
   getWorkspaceContracts,
   sendContractByEmail,
@@ -26,6 +26,7 @@ import {
   generateContractPdfBlob,
 } from '../lib/contratoPdf';
 import Riders from './Riders';
+import PdfDocumentModal from '../components/PdfDocumentModal';
 import './Documentos.css';
 
 const DELETE_CONFIRMATION_WORDS = [
@@ -97,18 +98,6 @@ function joinAddress(...parts) {
     .join(', ');
 }
 
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
-}
 
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
@@ -158,6 +147,7 @@ export default function Documentos({
     useState(false);
   const [generando, setGenerando] = useState(false);
   const [descargandoId, setDescargandoId] = useState(null);
+  const [pdfViewer, setPdfViewer] = useState(null);
   const [enviandoId, setEnviandoId] = useState(null);
   const [eliminandoId, setEliminandoId] = useState(null);
   const [error, setError] = useState('');
@@ -863,7 +853,7 @@ export default function Documentos({
     return true;
   }
 
-  async function generarYDescargar() {
+  async function generarYGuardar() {
     setError('');
 
     if (!validarContrato()) return;
@@ -925,10 +915,7 @@ export default function Documentos({
         workspaceId
       );
 
-      downloadBlob(
-        pdfBlob,
-        `Contrato-${contratoGuardado.numero}.pdf`
-      );
+      const signedUrl = await getContractPdfSignedUrl(pdfPath);
 
       const contractsData =
         await getWorkspaceContracts(workspaceId);
@@ -937,9 +924,13 @@ export default function Documentos({
       setModo('lista');
       setCotizacion(null);
       setForm(EMPTY_FORM);
+      setPdfViewer({
+        title: `Contrato ${contratoGuardado.numero}`,
+        url: signedUrl,
+      });
 
       toast.success(
-        'Contrato generado y descargado correctamente.'
+        'Contrato generado y guardado correctamente.'
       );
     } catch (err) {
       console.error(err);
@@ -955,15 +946,28 @@ export default function Documentos({
     }
   }
 
-  async function descargarContrato(contract) {
+  async function abrirContrato(contract, autoPrint = false) {
     try {
       setDescargandoId(contract.id);
-      await downloadStoredContract(contract);
+
+      const signedUrl = await getContractPdfSignedUrl(
+        contract.pdf_path
+      );
+
+      if (!signedUrl) {
+        throw new Error('No se pudo abrir el PDF guardado del contrato.');
+      }
+
+      setPdfViewer({
+        title: `Contrato ${contract.numero || contract.id}`,
+        url: signedUrl,
+        autoPrint,
+      });
     } catch (err) {
       console.error(err);
       toast.error(
         err.message ||
-          'No se pudo descargar el contrato.'
+          'No se pudo preparar el contrato.'
       );
     } finally {
       setDescargandoId(null);
@@ -1306,13 +1310,22 @@ export default function Documentos({
                         descargandoId === contract.id ||
                         !contract.pdf_path
                       }
-                      onClick={() =>
-                        descargarContrato(contract)
-                      }
+                      onClick={() => abrirContrato(contract)}
                     >
                       {descargandoId === contract.id
                         ? 'Preparando...'
-                        : 'Descargar PDF'}
+                        : 'Ver'}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={
+                        descargandoId === contract.id ||
+                        !contract.pdf_path
+                      }
+                      onClick={() => abrirContrato(contract, true)}
+                    >
+                      Imprimir
                     </button>
 
                     <button
@@ -1354,7 +1367,7 @@ export default function Documentos({
             className="form-cotizacion documentos-form"
             onSubmit={(event) => {
               event.preventDefault();
-              generarYDescargar();
+              generarYGuardar();
             }}
           >
             <section className="form-section form-full">
@@ -1674,7 +1687,7 @@ export default function Documentos({
                   >
                     {generando
                       ? 'Generando contrato...'
-                      : 'Generar y descargar PDF'}
+                      : 'Generar y guardar PDF'}
                   </button>
                 </div>
               </>
@@ -1857,6 +1870,11 @@ export default function Documentos({
           </form>
         </div>
       )}
+
+      <PdfDocumentModal
+        document={pdfViewer}
+        onClose={() => setPdfViewer(null)}
+      />
 
       {contratoEnvio && (
         <div

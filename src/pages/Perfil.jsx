@@ -34,6 +34,11 @@ const formInicial = {
   cuenta_bancaria: '',
   nombre_banco: '',
   porcentaje_adelanto: 50,
+  manager_artistico_activo: false,
+  manager_artistico_nombre: '',
+  manager_artistico_porcentaje: 0,
+  impuesto_activo_por_defecto: false,
+  impuesto_porcentaje: 0,
   condiciones_pago:
     DEFAULT_BUSINESS_POLICIES_TEMPLATE,
 
@@ -245,6 +250,25 @@ export default function Perfil({
 
         porcentaje_adelanto: Number(
           perfilNegocio?.porcentaje_adelanto ?? 50
+        ),
+
+        manager_artistico_activo: Boolean(
+          perfilNegocio?.manager_artistico_activo
+        ),
+
+        manager_artistico_nombre:
+          perfilNegocio?.manager_artistico_nombre || '',
+
+        manager_artistico_porcentaje: Number(
+          perfilNegocio?.manager_artistico_porcentaje ?? 0
+        ),
+
+        impuesto_activo_por_defecto: Boolean(
+          perfilNegocio?.impuesto_activo_por_defecto
+        ),
+
+        impuesto_porcentaje: Number(
+          perfilNegocio?.impuesto_porcentaje ?? 0
         ),
 
         condiciones_pago:
@@ -500,6 +524,60 @@ export default function Perfil({
       return false;
     }
 
+    const porcentajeManagerArtistico = Number(
+      form.manager_artistico_porcentaje
+    );
+
+    if (
+      !Number.isFinite(porcentajeManagerArtistico) ||
+      porcentajeManagerArtistico < 0 ||
+      porcentajeManagerArtistico > 100
+    ) {
+      toast.error(
+        'El porcentaje del manager artístico debe estar entre 0% y 100%.'
+      );
+
+      return false;
+    }
+
+    if (
+      form.manager_artistico_activo &&
+      porcentajeManagerArtistico <= 0
+    ) {
+      toast.error(
+        'Indica un porcentaje mayor que 0% para activar al manager artístico.'
+      );
+
+      return false;
+    }
+
+    const porcentajeImpuesto = Number(
+      form.impuesto_porcentaje
+    );
+
+    if (
+      !Number.isFinite(porcentajeImpuesto) ||
+      porcentajeImpuesto < 0 ||
+      porcentajeImpuesto > 100
+    ) {
+      toast.error(
+        'El porcentaje de impuesto debe estar entre 0% y 100%.'
+      );
+
+      return false;
+    }
+
+    if (
+      form.impuesto_activo_por_defecto &&
+      porcentajeImpuesto <= 0
+    ) {
+      toast.error(
+        'Indica un porcentaje mayor que 0% para incluir impuestos por defecto.'
+      );
+
+      return false;
+    }
+
     if (!form.condiciones_pago.trim()) {
       toast.error(
         'Las políticas y condiciones no pueden estar vacías.'
@@ -662,6 +740,12 @@ export default function Perfil({
             firma_path: firmaPath,
             porcentaje_adelanto: Number(
               form.porcentaje_adelanto
+            ),
+            manager_artistico_porcentaje: Number(
+              form.manager_artistico_porcentaje
+            ),
+            impuesto_porcentaje: Number(
+              form.impuesto_porcentaje
             ),
           },
           workspaceId
@@ -1440,6 +1524,109 @@ export default function Perfil({
                 Las cotizaciones anteriores conservarán la
                 firma y el perfil que tenían al momento de
                 ser creadas.
+              </p>
+            </section>
+
+            <section className="form-section form-full">
+              <h2>Manager artístico</h2>
+
+              <p>
+                Configura el porcentaje habitual del manager. Este valor se
+                copiará automáticamente a las cotizaciones nuevas y podrá
+                ajustarse o desactivarse en cada evento.
+              </p>
+
+              <label className="check-row">
+                <input
+                  type="checkbox"
+                  name="manager_artistico_activo"
+                  checked={Boolean(form.manager_artistico_activo)}
+                  onChange={cambiar}
+                />
+                Incluir manager artístico por defecto
+              </label>
+
+              <div className="form-grid" style={{ marginTop: 14 }}>
+                <div>
+                  <label htmlFor="perfil-manager-nombre">
+                    Nombre o empresa del manager
+                  </label>
+
+                  <input
+                    id="perfil-manager-nombre"
+                    type="text"
+                    name="manager_artistico_nombre"
+                    value={form.manager_artistico_nombre}
+                    onChange={cambiar}
+                    placeholder="Opcional"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="perfil-manager-porcentaje">
+                    Porcentaje habitual (%)
+                  </label>
+
+                  <input
+                    id="perfil-manager-porcentaje"
+                    type="number"
+                    name="manager_artistico_porcentaje"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={form.manager_artistico_porcentaje}
+                    onChange={cambiar}
+                  />
+                </div>
+              </div>
+
+              <p style={{ marginTop: 14 }}>
+                El porcentaje se calcula sobre el subtotal después del descuento.
+              </p>
+            </section>
+
+            <section className="form-section form-full">
+              <h2>Impuestos</h2>
+
+              <p>
+                Define un porcentaje opcional para cotizaciones que deban
+                incluir impuestos. Las presentaciones artísticas están exentas
+                del ITBIS, por eso el valor inicial es 0%.
+              </p>
+
+              <label className="check-row">
+                <input
+                  type="checkbox"
+                  name="impuesto_activo_por_defecto"
+                  checked={Boolean(form.impuesto_activo_por_defecto)}
+                  onChange={cambiar}
+                />
+                Incluir impuesto por defecto
+              </label>
+
+              <div className="form-grid" style={{ marginTop: 14 }}>
+                <div>
+                  <label htmlFor="perfil-impuesto-porcentaje">
+                    Porcentaje por defecto (%)
+                  </label>
+
+                  <input
+                    id="perfil-impuesto-porcentaje"
+                    type="number"
+                    name="impuesto_porcentaje"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={form.impuesto_porcentaje}
+                    onChange={cambiar}
+                  />
+                </div>
+              </div>
+
+              <p style={{ marginTop: 14 }}>
+                El impuesto se calcula después del descuento, el manager
+                artístico y la comisión comercial. La retención de ISR no se
+                suma aquí, porque la descuenta el cliente cuando corresponde.
               </p>
             </section>
 

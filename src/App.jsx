@@ -52,6 +52,11 @@ import Equipo from './pages/Equipo';
 import InvitacionesPendientes from './pages/InvitacionesPendientes';
 import AceptarInvitacionGestor from './pages/AceptarInvitacionGestor';
 import AppIcon from './components/AppIcon';
+import NotificationsCenter from './components/NotificationsCenter';
+import {
+  getWorkspaceNotifications,
+  subscribeToWorkspaceNotificationChanges,
+} from './lib/notificationsService';
 import './styles/NavigationBalanced.css';
 
 const TUTORIAL_STEP_IDS = {
@@ -113,6 +118,90 @@ function readTutorialCompleted(workspaceId, esArtista) {
   }
 }
 
+
+function getNotificationsStorageKey(workspaceId, userId) {
+  return `mibooking.notifications.reviewed.${workspaceId || 'sin-workspace'}.${
+    userId || 'sin-usuario'
+  }`;
+}
+
+function readReviewedNotificationIds(workspaceId, userId) {
+  if (typeof window === 'undefined' || !workspaceId || !userId) {
+    return [];
+  }
+
+  try {
+    const stored = JSON.parse(
+      window.localStorage.getItem(
+        getNotificationsStorageKey(workspaceId, userId)
+      ) || '[]'
+    );
+
+    return Array.isArray(stored)
+      ? stored.filter(Boolean).slice(-300)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveReviewedNotificationIds(workspaceId, userId, ids) {
+  if (typeof window === 'undefined' || !workspaceId || !userId) {
+    return;
+  }
+
+  const normalized = Array.from(new Set(ids || []))
+    .filter(Boolean)
+    .slice(-300);
+
+  try {
+    window.localStorage.setItem(
+      getNotificationsStorageKey(workspaceId, userId),
+      JSON.stringify(normalized)
+    );
+  } catch {
+    // El centro sigue funcionando aunque el navegador bloquee localStorage.
+  }
+}
+
+function buildSubscriptionNotification({
+  accessState,
+  subscription,
+  workspaceId,
+  esArtista,
+}) {
+  if (!['grace', 'restricted'].includes(accessState)) {
+    return null;
+  }
+
+  const restricted = accessState === 'restricted';
+  const statusKey =
+    subscription?.status || subscription?.billing_mode || accessState;
+
+  return {
+    id: `subscription:${workspaceId}:${accessState}:${statusKey}`,
+    type: 'subscription',
+    severity: restricted ? 'critical' : 'warning',
+    icon: 'billing',
+    title: restricted
+      ? 'Suscripción pendiente de regularizar'
+      : 'Pago de suscripción pendiente',
+    description: esArtista
+      ? restricted
+        ? 'El acceso operativo está restringido. Revisa la suscripción para restablecer el workspace.'
+        : 'MiBooking está dentro del período de gracia. Revisa el método de pago antes de que se restrinja el acceso.'
+      : 'El plan del Artista requiere atención. El propietario del workspace debe regularizar la suscripción.',
+    meta: restricted ? 'Acceso restringido' : 'Período de gracia',
+    action: esArtista
+      ? {
+          kind: 'subscription',
+          label: 'Revisar suscripción',
+        }
+      : null,
+    sortDate: new Date().toISOString(),
+  };
+}
+
 export default function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -131,6 +220,16 @@ export default function App() {
     useState(false);
   const [settingsOpen, setSettingsOpen] =
     useState(false);
+  const [notificationsOpen, setNotificationsOpen] =
+    useState(false);
+  const [notifications, setNotifications] =
+    useState([]);
+  const [notificationsLoading, setNotificationsLoading] =
+    useState(false);
+  const [notificationsError, setNotificationsError] =
+    useState('');
+  const [reviewedNotificationIds, setReviewedNotificationIds] =
+    useState([]);
 
   const [workspaceSubscription, setWorkspaceSubscription] =
     useState(null);
@@ -197,6 +296,8 @@ export default function App() {
   const settingsRef =
     useRef(null);
 
+  const notificationsRequestRef = useRef(0);
+
   const navigationHistory = useRef([]);
 
   useEffect(() => {
@@ -232,6 +333,11 @@ export default function App() {
         setDocumentosInitialSection('contratos');
         setMoreOpen(false);
         setTutorialCompleted(false);
+        setSettingsOpen(false);
+        setNotificationsOpen(false);
+        setNotifications([]);
+        setNotificationsError('');
+        setReviewedNotificationIds([]);
         setWorkspaceSubscription(null);
         setSubscriptionError('');
         setCheckoutLoading(false);
@@ -766,6 +872,223 @@ export default function App() {
       'perfil',
     ].includes(page);
 
+
+  const unreadNotificationCount = notifications.reduce(
+    (count, notification) =>
+      reviewedNotificationIds.includes(notification.id)
+        ? count
+        : count + 1,
+    0
+  );
+
+  async function cargarNotificaciones({ silent = false } = {}) {
+    const currentWorkspaceId = activeWorkspace?.workspace_id;
+    const currentUserId = session?.user?.id;
+
+    if (!currentWorkspaceId || !currentUserId) {
+      setNotifications([]);
+      return;
+    }
+
+    const requestId = notificationsRequestRef.current + 1;
+    notificationsRequestRef.current = requestId;
+
+    if (!silent) {
+      setNotificationsLoading(true);
+    }
+
+    setNotificationsError('');
+
+    const subscriptionNotification = buildSubscriptionNotification({
+      accessState: subscriptionAccessState,
+      subscription: workspaceSubscription,
+      workspaceId: currentWorkspaceId,
+      esArtista,
+    });
+
+    try {
+      const operationalNotifications = subscriptionAccessAllowed
+        ? await getWorkspaceNotifications(currentWorkspaceId)
+        : [];
+
+      if (notificationsRequestRef.current !== requestId) return;
+
+      setNotifications(
+        subscriptionNotification
+          ? [subscriptionNotification, ...operationalNotifications]
+          : operationalNotifications
+      );
+    } catch (error) {
+      console.error(error);
+
+      if (notificationsRequestRef.current !== requestId) return;
+
+      setNotificationsError(
+        error.message || 'No se pudieron actualizar las notificaciones.'
+      );
+
+      if (subscriptionNotification) {
+        setNotifications([subscriptionNotification]);
+      }
+    } finally {
+      if (notificationsRequestRef.current === requestId) {
+        setNotificationsLoading(false);
+      }
+    }
+  }
+
+  function updateReviewedNotifications(nextIds) {
+    const workspaceId = activeWorkspace?.workspace_id;
+    const userId = session?.user?.id;
+    const normalized = Array.from(new Set(nextIds || []))
+      .filter(Boolean)
+      .slice(-300);
+
+    setReviewedNotificationIds(normalized);
+    saveReviewedNotificationIds(workspaceId, userId, normalized);
+  }
+
+  function markNotificationReviewed(notificationId) {
+    if (!notificationId || reviewedNotificationIds.includes(notificationId)) {
+      return;
+    }
+
+    updateReviewedNotifications([
+      ...reviewedNotificationIds,
+      notificationId,
+    ]);
+  }
+
+  function markAllNotificationsReviewed() {
+    updateReviewedNotifications([
+      ...reviewedNotificationIds,
+      ...notifications.map((notification) => notification.id),
+    ]);
+  }
+
+  function toggleNotifications() {
+    const nextOpen = !notificationsOpen;
+
+    setSettingsOpen(false);
+    setMoreOpen(false);
+    setNotificationsOpen(nextOpen);
+
+    if (nextOpen) {
+      cargarNotificaciones();
+    }
+  }
+
+  function openNotificationsFromMobile() {
+    setMoreOpen(false);
+    setSettingsOpen(false);
+    setNotificationsOpen(true);
+    cargarNotificaciones();
+  }
+
+  function handleNotificationSelect(notification) {
+    markNotificationReviewed(notification?.id);
+    setNotificationsOpen(false);
+
+    const action = notification?.action;
+    if (!action) return;
+
+    switch (action.kind) {
+      case 'quote':
+        abrirCotizacion(action.quoteId);
+        break;
+
+      case 'payments':
+        abrirPagos(action.quoteId);
+        break;
+
+      case 'documents':
+        abrirDocumentos(action.section || 'contratos');
+        break;
+
+      case 'calendar':
+        irA('calendario');
+        break;
+
+      case 'subscription':
+        irA('suscripcion');
+        break;
+
+      case 'cotizaciones':
+        irA('cotizaciones');
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  useEffect(() => {
+    const workspaceId = activeWorkspace?.workspace_id;
+    const userId = session?.user?.id;
+
+    notificationsRequestRef.current += 1;
+    setNotificationsOpen(false);
+    setNotifications([]);
+    setNotificationsError('');
+
+    if (!workspaceId || !userId) {
+      setReviewedNotificationIds([]);
+      return undefined;
+    }
+
+    setReviewedNotificationIds(
+      readReviewedNotificationIds(workspaceId, userId)
+    );
+
+    cargarNotificaciones();
+
+    const intervalId = window.setInterval(
+      () => cargarNotificaciones({ silent: true }),
+      2 * 60 * 1000
+    );
+
+    function refreshOnFocus() {
+      cargarNotificaciones({ silent: true });
+    }
+
+    window.addEventListener('focus', refreshOnFocus);
+
+    const unsubscribe = subscriptionAccessAllowed
+      ? subscribeToWorkspaceNotificationChanges(
+          workspaceId,
+          () => cargarNotificaciones({ silent: true })
+        )
+      : null;
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshOnFocus);
+      unsubscribe?.();
+      notificationsRequestRef.current += 1;
+    };
+  }, [
+    activeWorkspace?.workspace_id,
+    session?.user?.id,
+    subscriptionAccessAllowed,
+    subscriptionAccessState,
+    workspaceSubscription?.status,
+    workspaceSubscription?.billing_mode,
+    esArtista,
+  ]);
+
+  useEffect(() => {
+    if (!activeWorkspace?.workspace_id || !session?.user?.id) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(
+      () => cargarNotificaciones({ silent: true }),
+      650
+    );
+
+    return () => window.clearTimeout(timeoutId);
+  }, [page, cotizacionId]);
+
   function normalizarCotizacionId(nombrePagina, id) {
     const paginasConCotizacion = [
       'nueva-cotizacion',
@@ -866,7 +1189,7 @@ export default function App() {
       }
     }
 
-    navegarA('ver-cotizacion', id);
+    navegarA('cotizaciones');
   }
 
   function editarCotizacion(id) {
@@ -2199,7 +2522,10 @@ export default function App() {
                 <button
                   type="button"
                   className={`premium-icon-button ${settingsOpen || settingsIsActive ? 'active' : ''}`}
-                  onClick={() => setSettingsOpen((current) => !current)}
+                  onClick={() => {
+                    setNotificationsOpen(false);
+                    setSettingsOpen((current) => !current);
+                  }}
                   aria-label="Configuración"
                   aria-expanded={settingsOpen}
                 >
@@ -2226,12 +2552,26 @@ export default function App() {
 
               <button
                 type="button"
-                className="premium-notification-button"
-                aria-label="Notificaciones"
+                className={`premium-notification-button ${
+                  notificationsOpen ? 'active' : ''
+                }`}
+                onClick={toggleNotifications}
+                aria-label={`Notificaciones${
+                  unreadNotificationCount > 0
+                    ? `: ${unreadNotificationCount} nuevas`
+                    : ''
+                }`}
+                aria-expanded={notificationsOpen}
                 title="Notificaciones de MiBooking"
               >
                 <AppIcon name="bell" size={19} />
-                {subscriptionAccessState === 'grace' && <i />}
+                {unreadNotificationCount > 0 && (
+                  <span className="premium-notification-count">
+                    {unreadNotificationCount > 99
+                      ? '99+'
+                      : unreadNotificationCount}
+                  </span>
+                )}
               </button>
 
               <button
@@ -2327,6 +2667,22 @@ export default function App() {
             )}
 
             <div className="premium-mobile-menu-grid">
+              <button
+                type="button"
+                className="premium-mobile-notification-item"
+                onClick={openNotificationsFromMobile}
+              >
+                <AppIcon name="bell" size={20} />
+                <span>Notificaciones</span>
+                {unreadNotificationCount > 0 && (
+                  <em className="premium-mobile-notification-count">
+                    {unreadNotificationCount > 99
+                      ? '99+'
+                      : unreadNotificationCount}
+                  </em>
+                )}
+              </button>
+
               {visibleDesktopNav.map((item) => (
                 <button
                   key={item.id}
@@ -2359,6 +2715,18 @@ export default function App() {
           </div>
         </div>
       )}
+
+      <NotificationsCenter
+        open={notificationsOpen}
+        notifications={notifications}
+        reviewedIds={reviewedNotificationIds}
+        loading={notificationsLoading}
+        error={notificationsError}
+        onClose={() => setNotificationsOpen(false)}
+        onRefresh={() => cargarNotificaciones()}
+        onMarkAllReviewed={markAllNotificationsReviewed}
+        onSelect={handleNotificationSelect}
+      />
 
       <Toaster
         position="bottom-right"

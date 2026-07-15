@@ -6,7 +6,12 @@ import { getProvincias } from "../lib/provinciasService";
 import { getFormatosActivos } from "../lib/formatosService";
 import { calcularCotizacion } from "../lib/calcularCotizacion";
 import { getTiposEventoConfig } from "../lib/tiposEventoConfigService";
-import { saveCotizacion, getCotizacionById } from "../lib/cotizacionesService";
+import { getBusinessProfileForQuotes } from "../lib/profileService";
+import {
+  ensureCotizacionPdf,
+  getCotizacionById,
+  saveCotizacion,
+} from "../lib/cotizacionesService";
 
 const formInicial = {
   cliente_id: "",
@@ -35,6 +40,11 @@ const formInicial = {
   modo_tarifa_musicos: "uniforme",
   musicos_config: [],
   incluye_sonido: false,
+  incluye_manager_artistico: false,
+  manager_artistico_nombre: "",
+  manager_artistico_porcentaje: 0,
+  incluye_impuesto: false,
+  impuesto_porcentaje: 0,
   descuento: 0,
   estado: "Pendiente de aprobación",
 };
@@ -170,13 +180,19 @@ export default function NuevaCotizacion({
         setCargando(true);
         setError("");
 
-        const [clientesData, provinciasData, formatosData, tiposEventoData] =
-          await Promise.all([
-            getClientes(cotizacionWorkspaceId),
-            getProvincias(cotizacionWorkspaceId),
-            getFormatosActivos(cotizacionWorkspaceId),
-            getTiposEventoConfig(cotizacionWorkspaceId),
-          ]);
+        const [
+          clientesData,
+          provinciasData,
+          formatosData,
+          tiposEventoData,
+          perfilNegocioData,
+        ] = await Promise.all([
+          getClientes(cotizacionWorkspaceId),
+          getProvincias(cotizacionWorkspaceId),
+          getFormatosActivos(cotizacionWorkspaceId),
+          getTiposEventoConfig(cotizacionWorkspaceId),
+          getBusinessProfileForQuotes(cotizacionWorkspaceId),
+        ]);
 
         if (cancelled) return;
 
@@ -188,6 +204,32 @@ export default function NuevaCotizacion({
         );
         setFormatos(Array.isArray(formatosData) ? formatosData : []);
         setTiposEvento(Array.isArray(tiposEventoData) ? tiposEventoData : []);
+
+        if (!cotizacionId) {
+          const porcentajeManager = Number(
+            perfilNegocioData?.manager_artistico_porcentaje || 0,
+          );
+
+          const porcentajeImpuesto = Number(
+            perfilNegocioData?.impuesto_porcentaje || 0,
+          );
+
+          setForm((actual) => ({
+            ...actual,
+            incluye_manager_artistico: Boolean(
+              perfilNegocioData?.manager_artistico_activo &&
+                porcentajeManager > 0,
+            ),
+            manager_artistico_nombre:
+              perfilNegocioData?.manager_artistico_nombre || "",
+            manager_artistico_porcentaje: porcentajeManager,
+            incluye_impuesto: Boolean(
+              perfilNegocioData?.impuesto_activo_por_defecto &&
+                porcentajeImpuesto > 0,
+            ),
+            impuesto_porcentaje: porcentajeImpuesto,
+          }));
+        }
 
         if (cotizacionId) {
           const cotizacion = await getCotizacionById(
@@ -276,6 +318,13 @@ export default function NuevaCotizacion({
       modo_tarifa_musicos: modoTarifa,
       musicos_config: musicosConfig,
       incluye_sonido: Boolean(c.incluye_sonido),
+      incluye_manager_artistico: Boolean(c.incluye_manager_artistico),
+      manager_artistico_nombre: c.manager_artistico_nombre_snapshot || "",
+      manager_artistico_porcentaje: Number(
+        c.manager_artistico_porcentaje || 0,
+      ),
+      incluye_impuesto: Boolean(c.incluye_impuesto),
+      impuesto_porcentaje: Number(c.impuesto_porcentaje || 0),
       descuento: Number(c.descuento || 0),
       estado: c.estado || "Pendiente de aprobación",
     });
@@ -299,6 +348,16 @@ export default function NuevaCotizacion({
       transporte: Number(c.transporte || 0),
       sonido: Number(c.sonido || 0),
       road_manager: Number(c.road_manager || 0),
+      incluye_manager_artistico: Boolean(c.incluye_manager_artistico),
+      manager_artistico_base: Number(c.manager_artistico_base || 0),
+      manager_artistico_porcentaje: Number(
+        c.manager_artistico_porcentaje || 0,
+      ),
+      manager_artistico_monto: Number(c.manager_artistico_monto || 0),
+      incluye_impuesto: Boolean(c.incluye_impuesto),
+      impuesto_base: Number(c.impuesto_base || 0),
+      impuesto_porcentaje: Number(c.impuesto_porcentaje || 0),
+      impuesto_monto: Number(c.impuesto_monto || 0),
       subtotal: Number(c.subtotal || 0),
       descuento: Number(c.descuento || 0),
       monto_descuento: Number(c.monto_descuento || 0),
@@ -424,6 +483,51 @@ export default function NuevaCotizacion({
       return false;
     }
 
+    const porcentajeManagerArtistico = Number(
+      form.manager_artistico_porcentaje,
+    );
+
+    if (
+      !Number.isFinite(porcentajeManagerArtistico) ||
+      porcentajeManagerArtistico < 0 ||
+      porcentajeManagerArtistico > 100
+    ) {
+      toast.error(
+        "El porcentaje del manager artístico debe estar entre 0% y 100%.",
+      );
+      return false;
+    }
+
+    if (
+      form.incluye_manager_artistico &&
+      porcentajeManagerArtistico <= 0
+    ) {
+      toast.error(
+        "Indica un porcentaje mayor que 0% para incluir al manager artístico.",
+      );
+      return false;
+    }
+
+    const porcentajeImpuesto = Number(form.impuesto_porcentaje);
+
+    if (
+      !Number.isFinite(porcentajeImpuesto) ||
+      porcentajeImpuesto < 0 ||
+      porcentajeImpuesto > 100
+    ) {
+      toast.error(
+        "El porcentaje de impuesto debe estar entre 0% y 100%.",
+      );
+      return false;
+    }
+
+    if (form.incluye_impuesto && porcentajeImpuesto <= 0) {
+      toast.error(
+        "Indica un porcentaje mayor que 0% para incluir el impuesto.",
+      );
+      return false;
+    }
+
     if (
       form.modo_tarifa_musicos === "individual" &&
       form.musicos_config.length !== cantidadMusicos
@@ -466,6 +570,11 @@ export default function NuevaCotizacion({
       cantidadMusicos: Number(form.cantidad_musicos),
       incluyeSonido: form.incluye_sonido,
       descuento: Number(form.descuento),
+      incluyeManagerArtistico: form.incluye_manager_artistico,
+      managerArtisticoPorcentaje:
+        Number(form.manager_artistico_porcentaje) / 100,
+      incluyeImpuesto: form.incluye_impuesto,
+      impuestoPorcentaje: Number(form.impuesto_porcentaje) / 100,
       aplicarComision: !cotizacionEsArtista && comisionPorcentaje > 0,
       comisionPorcentaje: comisionPorcentaje / 100,
       tipoEventoConfig: tipoEventoSeleccionado,
@@ -564,6 +673,16 @@ export default function NuevaCotizacion({
             resultado.cantidad_musicos ?? form.cantidad_musicos,
           ),
           incluye_sonido: form.incluye_sonido,
+          incluye_manager_artistico: Boolean(
+            form.incluye_manager_artistico &&
+              Number(resultado.manager_artistico_monto || 0) > 0,
+          ),
+          manager_artistico_nombre_snapshot:
+            form.manager_artistico_nombre.trim() || null,
+          incluye_impuesto: Boolean(
+            form.incluye_impuesto &&
+              Number(resultado.impuesto_monto || 0) > 0,
+          ),
           descuento: Number(form.descuento),
           estado: form.estado,
 
@@ -572,10 +691,16 @@ export default function NuevaCotizacion({
         cotizacionWorkspaceId,
       );
 
+      await ensureCotizacionPdf(
+        guardada.id,
+        cotizacionWorkspaceId,
+        { force: true },
+      );
+
       toast.success(
         modoEdicion
-          ? "Cotización actualizada correctamente."
-          : "Cotización guardada correctamente.",
+          ? "Cotización y PDF actualizados correctamente."
+          : "Cotización y PDF guardados correctamente.",
       );
 
       if (onCotizacionGuardada) {
@@ -937,7 +1062,114 @@ export default function NuevaCotizacion({
                     Incluir sonido
                   </label>
                 </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                  }}
+                >
+                  <label className="check-row">
+                    <input
+                      type="checkbox"
+                      name="incluye_manager_artistico"
+                      checked={form.incluye_manager_artistico}
+                      onChange={cambiar}
+                    />
+                    Incluir manager artístico
+                  </label>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                  }}
+                >
+                  <label className="check-row">
+                    <input
+                      type="checkbox"
+                      name="incluye_impuesto"
+                      checked={form.incluye_impuesto}
+                      onChange={cambiar}
+                    />
+                    Incluir impuesto
+                  </label>
+                </div>
+
               </div>
+
+              {form.incluye_manager_artistico && (
+                <div
+                  className="form-grid"
+                  style={{
+                    marginTop: 16,
+                    padding: 14,
+                    border: "1px solid rgba(148, 163, 184, 0.25)",
+                    borderRadius: 14,
+                    background: "rgba(148, 163, 184, 0.06)",
+                  }}
+                >
+                  <div>
+                    <label>Nombre o empresa del manager</label>
+                    <input
+                      type="text"
+                      name="manager_artistico_nombre"
+                      value={form.manager_artistico_nombre}
+                      onChange={cambiar}
+                      placeholder="Opcional"
+                    />
+                  </div>
+
+                  <div>
+                    <label>Porcentaje del manager (%) *</label>
+                    <input
+                      type="number"
+                      name="manager_artistico_porcentaje"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={form.manager_artistico_porcentaje}
+                      onChange={cambiar}
+                    />
+                  </div>
+
+                  <small style={{ gridColumn: "1 / -1" }}>
+                    Se calcula sobre el subtotal después del descuento.
+                  </small>
+                </div>
+              )}
+
+              {form.incluye_impuesto && (
+                <div
+                  className="form-grid"
+                  style={{
+                    marginTop: 16,
+                    padding: 14,
+                    border: "1px solid rgba(148, 163, 184, 0.25)",
+                    borderRadius: 14,
+                    background: "rgba(148, 163, 184, 0.06)",
+                  }}
+                >
+                  <div>
+                    <label>Porcentaje de impuesto (%) *</label>
+                    <input
+                      type="number"
+                      name="impuesto_porcentaje"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={form.impuesto_porcentaje}
+                      onChange={cambiar}
+                    />
+                  </div>
+
+                  <small style={{ gridColumn: "1 / -1" }}>
+                    Se calcula sobre el monto neto después del descuento, el
+                    manager artístico y la comisión comercial.
+                  </small>
+                </div>
+              )}
 
               {form.formato_id && (
                 <div
@@ -1163,6 +1395,21 @@ export default function NuevaCotizacion({
               <strong>RD$ {resultado.monto_descuento.toLocaleString()}</strong>
             </div>
 
+            {resultado.incluye_manager_artistico && (
+              <div className="fila">
+                <span>
+                  Manager artístico
+                  {form.manager_artistico_nombre
+                    ? ` · ${form.manager_artistico_nombre}`
+                    : ""}
+                  {` (${resultado.manager_artistico_porcentaje}%)`}
+                </span>
+                <strong>
+                  RD$ {resultado.manager_artistico_monto.toLocaleString()}
+                </strong>
+              </div>
+            )}
+
             <div className="fila">
               <span>
                 Comisión
@@ -1172,6 +1419,13 @@ export default function NuevaCotizacion({
               </span>
               <strong>RD$ {resultado.comision.toLocaleString()}</strong>
             </div>
+
+            {resultado.incluye_impuesto && (
+              <div className="fila">
+                <span>Impuesto ({resultado.impuesto_porcentaje}%)</span>
+                <strong>RD$ {resultado.impuesto_monto.toLocaleString()}</strong>
+              </div>
+            )}
 
             <div className="fila">
               <span>Total redondeado</span>

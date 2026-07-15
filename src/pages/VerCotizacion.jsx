@@ -1,6 +1,30 @@
 import { useEffect, useState } from 'react';
-import { getCotizacionById } from '../lib/cotizacionesService';
+import toast from 'react-hot-toast';
+import {
+  convertirCotizacionEnFactura,
+  ensureCotizacionPdf,
+  getCotizacionById,
+  sendCotizacionByEmail,
+} from '../lib/cotizacionesService';
+import PdfDocumentModal from '../components/PdfDocumentModal';
+import {
+  renderBusinessPolicies,
+  renderBusinessPolicyTemplate,
+} from '../lib/profileService';
+import PdfEmailModal from '../components/PdfEmailModal';
 import './VerCotizacion.css';
+
+const ESTADOS_APROBADOS = ['Confirmada', 'Aprobada'];
+
+function normalizarNcf(value) {
+  return String(value || '').trim().toUpperCase();
+}
+
+function ncfEsValido(value) {
+  return /^(B\d{10}|E\d{12})$/.test(
+    normalizarNcf(value)
+  );
+}
 
 export default function VerCotizacion({
   workspaceId,
@@ -10,29 +34,39 @@ export default function VerCotizacion({
   const [cotizacion, setCotizacion] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
+  const [mostrarFacturacion, setMostrarFacturacion] =
+    useState(false);
+  const [incluyeNcfFactura, setIncluyeNcfFactura] =
+    useState(false);
+  const [ncfFactura, setNcfFactura] = useState('');
+  const [convirtiendo, setConvirtiendo] = useState(false);
+  const [procesandoPdf, setProcesandoPdf] = useState(false);
+  const [pdfViewer, setPdfViewer] = useState(null);
+  const [emailDocument, setEmailDocument] = useState(null);
+  const [enviandoPdf, setEnviandoPdf] = useState(false);
+
+  async function cargarCotizacion() {
+    try {
+      setCargando(true);
+      setError('');
+
+      const data = await getCotizacionById(
+        cotizacionId,
+        workspaceId
+      );
+
+      setCotizacion(data);
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.message || 'No se pudo cargar el documento.'
+      );
+    } finally {
+      setCargando(false);
+    }
+  }
 
   useEffect(() => {
-    async function cargarCotizacion() {
-      try {
-        setCargando(true);
-        setError('');
-
-        const data = await getCotizacionById(
-          cotizacionId,
-          workspaceId
-        );
-
-        setCotizacion(data);
-      } catch (err) {
-        console.error(err);
-        setError(
-          err.message || 'No se pudo cargar la cotización.'
-        );
-      } finally {
-        setCargando(false);
-      }
-    }
-
     if (cotizacionId) {
       cargarCotizacion();
     }
@@ -56,14 +90,171 @@ export default function VerCotizacion({
     });
   }
 
-  function imprimir() {
-    window.print();
+  function fechaHora(fecha) {
+    if (!fecha) return '';
+
+    return new Date(fecha).toLocaleString('es-DO', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  function documentTitle(item = cotizacion) {
+    const type = item?.documento_tipo === 'factura'
+      ? 'Factura'
+      : 'Cotización';
+
+    return `${type} ${item?.numero || `#${item?.id || ''}`}`;
+  }
+
+  async function preparePdf(autoPrint = false, force = false) {
+    if (!cotizacion) return;
+
+    try {
+      setProcesandoPdf(true);
+
+      const result = await ensureCotizacionPdf(
+        cotizacion.id,
+        workspaceId,
+        { force }
+      );
+
+      setCotizacion(result.cotizacion);
+      setPdfViewer({
+        title: documentTitle(result.cotizacion),
+        url: result.url,
+        autoPrint,
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.message || 'No se pudo preparar el PDF guardado.'
+      );
+    } finally {
+      setProcesandoPdf(false);
+    }
+  }
+
+  function prepareEmail() {
+    if (!cotizacion) return;
+
+    const client = cotizacion.clientes || {};
+    const business = cotizacion.perfil_negocio_snapshot || {};
+    const artistName =
+      cotizacion.artista_nombre_snapshot ||
+      business.nombre_artistico ||
+      'MiBooking';
+    const label = cotizacion.documento_tipo === 'factura'
+      ? 'factura'
+      : 'cotización';
+
+    setEmailDocument({
+      title: `Enviar ${documentTitle()}`,
+      recipient: client.email || '',
+      subject: `${documentTitle()} - ${artistName}`,
+      message:
+        `Hola ${client.nombre || ''},
+
+` +
+        `Adjuntamos la ${label} correspondiente a ` +
+        `${cotizacion.nombre_evento || cotizacion.tipo_evento || 'su evento'}.
+
+` +
+        `Quedamos atentos a cualquier comentario.
+
+` +
+        `Atentamente,
+${artistName}`,
+    });
+  }
+
+  async function sendPdfEmail(form) {
+    if (!cotizacion) return;
+
+    try {
+      setEnviandoPdf(true);
+
+      await sendCotizacionByEmail({
+        cotizacionId: cotizacion.id,
+        workspaceId,
+        recipient: form.recipient,
+        subject: form.subject,
+        message: form.message,
+      });
+
+      setEmailDocument(null);
+      toast.success(`${documentTitle()} enviada por correo.`);
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.message || 'No se pudo enviar el PDF por correo.'
+      );
+    } finally {
+      setEnviandoPdf(false);
+    }
+  }
+
+  async function emitirFactura() {
+    if (!cotizacion) return;
+
+    if (
+      incluyeNcfFactura &&
+      !ncfEsValido(ncfFactura)
+    ) {
+      toast.error(
+        'Escribe un NCF válido: B + 10 dígitos o E + 12 dígitos.'
+      );
+      return;
+    }
+
+    const confirmada = window.confirm(
+      incluyeNcfFactura
+        ? '¿Convertir esta cotización en factura y asignar el NCF indicado?'
+        : '¿Convertir esta cotización en factura sin NCF?'
+    );
+
+    if (!confirmada) return;
+
+    try {
+      setConvirtiendo(true);
+
+      const actualizada =
+        await convertirCotizacionEnFactura({
+          id: cotizacion.id,
+          workspaceId,
+          incluyeNcf: incluyeNcfFactura,
+          ncf: ncfFactura,
+        });
+
+      const pdfResult = await ensureCotizacionPdf(
+        actualizada.id,
+        workspaceId,
+        { force: true }
+      );
+
+      setCotizacion(pdfResult.cotizacion);
+      setMostrarFacturacion(false);
+      setIncluyeNcfFactura(false);
+      setNcfFactura('');
+      toast.success('Factura emitida y PDF guardado correctamente.');
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.message ||
+          'No se pudo convertir la cotización en factura.'
+      );
+    } finally {
+      setConvirtiendo(false);
+    }
   }
 
   if (cargando) {
     return (
       <div className="vc-page">
-        Cargando cotización...
+        Cargando documento...
       </div>
     );
   }
@@ -79,7 +270,7 @@ export default function VerCotizacion({
   if (!cotizacion) {
     return (
       <div className="vc-page">
-        Cotización no encontrada.
+        Documento no encontrado.
       </div>
     );
   }
@@ -88,6 +279,14 @@ export default function VerCotizacion({
   const zona = cotizacion.provincias || {};
   const negocio =
     cotizacion.perfil_negocio_snapshot || {};
+
+  const esFactura =
+    cotizacion.documento_tipo === 'factura';
+  const estadoAprobado = ESTADOS_APROBADOS.includes(
+    cotizacion.estado
+  );
+  const puedeConvertir =
+    !esFactura && estadoAprobado;
 
   const nombreArtista =
     cotizacion.artista_nombre_snapshot ||
@@ -109,19 +308,42 @@ export default function VerCotizacion({
   const montoDescuento = Number(
     cotizacion.monto_descuento || 0
   );
+  const incluyeImpuesto = Boolean(
+    cotizacion.incluye_impuesto &&
+      Number(cotizacion.impuesto_monto || 0) > 0
+  );
+  const impuestoPorcentaje = Number(
+    cotizacion.impuesto_porcentaje || 0
+  );
+  const impuestoMonto = Number(
+    cotizacion.impuesto_monto || 0
+  );
+  const ncf =
+    esFactura && cotizacion.incluye_ncf
+      ? String(cotizacion.ncf || '').trim()
+      : '';
 
   const subtotalCliente =
     Number(cotizacion.subtotal || 0) +
+    Number(cotizacion.manager_artistico_monto || 0) +
     Number(cotizacion.comision || 0);
 
   const presentacionMusical =
     subtotalCliente - sonido;
 
-  const politicas = String(
-    cotizacion.politicas_condiciones ||
-      negocio.condiciones_pago ||
-      ''
+  const politicasGuardadas = String(
+    cotizacion.politicas_condiciones || ''
   ).trim();
+
+  const politicas = politicasGuardadas
+    ? renderBusinessPolicyTemplate(
+        politicasGuardadas,
+        negocio
+      )
+    : renderBusinessPolicies(
+        negocio.condiciones_pago,
+        negocio
+      );
 
   const firmaUrl =
     negocio.firma_url ||
@@ -138,10 +360,120 @@ export default function VerCotizacion({
           ← Atrás
         </button>
 
-        <button type="button" onClick={imprimir}>
-          Imprimir / Guardar PDF
+        {puedeConvertir && (
+          <button
+            type="button"
+            className="vc-invoice-button"
+            onClick={() =>
+              setMostrarFacturacion((actual) => !actual)
+            }
+          >
+            Convertir en factura
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => preparePdf(false)}
+          disabled={procesandoPdf}
+        >
+          {procesandoPdf ? 'Preparando...' : 'Ver PDF'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => preparePdf(true)}
+          disabled={procesandoPdf}
+        >
+          Imprimir
+        </button>
+
+        <button type="button" onClick={prepareEmail}>
+          Enviar por correo
         </button>
       </div>
+
+      {mostrarFacturacion && puedeConvertir && (
+        <section className="vc-convert-panel no-print">
+          <div>
+            <h2>Emitir factura</h2>
+            <p>
+              Se conservarán el cliente, los conceptos, el impuesto y el
+              total aprobados. El documento pasará a mostrarse como factura.
+            </p>
+          </div>
+
+          <label className="vc-ncf-check">
+            <input
+              type="checkbox"
+              checked={incluyeNcfFactura}
+              onChange={(event) => {
+                setIncluyeNcfFactura(event.target.checked);
+
+                if (!event.target.checked) {
+                  setNcfFactura('');
+                }
+              }}
+            />
+            Incluir NCF en la factura
+          </label>
+
+          {incluyeNcfFactura && (
+            <div className="vc-ncf-field">
+              <label htmlFor="vc-factura-ncf">
+                NCF / e-NCF autorizado
+              </label>
+              <input
+                id="vc-factura-ncf"
+                type="text"
+                value={ncfFactura}
+                maxLength="13"
+                placeholder="B0100000001"
+                autoComplete="off"
+                onChange={(event) =>
+                  setNcfFactura(
+                    event.target.value
+                      .toUpperCase()
+                      .replace(/[^A-Z0-9]/g, '')
+                      .slice(0, 13)
+                  )
+                }
+              />
+              <small>
+                Utiliza exclusivamente una secuencia autorizada por la DGII.
+              </small>
+            </div>
+          )}
+
+          <div className="vc-convert-actions">
+            <button
+              type="button"
+              onClick={() => setMostrarFacturacion(false)}
+              disabled={convirtiendo}
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              className="vc-invoice-button"
+              onClick={emitirFactura}
+              disabled={convirtiendo}
+            >
+              {convirtiendo
+                ? 'Emitiendo...'
+                : 'Emitir factura'}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {!esFactura && !estadoAprobado && (
+        <p className="vc-convert-hint no-print">
+          La opción de convertir en factura estará disponible cuando la
+          cotización esté Confirmada o Aprobada.
+        </p>
+      )}
 
       <div className="vc-document">
         <header className="vc-header">
@@ -172,11 +504,27 @@ export default function VerCotizacion({
           </div>
 
           <div className="vc-box">
-            <strong>COTIZACIÓN</strong>
+            <strong>
+              {esFactura ? 'FACTURA' : 'COTIZACIÓN'}
+            </strong>
             <span>
               {cotizacion.numero ||
                 `#${cotizacion.id}`}
             </span>
+
+            {esFactura && (
+              <small>
+                Cotización de origen
+              </small>
+            )}
+
+            {ncf && <small>NCF: {ncf}</small>}
+
+            {esFactura && cotizacion.factura_emitida_at && (
+              <small>
+                Emitida: {fechaHora(cotizacion.factura_emitida_at)}
+              </small>
+            )}
           </div>
         </header>
 
@@ -319,6 +667,17 @@ export default function VerCotizacion({
             </div>
           )}
 
+          {incluyeImpuesto && (
+            <div>
+              <span>
+                Impuesto {impuestoPorcentaje}%
+              </span>
+              <strong>
+                {money(impuestoMonto)}
+              </strong>
+            </div>
+          )}
+
           <div className="vc-total-final">
             <span>Total</span>
             <strong>
@@ -372,6 +731,18 @@ export default function VerCotizacion({
           </p>
         </footer>
       </div>
+
+      <PdfDocumentModal
+        document={pdfViewer}
+        onClose={() => setPdfViewer(null)}
+      />
+
+      <PdfEmailModal
+        document={emailDocument}
+        sending={enviandoPdf}
+        onClose={() => setEmailDocument(null)}
+        onSend={sendPdfEmail}
+      />
     </div>
   );
 }

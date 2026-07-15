@@ -212,7 +212,7 @@ export async function getRiderPdfSignedUrl(path) {
   const { data, error } = await supabase.storage
     .from(RIDERS_BUCKET)
     .createSignedUrl(path, SIGNED_URL_DURATION, {
-      download: true,
+      download: false,
     });
 
   if (error) throw error;

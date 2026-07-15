@@ -8,6 +8,11 @@ import { jsPDF } from 'jspdf';
 import toast from 'react-hot-toast';
 import { saveFormatoRiderConfig } from '../lib/formatosService';
 import {
+  getStagePlotPdfSignedUrl,
+  sendStagePlotByEmail,
+  uploadStagePlotPdf,
+} from '../lib/stagePlotPdfService';
+import {
   STAGE_PLOT_ITEM_TYPES,
   createManualStagePlotItem,
   generateStagePlotFromRider,
@@ -16,6 +21,8 @@ import {
   sortStagePlotItems,
   syncStagePlotWithRider,
 } from '../lib/stagePlot';
+import PdfDocumentModal from '../components/PdfDocumentModal';
+import PdfEmailModal from '../components/PdfEmailModal';
 import './StagePlotEditor.css';
 
 const VIEWBOX_WIDTH = 1000;
@@ -337,7 +344,7 @@ function loadSvgAsPngDataUrl(svgBlob) {
   });
 }
 
-async function buildStagePlotPdfDownload({
+async function buildStagePlotPdfBlob({
   svgNode,
   title,
   formatName,
@@ -414,7 +421,7 @@ async function buildStagePlotPdfDownload({
     align: 'right',
   });
 
-  pdf.save(`${safeFileName(`${formatName || 'Formato'}-Stage-Plot`)}.pdf`);
+  return pdf.output('blob');
 }
 
 export default function StagePlotEditor({
@@ -437,6 +444,9 @@ export default function StagePlotEditor({
   const [exportingPdf, setExportingPdf] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [newType, setNewType] = useState('monitor');
+  const [pdfViewer, setPdfViewer] = useState(null);
+  const [emailDocument, setEmailDocument] = useState(null);
+  const [sendingPdf, setSendingPdf] = useState(false);
 
   useEffect(() => {
     const nextPlot = normalizeStagePlot(
@@ -655,31 +665,54 @@ export default function StagePlotEditor({
     );
   }
 
+  function normalizedPlotForSave(source = plot) {
+    return {
+      ...source,
+      version: 1,
+      width_m: Math.max(1, Number(source.width_m || 6)),
+      depth_m: Math.max(1, Number(source.depth_m || 4)),
+      title: String(source.title || 'Stage Plot principal').trim(),
+      notes: String(source.notes || '').trim(),
+      updated_at: new Date().toISOString(),
+      items: source.items.map((item) => ({
+        ...item,
+        x: Number(item.x.toFixed(2)),
+        y: Number(item.y.toFixed(2)),
+        width: Number(item.width.toFixed(2)),
+        height: Number(item.height.toFixed(2)),
+        rotation: Number(item.rotation || 0),
+      })),
+    };
+  }
+
+  async function buildAndUploadStagePlotPdf() {
+    const pdfBlob = await buildStagePlotPdfBlob({
+      svgNode: svgRef.current,
+      title: plot.title || 'Stage Plot principal',
+      formatName: formato?.nombre || 'Formato',
+      widthM: plot.width_m,
+      depthM: plot.depth_m,
+    });
+
+    const path = await uploadStagePlotPdf(
+      pdfBlob,
+      formato.id,
+      workspaceId
+    );
+    const url = await getStagePlotPdfSignedUrl(path);
+
+    return { path, url };
+  }
+
   async function save() {
     if (readOnly) return;
 
     try {
       setSaving(true);
 
-      const stagePlot = {
-        ...plot,
-        version: 1,
-        width_m: Math.max(1, Number(plot.width_m || 6)),
-        depth_m: Math.max(1, Number(plot.depth_m || 4)),
-        title: String(plot.title || 'Stage Plot principal').trim(),
-        notes: String(plot.notes || '').trim(),
-        updated_at: new Date().toISOString(),
-        items: plot.items.map((item) => ({
-          ...item,
-          x: Number(item.x.toFixed(2)),
-          y: Number(item.y.toFixed(2)),
-          width: Number(item.width.toFixed(2)),
-          height: Number(item.height.toFixed(2)),
-          rotation: Number(item.rotation || 0),
-        })),
-      };
+      const stagePlot = normalizedPlotForSave();
 
-      const saved = await saveFormatoRiderConfig(
+      await saveFormatoRiderConfig(
         formato.id,
         {
           ...(formato.rider_config || {}),
@@ -688,38 +721,129 @@ export default function StagePlotEditor({
         workspaceId
       );
 
-      setPlot(stagePlot);
+      const { path } = await buildAndUploadStagePlotPdf();
+      const stagePlotWithPdf = {
+        ...stagePlot,
+        pdf_path: path,
+        pdf_generado_at: new Date().toISOString(),
+      };
+
+      const saved = await saveFormatoRiderConfig(
+        formato.id,
+        {
+          ...(formato.rider_config || {}),
+          stage_plot: stagePlotWithPdf,
+        },
+        workspaceId
+      );
+
+      setPlot(stagePlotWithPdf);
       setDirty(false);
       onSaved?.(saved);
-      toast.success('Stage Plot guardado correctamente.');
+      toast.success('Stage Plot y PDF guardados correctamente.');
     } catch (error) {
       console.error(error);
       toast.error(
-        error.message || 'No se pudo guardar el Stage Plot.'
+        error.message || 'No se pudo guardar el Stage Plot y su PDF.'
       );
     } finally {
       setSaving(false);
     }
   }
 
-  async function downloadStagePlotPdf() {
+  async function ensureStoredStagePlotPdf() {
+    if (dirty && !readOnly) {
+      throw new Error(
+        'Guarda primero los cambios del Stage Plot para actualizar el PDF.'
+      );
+    }
+
+    if (plot.pdf_path) {
+      const url = await getStagePlotPdfSignedUrl(plot.pdf_path);
+      return { path: plot.pdf_path, url };
+    }
+
+    const result = await buildAndUploadStagePlotPdf();
+
+    if (!readOnly) {
+      const stagePlotWithPdf = {
+        ...normalizedPlotForSave(),
+        pdf_path: result.path,
+        pdf_generado_at: new Date().toISOString(),
+      };
+
+      const saved = await saveFormatoRiderConfig(
+        formato.id,
+        {
+          ...(formato.rider_config || {}),
+          stage_plot: stagePlotWithPdf,
+        },
+        workspaceId
+      );
+
+      setPlot(stagePlotWithPdf);
+      onSaved?.(saved);
+    }
+
+    return result;
+  }
+
+  async function openStagePlotPdf(autoPrint = false) {
     try {
       setExportingPdf(true);
-      await buildStagePlotPdfDownload({
-        svgNode: svgRef.current,
-        title: plot.title || 'Stage Plot principal',
-        formatName: formato?.nombre || 'Formato',
-        widthM: plot.width_m,
-        depthM: plot.depth_m,
+      const result = await ensureStoredStagePlotPdf();
+
+      setPdfViewer({
+        title: `${plot.title || 'Stage Plot'} · ${formato?.nombre || 'Formato'}`,
+        url: result.url,
+        autoPrint,
       });
-      toast.success('Stage Plot PDF descargado correctamente.');
     } catch (error) {
       console.error(error);
       toast.error(
-        error.message || 'No se pudo descargar el Stage Plot PDF.'
+        error.message || 'No se pudo preparar el Stage Plot PDF.'
       );
     } finally {
       setExportingPdf(false);
+    }
+  }
+
+  function prepareStagePlotEmail() {
+    setEmailDocument({
+      title: `Enviar Stage Plot · ${formato?.nombre || 'Formato'}`,
+      recipient: '',
+      subject: `Stage Plot - ${formato?.nombre || 'Formato'}`,
+      message:
+        `Hola,\n\nAdjuntamos el Stage Plot técnico correspondiente al formato ` +
+        `${formato?.nombre || 'contratado'}.\n\n` +
+        `Por favor, compártelo con la compañía de sonido o responsable técnico.\n\n` +
+        `Atentamente,\nMiBooking`,
+    });
+  }
+
+  async function sendStagePlotEmail(form) {
+    try {
+      setSendingPdf(true);
+      const result = await ensureStoredStagePlotPdf();
+
+      await sendStagePlotByEmail({
+        workspaceId,
+        formatId: formato.id,
+        path: result.path,
+        recipient: form.recipient,
+        subject: form.subject,
+        message: form.message,
+      });
+
+      setEmailDocument(null);
+      toast.success('Stage Plot enviado por correo.');
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error.message || 'No se pudo enviar el Stage Plot.'
+      );
+    } finally {
+      setSendingPdf(false);
     }
   }
 
@@ -783,12 +907,26 @@ export default function StagePlotEditor({
           <button
             type="button"
             className="stage-plot-pdf-button"
-            onClick={downloadStagePlotPdf}
+            onClick={() => openStagePlotPdf(false)}
             disabled={exportingPdf}
           >
-            {exportingPdf
-              ? 'Preparando PDF...'
-              : 'Descargar Stage Plot PDF'}
+            {exportingPdf ? 'Preparando PDF...' : 'Ver PDF'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => openStagePlotPdf(true)}
+            disabled={exportingPdf}
+          >
+            Imprimir
+          </button>
+
+          <button
+            type="button"
+            onClick={prepareStagePlotEmail}
+            disabled={exportingPdf}
+          >
+            Enviar por correo
           </button>
 
           <button
@@ -1235,6 +1373,17 @@ export default function StagePlotEditor({
           </section>
         </aside>
       </div>
+      <PdfDocumentModal
+        document={pdfViewer}
+        onClose={() => setPdfViewer(null)}
+      />
+
+      <PdfEmailModal
+        document={emailDocument}
+        sending={sendingPdf}
+        onClose={() => setEmailDocument(null)}
+        onSend={sendStagePlotEmail}
+      />
     </div>
   );
 }

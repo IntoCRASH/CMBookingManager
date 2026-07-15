@@ -218,7 +218,7 @@ export async function getContractPdfSignedUrl(path) {
   const { data, error } = await supabase.storage
     .from(CONTRACTS_BUCKET)
     .createSignedUrl(path, SIGNED_URL_DURATION, {
-      download: true,
+      download: false,
     });
 
   if (error) throw error;

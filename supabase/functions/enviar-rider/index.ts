@@ -150,6 +150,19 @@ Deno.serve(async (request) => {
       );
     }
 
+    const replyEmail = String(user.email || '').trim();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyEmail)) {
+      return json(
+        {
+          ok: false,
+          error:
+            'La cuenta del usuario no tiene un correo válido para recibir respuestas.',
+        },
+        400
+      );
+    }
+
     // Consulta protegida por RLS: confirma que el usuario tiene
     // acceso activo al workspace del rider.
     const { data: rider, error: riderError } =
@@ -300,6 +313,13 @@ Deno.serve(async (request) => {
                   : ''
               }
             </div>
+
+            <p style="margin:14px 0 0;font-size:13px;line-height:1.55;color:#475569;">
+              Si desea responder a este correo, escriba a
+              <a href="mailto:${escapeHtml(replyEmail)}" style="color:#0f172a;font-weight:700;text-decoration:none;">
+                ${escapeHtml(replyEmail)}
+              </a>.
+            </p>
           </div>
         </div>
       </div>
@@ -319,6 +339,7 @@ Deno.serve(async (request) => {
         },
         body: JSON.stringify({
           from: fromEmail,
+          reply_to: replyEmail,
           to: [destinatario],
           subject: safeSubject,
           html: emailHtml,
