@@ -463,3 +463,71 @@
   background: rgba(20, 29, 48, 0.9);
   color: #e2e8f0;
 }
+
+/* =========================================================
+   MIBOOKING — LOGIN: TEXTO VISIBLE EN INPUTS Y AUTOFILL
+   Corrige el contraste al escribir y al usar credenciales
+   guardadas por Chrome, Edge, Safari y otros navegadores.
+========================================================= */
+
+.auth-card input,
+.auth-card input:hover,
+.auth-card input:focus,
+.auth-card input:active {
+  background: #eef4ff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
+  opacity: 1;
+}
+
+.auth-card input::placeholder {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  opacity: 1;
+}
+
+.auth-card input:focus {
+  background: #f8fbff !important;
+  border-color: #8b5cf6 !important;
+  box-shadow:
+    0 0 0 4px rgba(139, 92, 246, 0.16) !important;
+}
+
+.auth-card input[readonly] {
+  background: #dfe8f6 !important;
+  color: #334155 !important;
+  -webkit-text-fill-color: #334155 !important;
+  caret-color: #334155 !important;
+}
+
+/* Chrome, Edge, Safari y navegadores WebKit/Blink. */
+.auth-card input:-webkit-autofill,
+.auth-card input:-webkit-autofill:hover,
+.auth-card input:-webkit-autofill:focus,
+.auth-card input:-webkit-autofill:active {
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
+  -webkit-box-shadow:
+    0 0 0 1000px #eef4ff inset !important;
+  box-shadow:
+    0 0 0 1000px #eef4ff inset !important;
+  border-color: rgba(139, 92, 246, 0.48) !important;
+  transition:
+    background-color 9999s ease-out 0s;
+}
+
+/* Firefox y navegadores con soporte estándar de :autofill. */
+.auth-card input:autofill {
+  background: #eef4ff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
+}
+
+/* Asegura que los puntos de contraseña tengan contraste. */
+.auth-card input[type='password'] {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
